@@ -140,10 +140,21 @@ def show_ranking():
 
 def show_points_history():
     username = input("ユーザー名(空欄は全員): ").strip()
-    history = utils.load_points_history()
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d")
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d")
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+
+    history = utils.filter_points_history(start=start, end=end, username=username)
     for entry in history:
-        if username and entry.get("username") != username:
-            continue
         ts = entry.get("timestamp")
         user = entry.get("username")
         delta_a = entry.get("A", 0)
