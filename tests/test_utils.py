@@ -160,3 +160,18 @@ def test_load_points_history_after_logging():
             "timestamp": ts.isoformat(timespec="seconds"),
         },
     ]
+
+
+def test_filter_points_history():
+    ts1 = datetime(2021, 4, 1, 12, 0, 0)
+    ts2 = datetime(2021, 4, 5, 12, 0, 0)
+    utils.log_points_change("u1", 1, 0, ts1)
+    utils.log_points_change("u2", 2, 0, ts2)
+
+    start = datetime(2021, 4, 3)
+    end = datetime(2021, 4, 6)
+    results = utils.filter_points_history(start=start, end=end, username="u2")
+
+    assert len(results) == 1
+    assert results[0]["username"] == "u2"
+    assert results[0]["timestamp"] == ts2.isoformat(timespec="seconds")

@@ -25,6 +25,29 @@ def load_points_history() -> List[Dict[str, str]]:
     return []
 
 
+def filter_points_history(
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
+    username: str = "",
+) -> List[Dict[str, str]]:
+    """履歴を開始日・終了日・ユーザー名でフィルタリングして返す。"""
+
+    history = load_points_history()
+    results: List[Dict[str, str]] = []
+
+    for entry in history:
+        ts = datetime.fromisoformat(entry.get("timestamp"))
+        if start and ts < start:
+            continue
+        if end and ts > end:
+            continue
+        if username and entry.get("username") != username:
+            continue
+        results.append(entry)
+
+    return results
+
+
 def log_points_change(username: str, delta_a: int, delta_o: int, timestamp: Optional[datetime] = None) -> None:
     history = load_points_history()
     ts = timestamp or datetime.now()
