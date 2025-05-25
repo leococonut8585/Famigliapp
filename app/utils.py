@@ -36,8 +36,9 @@ def save_posts(posts: List[Dict[str, str]]) -> None:
 
 def add_post(author: str, category: str, text: str) -> None:
     posts = load_posts()
+    next_id = max((p.get('id', 0) for p in posts), default=0) + 1
     post = {
-        'id': len(posts) + 1,
+        'id': next_id,
         'author': author,
         'category': category,
         'text': text,

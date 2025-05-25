@@ -51,3 +51,15 @@ def test_add_post_and_delete():
     assert posts[0]["text"] == "hello"
     assert utils.delete_post(posts[0]["id"])
     assert utils.load_posts() == []
+
+
+def test_post_id_increment_after_middle_delete():
+    utils.add_post("u1", "bravissimo", "one")
+    utils.add_post("u2", "bravissimo", "two")
+    posts = utils.load_posts()
+    first_id = posts[0]["id"]
+    second_id = posts[1]["id"]
+    assert utils.delete_post(first_id)
+    utils.add_post("u3", "bravissimo", "three")
+    ids = [p["id"] for p in utils.load_posts()]
+    assert ids == [second_id, second_id + 1]
