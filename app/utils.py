@@ -3,6 +3,18 @@ from pathlib import Path
 from typing import Dict, Optional, List, Tuple
 from datetime import datetime, timedelta
 
+try:
+    from flask import current_app
+except Exception:  # pragma: no cover - optional dependency
+    current_app = None  # type: ignore
+
+try:
+    from . import db
+    from .models import User, Post, PointsHistory  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    db = None  # type: ignore
+    User = Post = PointsHistory = None  # type: ignore
+
 import config
 
 POINTS_PATH = Path(config.POINTS_FILE)
@@ -10,17 +22,47 @@ POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 POSTS_PATH = Path(config.POSTS_FILE)
 
 
+def _use_db() -> bool:
+    """Return True if a database connection is available."""
+
+    if db is None or current_app is None:
+        return False
+    try:  # pragma: no cover - runtime check
+        db.session.execute("SELECT 1")
+    except Exception:
+        return False
+    return True
+
+
 def load_points() -> Dict[str, Dict[str, int]]:
+    if _use_db():
+        assert User is not None
+        data: Dict[str, Dict[str, int]] = {}
+        for u in User.query.all():  # type: ignore[attr-defined]
+            data[u.username] = {"A": u.points_a, "O": u.points_o}
+        return data
     if POINTS_PATH.exists():
-        with open(POINTS_PATH, 'r', encoding='utf-8') as f:
+        with open(POINTS_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
-    else:
-        return {}
+    return {}
 
 
 def load_points_history() -> List[Dict[str, str]]:
+    if _use_db():
+        assert PointsHistory is not None
+        results: List[Dict[str, str]] = []
+        for h in PointsHistory.query.order_by(PointsHistory.id).all():  # type: ignore[attr-defined]
+            results.append(
+                {
+                    "username": h.user.username if h.user else "",
+                    "A": h.delta_a,
+                    "O": h.delta_o,
+                    "timestamp": h.timestamp.isoformat(timespec="seconds"),
+                }
+            )
+        return results
     if POINTS_HISTORY_PATH.exists():
-        with open(POINTS_HISTORY_PATH, 'r', encoding='utf-8') as f:
+        with open(POINTS_HISTORY_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
@@ -49,52 +91,142 @@ def filter_points_history(
 
 
 def log_points_change(username: str, delta_a: int, delta_o: int, timestamp: Optional[datetime] = None) -> None:
-    history = load_points_history()
     ts = timestamp or datetime.now()
-    history.append({
-        'username': username,
-        'A': delta_a,
-        'O': delta_o,
-        'timestamp': ts.isoformat(timespec='seconds'),
-    })
-    with open(POINTS_HISTORY_PATH, 'w', encoding='utf-8') as f:
+    if _use_db():
+        assert PointsHistory is not None and User is not None
+        user = User.query.filter_by(username=username).first()  # type: ignore[attr-defined]
+        if not user:
+            user = User(username=username, email=f"{username}@example.com")  # type: ignore[call-arg]
+            db.session.add(user)
+            db.session.flush()
+        history = PointsHistory(
+            user_id=user.id,
+            delta_a=delta_a,
+            delta_o=delta_o,
+            timestamp=ts,
+        )
+        db.session.add(history)
+        db.session.commit()
+        return
+    history = load_points_history()
+    history.append(
+        {
+            "username": username,
+            "A": delta_a,
+            "O": delta_o,
+            "timestamp": ts.isoformat(timespec="seconds"),
+        }
+    )
+    with open(POINTS_HISTORY_PATH, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
 
 def save_points(points: Dict[str, Dict[str, int]]) -> None:
-    with open(POINTS_PATH, 'w', encoding='utf-8') as f:
+    if _use_db():
+        assert User is not None
+        for username, vals in points.items():
+            user = User.query.filter_by(username=username).first()  # type: ignore[attr-defined]
+            if not user:
+                user = User(username=username, email=f"{username}@example.com")  # type: ignore[call-arg]
+                db.session.add(user)
+            user.points_a = vals.get("A", 0)
+            user.points_o = vals.get("O", 0)
+        db.session.commit()
+        return
+    with open(POINTS_PATH, "w", encoding="utf-8") as f:
         json.dump(points, f, ensure_ascii=False, indent=2)
 
 
 def load_posts() -> List[Dict[str, str]]:
+    if _use_db():
+        assert Post is not None and User is not None
+        results: List[Dict[str, str]] = []
+        for p in Post.query.order_by(Post.id).all():  # type: ignore[attr-defined]
+            results.append(
+                {
+                    "id": p.id,
+                    "author": p.author.username if p.author else "",
+                    "category": p.category,
+                    "text": p.text,
+                    "timestamp": p.timestamp.isoformat(timespec="seconds"),
+                }
+            )
+        return results
     if POSTS_PATH.exists():
-        with open(POSTS_PATH, 'r', encoding='utf-8') as f:
+        with open(POSTS_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     return []
 
 
 def save_posts(posts: List[Dict[str, str]]) -> None:
-    with open(POSTS_PATH, 'w', encoding='utf-8') as f:
+    if _use_db():
+        assert Post is not None and User is not None
+        # Replace existing posts with provided list
+        Post.query.delete()  # type: ignore[attr-defined]
+        for p in posts:
+            author = User.query.filter_by(username=p.get("author")).first()  # type: ignore[attr-defined]
+            if not author:
+                author = User(username=p.get("author"), email=f"{p.get('author')}@example.com")  # type: ignore[call-arg]
+                db.session.add(author)
+                db.session.flush()
+            db.session.add(
+                Post(
+                    id=p.get("id"),
+                    author_id=author.id,
+                    category=p.get("category"),
+                    text=p.get("text"),
+                    timestamp=datetime.fromisoformat(p.get("timestamp"))
+                    if p.get("timestamp")
+                    else datetime.utcnow(),
+                )
+            )
+        db.session.commit()
+        return
+    with open(POSTS_PATH, "w", encoding="utf-8") as f:
         json.dump(posts, f, ensure_ascii=False, indent=2)
 
 
 def add_post(author: str, category: str, text: str) -> None:
+    if _use_db():
+        assert Post is not None and User is not None
+        user = User.query.filter_by(username=author).first()  # type: ignore[attr-defined]
+        if not user:
+            user = User(username=author, email=f"{author}@example.com")  # type: ignore[call-arg]
+            db.session.add(user)
+            db.session.flush()
+        post = Post(
+            author_id=user.id,
+            category=category,
+            text=text,
+            timestamp=datetime.utcnow(),
+        )
+        db.session.add(post)
+        db.session.commit()
+        return
     posts = load_posts()
-    next_id = max((p.get('id', 0) for p in posts), default=0) + 1
+    next_id = max((p.get("id", 0) for p in posts), default=0) + 1
     post = {
-        'id': next_id,
-        'author': author,
-        'category': category,
-        'text': text,
-        'timestamp': datetime.now().isoformat(timespec='seconds'),
+        "id": next_id,
+        "author": author,
+        "category": category,
+        "text": text,
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
     }
     posts.append(post)
     save_posts(posts)
 
 
 def delete_post(post_id: int) -> bool:
+    if _use_db():
+        assert Post is not None
+        post = Post.query.filter_by(id=post_id).first()  # type: ignore[attr-defined]
+        if not post:
+            return False
+        db.session.delete(post)
+        db.session.commit()
+        return True
     posts = load_posts()
-    new_posts = [p for p in posts if p.get('id') != post_id]
+    new_posts = [p for p in posts if p.get("id") != post_id]
     if len(new_posts) == len(posts):
         return False
     save_posts(new_posts)
@@ -107,6 +239,27 @@ def filter_posts(
     keyword: str = "",
 ) -> List[Dict[str, str]]:
     """Filter posts by category, author and keyword."""
+    if _use_db():
+        assert Post is not None and User is not None
+        query = Post.query  # type: ignore[attr-defined]
+        if category:
+            query = query.filter_by(category=category)
+        if author:
+            query = query.join(User).filter(User.username == author)
+        if keyword:
+            query = query.filter(Post.text.contains(keyword))
+        results = []
+        for p in query.all():
+            results.append(
+                {
+                    "id": p.id,
+                    "author": p.author.username if p.author else "",
+                    "category": p.category,
+                    "text": p.text,
+                    "timestamp": p.timestamp.isoformat(timespec="seconds"),
+                }
+            )
+        return results
     posts = load_posts()
     results: List[Dict[str, str]] = []
     for p in posts:
@@ -121,12 +274,18 @@ def filter_posts(
 
 
 def login(username: str, password: str) -> Optional[Dict[str, str]]:
+    if _use_db():
+        assert User is not None
+        u = User.query.filter_by(username=username).first()  # type: ignore[attr-defined]
+        if u and u.password == password:
+            return {"username": u.username, "role": u.role, "email": u.email}
+        return None
     user = config.USERS.get(username)
-    if user and user['password'] == password:
+    if user and user["password"] == password:
         return {
-            'username': username,
-            'role': user['role'],
-            'email': user['email']
+            "username": username,
+            "role": user["role"],
+            "email": user["email"],
         }
     return None
 
