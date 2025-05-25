@@ -2,6 +2,16 @@
 
 from typing import Optional
 
+try:
+    from flask_sqlalchemy import SQLAlchemy
+    from flask_migrate import Migrate
+except Exception:  # pragma: no cover - optional dependency
+    SQLAlchemy = None  # type: ignore
+    Migrate = None  # type: ignore
+
+db = SQLAlchemy() if SQLAlchemy else None  # type: ignore
+_migrate = Migrate() if Migrate else None  # type: ignore
+
 
 def create_app() -> "Flask":
     """Create and configure :class:`~flask.Flask` instance."""
@@ -11,9 +21,17 @@ def create_app() -> "Flask":
     app = Flask(__name__)
     app.config.from_object("config")
 
+    if db is not None:
+        db.init_app(app)
+        if _migrate is not None:
+            _migrate.init_app(app, db)
+
     from .auth import bp as auth_bp
 
     app.register_blueprint(auth_bp)
+
+    if db is not None:
+        from . import models  # noqa: F401
 
     @app.route("/")
     def index():
