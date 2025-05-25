@@ -15,6 +15,7 @@ def display_menu(user: Dict[str, str]):
         print("4. 投稿する")
         if user['role'] == 'admin':
             print("5. 投稿を削除する")
+        print("6. ランキングを見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == '1':
@@ -33,6 +34,8 @@ def display_menu(user: Dict[str, str]):
                 remove_post()
             else:
                 print("権限がありません")
+        elif choice == '6':
+            show_ranking()
         elif choice == '0':
             break
         else:
@@ -95,6 +98,16 @@ def remove_post():
         print("削除しました")
     else:
         print("該当IDがありません")
+
+
+def show_ranking():
+    metric = input("ランキング種別を選択 (A/O/U): ").strip().upper()
+    if metric not in {"A", "O", "U"}:
+        print("A, O, U のいずれかを入力してください")
+        return
+    ranking = utils.get_ranking(metric)
+    for i, (user, value) in enumerate(ranking, 1):
+        print(f"{i}. {user}: {value}")
 
 
 def main():
