@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ quest.title }}</h1>
+<p>{{ quest.body }}</p>
+<p>状態: {{ quest.status }}</p>
+{% if quest.reward %}<p>報酬: {{ quest.reward }}</p>{% endif %}
+{% if quest.status == 'open' %}
+    <a href="{{ url_for('quest_box.accept', quest_id=quest.id) }}">Accept</a>
+{% elif quest.status == 'accepted' %}
+    {% if user.username == quest.accepted_by or user.role == 'admin' %}
+        <a href="{{ url_for('quest_box.complete', quest_id=quest.id) }}">Complete</a>
+    {% endif %}
+{% endif %}
+{% if user.role == 'admin' %}
+    <a href="{{ url_for('quest_box.reward', quest_id=quest.id) }}">報酬登録</a>
+    <a href="{{ url_for('quest_box.delete', quest_id=quest.id) }}">削除</a>
+{% endif %}
+<p><a href="{{ url_for('quest_box.index') }}">戻る</a></p>
+{% endblock %}
