@@ -1,5 +1,6 @@
 import getpass
 from typing import Dict
+from datetime import datetime
 
 from app import utils
 
@@ -63,9 +64,12 @@ def edit_points():
     except ValueError:
         print("数値を入力してください")
         return
+    old_a = points[username].get('A', 0)
+    old_o = points[username].get('O', 0)
     points[username]['A'] = a
     points[username]['O'] = o
     utils.save_points(points)
+    utils.log_points_change(username, a - old_a, o - old_o)
     print("保存しました")
 
 
@@ -105,7 +109,23 @@ def show_ranking():
     if metric not in {"A", "O", "U"}:
         print("A, O, U のいずれかを入力してください")
         return
-    ranking = utils.get_ranking(metric)
+    period = input("期間を指定 (all/weekly/custom): ").strip().lower()
+    start = end = None
+    kwargs = {}
+    if period == "weekly":
+        kwargs["period"] = "weekly"
+    elif period == "custom":
+        s = input("開始日 YYYY-MM-DD: ").strip()
+        e = input("終了日 YYYY-MM-DD: ").strip()
+        try:
+            start = datetime.strptime(s, "%Y-%m-%d") if s else None
+            end = datetime.strptime(e, "%Y-%m-%d") if e else None
+            kwargs["start"] = start
+            kwargs["end"] = end
+        except ValueError:
+            print("日付の形式が正しくありません")
+            return
+    ranking = utils.get_ranking(metric, **kwargs)
     for i, (user, value) in enumerate(ranking, 1):
         print(f"{i}. {user}: {value}")
 
