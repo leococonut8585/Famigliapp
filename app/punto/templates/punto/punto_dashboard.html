@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Punto</h1>
+<table>
+    <tr>
+        <th>ユーザー</th>
+        <th>A</th>
+        <th>O</th>
+        <th>U</th>
+        {% if user.role == 'admin' %}<th>操作</th>{% endif %}
+    </tr>
+    {% for name, p in points.items() %}
+    <tr>
+        <td>{{ name }}</td>
+        <td>{{ p['A'] }}</td>
+        <td>{{ p['O'] }}</td>
+        <td>{{ p['A'] - p['O'] }}</td>
+        {% if user.role == 'admin' %}
+        <td><a href="{{ url_for('punto.edit', username=name) }}">編集</a></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
