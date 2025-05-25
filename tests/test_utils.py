@@ -90,3 +90,16 @@ def test_get_ranking_with_period():
     ranking = utils.get_ranking("A", start=start, end=end)
     assert ranking[0] == ("u1", 5)
     assert ranking[1] == ("u2", 3)
+
+
+def test_get_ranking_monthly_and_yearly():
+    now = datetime(2021, 2, 1, 0, 0, 0)
+    ts_old = datetime(2020, 12, 15, 10, 0, 0)
+    ts_current = datetime(2021, 1, 20, 10, 0, 0)
+    utils.log_points_change("u1", 5, 0, ts_old)
+    utils.log_points_change("u2", 3, 0, ts_current)
+    ranking_month = utils.get_ranking("A", period="monthly", end=now)
+    assert ranking_month == [("u2", 3)]
+    ranking_year = utils.get_ranking("A", period="yearly", end=now)
+    assert ranking_year[0] == ("u1", 5)
+    assert ranking_year[1] == ("u2", 3)
