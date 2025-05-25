@@ -53,3 +53,29 @@ def edit(username: str):
         return redirect(url_for("punto.dashboard"))
 
     return render_template("punto/punto_edit_form.html", form=form, username=username)
+
+
+@bp.route("/rankings")
+def rankings():
+    """Display ranking table based on query parameters."""
+
+    user = session.get("user")
+    metric = request.args.get("metric", "U").upper()
+    period = request.args.get("period", "all").lower()
+
+    if metric not in {"A", "O", "U"}:
+        flash("metricはA/O/Uのいずれかで指定してください")
+        return redirect(url_for("punto.rankings"))
+
+    if period not in {"all", "weekly", "monthly", "yearly"}:
+        flash("periodはall/weekly/monthly/yearlyのいずれかで指定してください")
+        return redirect(url_for("punto.rankings"))
+
+    ranking = utils.get_ranking(metric, period=None if period == "all" else period)
+    return render_template(
+        "punto/punto_rankings.html",
+        ranking=ranking,
+        metric=metric,
+        period=period,
+        user=user,
+    )
