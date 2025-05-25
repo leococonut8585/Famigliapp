@@ -40,6 +40,29 @@ def add():
     return render_template("posts/post_form.html", form=form, user=user)
 
 
+@bp.route("/edit/<int:post_id>", methods=["GET", "POST"])
+def edit(post_id: int):
+    """Edit an existing post (author or admin)."""
+
+    user = session.get("user")
+    posts = utils.load_posts()
+    post = next((p for p in posts if p.get("id") == post_id), None)
+    if not post:
+        flash("該当IDがありません")
+        return redirect(url_for("posts.index"))
+    if user["role"] != "admin" and user["username"] != post.get("author"):
+        flash("権限がありません")
+        return redirect(url_for("posts.index"))
+
+    form = AddPostForm(category=post.get("category"), text=post.get("text"))
+    if form.validate_on_submit():
+        utils.update_post(post_id, form.category.data or "", form.text.data)
+        flash("更新しました")
+        return redirect(url_for("posts.index"))
+
+    return render_template("posts/post_form.html", form=form, user=user, edit=True)
+
+
 @bp.route("/delete/<int:post_id>")
 def delete(post_id: int):
     """Delete a post (admin only)."""
