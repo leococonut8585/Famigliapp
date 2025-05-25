@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a> |
+        <a href="{{ url_for('punto.dashboard') }}">Punto</a> |
+        <a href="{{ url_for('posts.index') }}">掲示板</a>
+    </nav>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <ul class="flashes">
