@@ -7,6 +7,7 @@ USERS = {
 POINTS_FILE = "points.json"
 POINTS_HISTORY_FILE = "points_history.json"
 POSTS_FILE = "posts.json"
+INTRATTENIMENTO_FILE = "intrattenimento.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
 SQLALCHEMY_DATABASE_URI = "sqlite:///famigliapp.db"
 SQLALCHEMY_TRACK_MODIFICATIONS = False

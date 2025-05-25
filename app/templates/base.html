@@ -10,7 +10,8 @@
         <a href="{{ url_for('index') }}">Home</a> |
         <a href="{{ url_for('punto.dashboard') }}">Punto</a> |
         <a href="{{ url_for('posts.index') }}">掲示板</a> |
-        <a href="{{ url_for('bravissimo.index') }}">Bravissimo</a>
+        <a href="{{ url_for('bravissimo.index') }}">Bravissimo</a> |
+        <a href="{{ url_for('intrattenimento.index') }}">intrattenimento</a>
     </nav>
     {% with messages = get_flashed_messages() %}
         {% if messages %}
