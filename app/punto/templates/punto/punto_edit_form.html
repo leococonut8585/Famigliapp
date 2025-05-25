@@ -4,8 +4,19 @@
 <h1>{{ username }} のポイント編集</h1>
 <form method="post">
     {{ form.hidden_tag() }}
-    <p>{{ form.a.label }}<br>{{ form.a(size=5) }}</p>
-    <p>{{ form.o.label }}<br>{{ form.o(size=5) }}</p>
+    <p>{{ form.a.label }}<br>{{ form.a(id="a", size=5) }}</p>
+    <p>{{ form.o.label }}<br>{{ form.o(id="o", size=5) }}</p>
+    <p>Uポイント: <span id="u-value">{{ form.a.data - form.o.data }}</span></p>
     <p>{{ form.submit() }}</p>
 </form>
+<script>
+function updateU() {
+  const a = parseInt(document.getElementById('a').value) || 0;
+  const o = parseInt(document.getElementById('o').value) || 0;
+  document.getElementById('u-value').textContent = a - o;
+}
+document.getElementById('a').addEventListener('input', updateU);
+document.getElementById('o').addEventListener('input', updateU);
+document.addEventListener('DOMContentLoaded', updateU);
+</script>
 {% endblock %}
