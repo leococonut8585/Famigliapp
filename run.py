@@ -5,39 +5,41 @@ from datetime import datetime
 from app import utils
 
 
-
 def display_menu(user: Dict[str, str]):
     while True:
         print("\n--- Famigliapp Menu ---")
         print("1. ポイントを見る")
-        if user['role'] == 'admin':
+        if user["role"] == "admin":
             print("2. ポイントを編集する")
         print("3. 投稿を見る")
         print("4. 投稿する")
-        if user['role'] == 'admin':
+        if user["role"] == "admin":
             print("5. 投稿を削除する")
         print("6. ランキングを見る")
+        print("7. ポイント履歴を見る")
         print("0. 終了")
         choice = input("選択してください: ")
-        if choice == '1':
+        if choice == "1":
             show_points(user)
-        elif choice == '2':
-            if user['role'] == 'admin':
+        elif choice == "2":
+            if user["role"] == "admin":
                 edit_points()
             else:
                 print("権限がありません")
-        elif choice == '3':
+        elif choice == "3":
             show_posts()
-        elif choice == '4':
+        elif choice == "4":
             add_post(user)
-        elif choice == '5':
-            if user['role'] == 'admin':
+        elif choice == "5":
+            if user["role"] == "admin":
                 remove_post()
             else:
                 print("権限がありません")
-        elif choice == '6':
+        elif choice == "6":
             show_ranking()
-        elif choice == '0':
+        elif choice == "7":
+            show_points_history()
+        elif choice == "0":
             break
         else:
             print("無効な選択です")
@@ -45,11 +47,13 @@ def display_menu(user: Dict[str, str]):
 
 def show_points(user: Dict[str, str]):
     points = utils.load_points()
-    if user['role'] == 'admin':
+    if user["role"] == "admin":
         for username, p in points.items():
-            print(f"{username}: A={p.get('A',0)} O={p.get('O',0)} U={p.get('A',0)-p.get('O',0)}")
+            print(
+                f"{username}: A={p.get('A',0)} O={p.get('O',0)} U={p.get('A',0)-p.get('O',0)}"
+            )
     else:
-        p = points.get(user['username'], {'A': 0, 'O': 0})
+        p = points.get(user["username"], {"A": 0, "O": 0})
         print(f"A={p.get('A',0)} O={p.get('O',0)} U={p.get('A',0)-p.get('O',0)}")
 
 
@@ -57,17 +61,17 @@ def edit_points():
     username = input("編集するユーザー名: ")
     points = utils.load_points()
     if username not in points:
-        points[username] = {'A': 0, 'O': 0}
+        points[username] = {"A": 0, "O": 0}
     try:
         a = int(input("Aポイント: "))
         o = int(input("Oポイント: "))
     except ValueError:
         print("数値を入力してください")
         return
-    old_a = points[username].get('A', 0)
-    old_o = points[username].get('O', 0)
-    points[username]['A'] = a
-    points[username]['O'] = o
+    old_a = points[username].get("A", 0)
+    old_o = points[username].get("O", 0)
+    points[username]["A"] = a
+    points[username]["O"] = o
     utils.save_points(points)
     utils.log_points_change(username, a - old_a, o - old_o)
     print("保存しました")
@@ -88,7 +92,7 @@ def add_post(user: Dict[str, str]):
     if not text:
         print("内容が空です")
         return
-    utils.add_post(user['username'], category, text)
+    utils.add_post(user["username"], category, text)
     print("投稿しました")
 
 
@@ -134,6 +138,19 @@ def show_ranking():
         print(f"{i}. {user}: {value}")
 
 
+def show_points_history():
+    username = input("ユーザー名(空欄は全員): ").strip()
+    history = utils.load_points_history()
+    for entry in history:
+        if username and entry.get("username") != username:
+            continue
+        ts = entry.get("timestamp")
+        user = entry.get("username")
+        delta_a = entry.get("A", 0)
+        delta_o = entry.get("O", 0)
+        print(f"{ts} {user} A:{delta_a:+d} O:{delta_o:+d}")
+
+
 def main():
     username = input("ユーザー名: ")
     password = getpass.getpass("パスワード: ")
@@ -145,5 +162,5 @@ def main():
     display_menu(user)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

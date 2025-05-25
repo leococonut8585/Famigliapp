@@ -51,8 +51,8 @@ def teardown_function():
 def test_login_success():
     user = utils.login("user1", "user1pass")
     assert user is not None
-    assert user['username'] == 'user1'
-    assert user['role'] == 'user'
+    assert user["username"] == "user1"
+    assert user["role"] == "user"
 
 
 def test_login_failure():
@@ -139,3 +139,24 @@ def test_filter_posts():
     assert len(kw) == 1 and kw[0]["author"] == "u2"
     combo = utils.filter_posts(category="bravissimo", author="u2")
     assert len(combo) == 1 and combo[0]["author"] == "u2"
+
+
+def test_load_points_history_after_logging():
+    ts = datetime(2021, 3, 1, 12, 0, 0)
+    utils.log_points_change("u1", 2, -1, ts)
+    utils.log_points_change("u2", -3, 0, ts)
+    history = utils.load_points_history()
+    assert history[-2:] == [
+        {
+            "username": "u1",
+            "A": 2,
+            "O": -1,
+            "timestamp": ts.isoformat(timespec="seconds"),
+        },
+        {
+            "username": "u2",
+            "A": -3,
+            "O": 0,
+            "timestamp": ts.isoformat(timespec="seconds"),
+        },
+    ]
