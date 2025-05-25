@@ -48,3 +48,15 @@ def test_edit_form_displays_u_points():
         res = client.get("/punto/edit/u1")
         assert res.status_code == 200
         assert "Uポイント".encode("utf-8") in res.data
+
+
+def test_history_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "admin@example.com"}
+        utils.log_points_change("u1", 1, 0)
+        res = client.get("/punto/history")
+        assert res.status_code == 200
+        assert "ポイント履歴".encode("utf-8") in res.data

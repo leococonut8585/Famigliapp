@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>ポイント履歴</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.username.label }} {{ form.username(size=20) }}</p>
+    <p>{{ form.start.label }} {{ form.start(size=12) }}</p>
+    <p>{{ form.end.label }} {{ form.end(size=12) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+<table>
+    <tr>
+        <th>日時</th>
+        <th>ユーザー</th>
+        <th>A変動</th>
+        <th>O変動</th>
+    </tr>
+    {% for e in entries %}
+    <tr>
+        <td>{{ e.timestamp }}</td>
+        <td>{{ e.username }}</td>
+        <td>{{ e.A }}</td>
+        <td>{{ e.O }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<p><a href="{{ url_for('punto.dashboard') }}">戻る</a></p>
+{% endblock %}
