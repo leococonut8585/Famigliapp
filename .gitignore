@@ -28,3 +28,4 @@ instance/
 Thumbs.db
 points.json
 posts.json
+points_history.json
