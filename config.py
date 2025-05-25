@@ -8,3 +8,7 @@ POINTS_FILE = "points.json"
 POINTS_HISTORY_FILE = "points_history.json"
 POSTS_FILE = "posts.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
+
+# Default database location for SQLAlchemy models
+SQLALCHEMY_DATABASE_URI = "sqlite:///famigliapp.db"
+SQLALCHEMY_TRACK_MODIFICATIONS = False

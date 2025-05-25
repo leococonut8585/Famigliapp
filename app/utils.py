@@ -194,3 +194,85 @@ def get_ranking(
             ranking.append((user, value))
         ranking.sort(key=lambda x: x[1], reverse=True)
         return ranking
+
+
+def sync_json_to_db(app) -> None:
+    """Import data from JSON files into the database."""
+    from .models import db, User, PointHistory, Post
+
+    with app.app_context():
+        points = load_points()
+        for username, p in points.items():
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                user = User(username=username, password="", role="user")
+                db.session.add(user)
+            user.A = p.get("A", 0)
+            user.O = p.get("O", 0)
+
+        for entry in load_points_history():
+            user = User.query.filter_by(username=entry.get("username")).first()
+            if not user:
+                user = User(username=entry.get("username"), password="", role="user")
+                db.session.add(user)
+                db.session.flush()
+            hist = PointHistory(
+                user_id=user.id,
+                delta_a=entry.get("A", 0),
+                delta_o=entry.get("O", 0),
+                timestamp=datetime.fromisoformat(entry.get("timestamp")),
+            )
+            db.session.add(hist)
+
+        for p in load_posts():
+            author = User.query.filter_by(username=p.get("author")).first()
+            if not author:
+                author = User(username=p.get("author"), password="", role="user")
+                db.session.add(author)
+                db.session.flush()
+            if not Post.query.filter_by(id=p.get("id")).first():
+                post = Post(
+                    id=p.get("id"),
+                    author_id=author.id,
+                    category=p.get("category"),
+                    text=p.get("text"),
+                    timestamp=datetime.fromisoformat(p.get("timestamp")),
+                )
+                db.session.add(post)
+
+        db.session.commit()
+
+
+def sync_db_to_json(app) -> None:
+    """Export data from the database back to JSON files."""
+    from .models import User, Post, PointHistory
+
+    with app.app_context():
+        points = {u.username: {"A": u.A, "O": u.O} for u in User.query.all()}
+        save_points(points)
+
+        posts = []
+        for p in Post.query.order_by(Post.id).all():
+            posts.append(
+                {
+                    "id": p.id,
+                    "author": p.author.username,
+                    "category": p.category,
+                    "text": p.text,
+                    "timestamp": p.timestamp.isoformat(timespec="seconds"),
+                }
+            )
+        save_posts(posts)
+
+        history = []
+        for h in PointHistory.query.order_by(PointHistory.timestamp).all():
+            history.append(
+                {
+                    "username": h.user.username,
+                    "A": h.delta_a,
+                    "O": h.delta_o,
+                    "timestamp": h.timestamp.isoformat(timespec="seconds"),
+                }
+            )
+        with open(POINTS_HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
