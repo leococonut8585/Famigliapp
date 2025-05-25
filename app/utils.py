@@ -1,0 +1,31 @@
+import json
+from pathlib import Path
+from typing import Dict, Optional
+
+import config
+
+POINTS_PATH = Path(config.POINTS_FILE)
+
+
+def load_points() -> Dict[str, Dict[str, int]]:
+    if POINTS_PATH.exists():
+        with open(POINTS_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    else:
+        return {}
+
+
+def save_points(points: Dict[str, Dict[str, int]]) -> None:
+    with open(POINTS_PATH, 'w', encoding='utf-8') as f:
+        json.dump(points, f, ensure_ascii=False, indent=2)
+
+
+def login(username: str, password: str) -> Optional[Dict[str, str]]:
+    user = config.USERS.get(username)
+    if user and user['password'] == password:
+        return {
+            'username': username,
+            'role': user['role'],
+            'email': user['email']
+        }
+    return None
