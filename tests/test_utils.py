@@ -63,3 +63,11 @@ def test_post_id_increment_after_middle_delete():
     utils.add_post("u3", "bravissimo", "three")
     ids = [p["id"] for p in utils.load_posts()]
     assert ids == [second_id, second_id + 1]
+
+
+def test_get_ranking():
+    utils.save_points({"u1": {"A": 5, "O": 1}, "u2": {"A": 3, "O": 0}})
+    ranking_a = utils.get_ranking("A")
+    assert ranking_a[0] == ("u1", 5)
+    ranking_u = utils.get_ranking("U")
+    assert ranking_u[0] == ("u1", 4)

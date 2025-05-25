@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple
 from datetime import datetime
 
 import config
@@ -66,3 +66,29 @@ def login(username: str, password: str) -> Optional[Dict[str, str]]:
             'email': user['email']
         }
     return None
+
+
+def get_ranking(metric: str = "A") -> List[Tuple[str, int]]:
+    """Return ranking list of users by the specified metric.
+
+    Parameters
+    ----------
+    metric : str
+        "A", "O", or "U". "U" represents A - O.
+
+    Returns
+    -------
+    List[Tuple[str, int]]
+        Sorted list of (username, value) pairs in descending order.
+    """
+    metric = metric.upper()
+    points = load_points()
+    ranking: List[Tuple[str, int]] = []
+    for user, p in points.items():
+        if metric == "U":
+            value = p.get("A", 0) - p.get("O", 0)
+        else:
+            value = p.get(metric, 0)
+        ranking.append((user, value))
+    ranking.sort(key=lambda x: x[1], reverse=True)
+    return ranking
