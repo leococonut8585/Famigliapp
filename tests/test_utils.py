@@ -93,13 +93,14 @@ def test_get_ranking_with_period():
 
 
 def test_get_ranking_monthly_and_yearly():
-    now = datetime(2021, 2, 1, 0, 0, 0)
-    ts_old = datetime(2020, 12, 15, 10, 0, 0)
-    ts_current = datetime(2021, 1, 20, 10, 0, 0)
-    utils.log_points_change("u1", 5, 0, ts_old)
-    utils.log_points_change("u2", 3, 0, ts_current)
+    now = datetime(2021, 2, 15, 0, 0, 0)
+    ts_prev_year = datetime(2020, 12, 31, 10, 0, 0)
+    ts_last_month = datetime(2021, 1, 20, 10, 0, 0)
+    ts_current_month = datetime(2021, 2, 5, 10, 0, 0)
+    utils.log_points_change("u1", 5, 0, ts_prev_year)
+    utils.log_points_change("u2", 2, 0, ts_last_month)
+    utils.log_points_change("u3", 3, 0, ts_current_month)
     ranking_month = utils.get_ranking("A", period="monthly", end=now)
-    assert ranking_month == [("u2", 3)]
+    assert ranking_month == [("u3", 3)]
     ranking_year = utils.get_ranking("A", period="yearly", end=now)
-    assert ranking_year[0] == ("u1", 5)
-    assert ranking_year[1] == ("u2", 3)
+    assert ranking_year == [("u3", 3), ("u2", 2)]

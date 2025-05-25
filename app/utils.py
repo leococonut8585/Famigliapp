@@ -115,9 +115,9 @@ def get_ranking(
         if period == "weekly":
             start = now - timedelta(days=7)
         elif period == "monthly":
-            start = now - timedelta(days=30)
+            start = now.replace(day=1)
         elif period == "yearly":
-            start = now - timedelta(days=365)
+            start = now.replace(month=1, day=1)
 
     if start or end:
         if start is None:
