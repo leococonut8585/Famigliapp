@@ -1,29 +1,52 @@
 import json
 import os
+import tempfile
+from pathlib import Path
 from datetime import datetime
 
 import app.utils as utils
 import config
 
+_temp_dir = None
+_original_points_file = config.POINTS_FILE
+_original_posts_file = config.POSTS_FILE
+_original_history_file = config.POINTS_HISTORY_FILE
+
 
 def setup_function():
-    # Prepare a temporary points file
-    if os.path.exists(config.POINTS_FILE):
-        os.remove(config.POINTS_FILE)
-    if os.path.exists(config.POSTS_FILE):
-        os.remove(config.POSTS_FILE)
-    if os.path.exists(config.POINTS_HISTORY_FILE):
-        os.remove(config.POINTS_HISTORY_FILE)
+    """Create a temporary directory for JSON files used in tests."""
+    global _temp_dir
+    _temp_dir = tempfile.TemporaryDirectory()
+
+    config.POINTS_FILE = os.path.join(_temp_dir.name, "points.json")
+    config.POSTS_FILE = os.path.join(_temp_dir.name, "posts.json")
+    config.POINTS_HISTORY_FILE = os.path.join(_temp_dir.name, "points_history.json")
+
+    utils.POINTS_PATH = Path(config.POINTS_FILE)
+    utils.POSTS_PATH = Path(config.POSTS_FILE)
+    utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+
     utils.save_points({"user1": {"A": 1, "O": 0}})
 
 
 def teardown_function():
-    if os.path.exists(config.POINTS_FILE):
-        os.remove(config.POINTS_FILE)
-    if os.path.exists(config.POSTS_FILE):
-        os.remove(config.POSTS_FILE)
-    if os.path.exists(config.POINTS_HISTORY_FILE):
-        os.remove(config.POINTS_HISTORY_FILE)
+    """Cleanup the temporary directory and restore config paths."""
+    global _temp_dir
+
+    if _temp_dir:
+        _temp_dir.cleanup()
+        assert not os.path.exists(config.POINTS_FILE)
+        assert not os.path.exists(config.POSTS_FILE)
+        assert not os.path.exists(config.POINTS_HISTORY_FILE)
+        _temp_dir = None
+
+    config.POINTS_FILE = _original_points_file
+    config.POSTS_FILE = _original_posts_file
+    config.POINTS_HISTORY_FILE = _original_history_file
+
+    utils.POINTS_PATH = Path(config.POINTS_FILE)
+    utils.POSTS_PATH = Path(config.POSTS_FILE)
+    utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 
 
 def test_login_success():
