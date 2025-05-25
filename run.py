@@ -3,6 +3,7 @@ from typing import Dict
 from datetime import datetime
 
 from app import utils
+from app.intrattenimento import utils as intrattenimento_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -18,6 +19,10 @@ def display_menu(user: Dict[str, str]):
         print("6. ランキングを見る")
         print("7. ポイント履歴を見る")
         print("8. 投稿を編集する")
+        print("9. intrattenimento を見る")
+        print("10. intrattenimento に投稿する")
+        if user["role"] == "admin":
+            print("11. intrattenimento 投稿を削除する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -42,6 +47,15 @@ def display_menu(user: Dict[str, str]):
             show_points_history()
         elif choice == "8":
             edit_post_cli(user)
+        elif choice == "9":
+            show_intrattenimento(user)
+        elif choice == "10":
+            add_intrattenimento_post(user)
+        elif choice == "11":
+            if user["role"] == "admin":
+                delete_intrattenimento_post()
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -187,6 +201,50 @@ def show_points_history():
         delta_a = entry.get("A", 0)
         delta_o = entry.get("O", 0)
         print(f"{ts} {user} A:{delta_a:+d} O:{delta_o:+d}")
+
+
+def show_intrattenimento(user: Dict[str, str]) -> None:
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    include_expired = False
+    if user["role"] == "admin":
+        incl = input("公開終了済みも表示？(y/N): ").strip().lower()
+        include_expired = incl == "y"
+    posts = intrattenimento_utils.filter_posts(
+        author=author, keyword=keyword, include_expired=include_expired
+    )
+    for p in posts:
+        end = p.get("end_date", "")
+        print(
+            f"[{p['id']}] {p['timestamp']} {p['author']} {p.get('title','')} {end} {p.get('body','')}"
+        )
+
+
+def add_intrattenimento_post(user: Dict[str, str]) -> None:
+    title = input("タイトル: ").strip()
+    body = input("本文: ").strip()
+    end_s = input("公開終了日 YYYY-MM-DD(空欄はなし): ").strip()
+    end_date = None
+    if end_s:
+        try:
+            end_date = datetime.strptime(end_s, "%Y-%m-%d").date()
+        except ValueError:
+            print("日付の形式が正しくありません")
+            return
+    intrattenimento_utils.add_post(user["username"], title, body, end_date)
+    print("投稿しました")
+
+
+def delete_intrattenimento_post() -> None:
+    try:
+        post_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if intrattenimento_utils.delete_post(post_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
 
 
 def main():
