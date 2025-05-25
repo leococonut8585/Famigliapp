@@ -23,6 +23,7 @@ def display_menu(user: Dict[str, str]):
         print("10. intrattenimento に投稿する")
         if user["role"] == "admin":
             print("11. intrattenimento 投稿を削除する")
+        print("12. 履歴をCSV出力")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -56,6 +57,8 @@ def display_menu(user: Dict[str, str]):
                 delete_intrattenimento_post()
             else:
                 print("権限がありません")
+        elif choice == "12":
+            export_history_csv()
         elif choice == "0":
             break
         else:
@@ -201,6 +204,17 @@ def show_points_history():
         delta_a = entry.get("A", 0)
         delta_o = entry.get("O", 0)
         print(f"{ts} {user} A:{delta_a:+d} O:{delta_o:+d}")
+
+
+def export_history_csv() -> None:
+    """Prompt for a path and export points history to CSV."""
+
+    path = input("出力先CSVファイル: ").strip()
+    if not path:
+        print("ファイル名を入力してください")
+        return
+    utils.export_points_history_csv(path)
+    print("エクスポートしました")
 
 
 def show_intrattenimento(user: Dict[str, str]) -> None:

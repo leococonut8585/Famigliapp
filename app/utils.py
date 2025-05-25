@@ -1,3 +1,4 @@
+import csv
 import json
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple
@@ -393,3 +394,21 @@ def get_ranking(
             ranking.append((user, value))
         ranking.sort(key=lambda x: x[1], reverse=True)
         return ranking
+
+
+def export_points_history_csv(path: str) -> None:
+    """ポイント履歴をCSVファイルに出力する。"""
+
+    history = load_points_history()
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "username", "A", "O"])
+        for entry in history:
+            writer.writerow(
+                [
+                    entry.get("timestamp", ""),
+                    entry.get("username", ""),
+                    entry.get("A", 0),
+                    entry.get("O", 0),
+                ]
+            )
