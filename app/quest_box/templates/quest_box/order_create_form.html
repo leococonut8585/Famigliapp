@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>報酬登録</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.reward.label }}<br>{{ form.reward(size=20) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

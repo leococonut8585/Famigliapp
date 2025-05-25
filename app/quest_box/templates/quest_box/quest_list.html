@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>依頼一覧</h1>
+<ul>
+{% for q in quests %}
+    <li>[{{ q.id }}] {{ q.title }} - {{ q.status }}
+        <a href="{{ url_for('quest_box.detail', quest_id=q.id) }}">詳細</a>
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('quest_box.delete', quest_id=q.id) }}">削除</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('quest_box.add') }}">依頼を投稿</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
