@@ -7,16 +7,32 @@ from app import utils
 
 def display_menu(user: Dict[str, str]):
     while True:
-        print("\n--- Famigliapp Punto Menu ---")
+        print("\n--- Famigliapp Menu ---")
         print("1. ポイントを見る")
         if user['role'] == 'admin':
             print("2. ポイントを編集する")
+        print("3. 投稿を見る")
+        print("4. 投稿する")
+        if user['role'] == 'admin':
+            print("5. 投稿を削除する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == '1':
             show_points(user)
-        elif choice == '2' and user['role'] == 'admin':
-            edit_points()
+        elif choice == '2':
+            if user['role'] == 'admin':
+                edit_points()
+            else:
+                print("権限がありません")
+        elif choice == '3':
+            show_posts()
+        elif choice == '4':
+            add_post(user)
+        elif choice == '5':
+            if user['role'] == 'admin':
+                remove_post()
+            else:
+                print("権限がありません")
         elif choice == '0':
             break
         else:
@@ -48,6 +64,37 @@ def edit_points():
     points[username]['O'] = o
     utils.save_points(points)
     print("保存しました")
+
+
+def show_posts():
+    category = input("カテゴリ(空欄は全て): ").strip()
+    posts = utils.load_posts()
+    for p in posts:
+        if category and p['category'] != category:
+            continue
+        print(f"[{p['id']}] {p['timestamp']} {p['author']} {p['category']} {p['text']}")
+
+
+def add_post(user: Dict[str, str]):
+    category = input("カテゴリ: ").strip()
+    text = input("内容: ").strip()
+    if not text:
+        print("内容が空です")
+        return
+    utils.add_post(user['username'], category, text)
+    print("投稿しました")
+
+
+def remove_post():
+    try:
+        post_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if utils.delete_post(post_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
 
 
 def main():

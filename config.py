@@ -5,4 +5,5 @@ USERS = {
 }
 
 POINTS_FILE = "points.json"
+POSTS_FILE = "posts.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
