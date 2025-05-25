@@ -49,3 +49,21 @@ def test_delete_post_route():
         res = client.get(f"/posts/delete/{post_id}", follow_redirects=True)
         assert res.status_code == 200
         assert utils.load_posts() == []
+
+
+def test_edit_post_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        utils.add_post("user1", "news", "orig")
+        post_id = utils.load_posts()[0]["id"]
+        res = client.post(
+            f"/posts/edit/{post_id}",
+            data={"category": "news", "text": "updated"},
+            follow_redirects=True,
+        )
+        assert res.status_code == 200
+        assert "更新しました".encode("utf-8") in res.data
+        assert utils.load_posts()[0]["text"] == "updated"

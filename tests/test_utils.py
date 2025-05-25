@@ -141,6 +141,14 @@ def test_filter_posts():
     assert len(combo) == 1 and combo[0]["author"] == "u2"
 
 
+def test_update_post():
+    utils.add_post("u1", "news", "old")
+    post_id = utils.load_posts()[0]["id"]
+    assert utils.update_post(post_id, "news", "new text")
+    posts = utils.load_posts()
+    assert posts[0]["text"] == "new text"
+
+
 def test_load_points_history_after_logging():
     ts = datetime(2021, 3, 1, 12, 0, 0)
     utils.log_points_change("u1", 2, -1, ts)

@@ -11,6 +11,9 @@
 <ul>
 {% for p in posts %}
     <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} ({{ p.category }}) {{ p.text }}
+        {% if user.role == 'admin' or user.username == p.author %}
+            <a href="{{ url_for('posts.edit', post_id=p.id) }}">編集</a>
+        {% endif %}
         {% if user.role == 'admin' %}
             <a href="{{ url_for('posts.delete', post_id=p.id) }}">削除</a>
         {% endif %}

@@ -216,6 +216,46 @@ def add_post(author: str, category: str, text: str) -> None:
     save_posts(posts)
 
 
+def update_post(post_id: int, category: str, text: str) -> bool:
+    """Update an existing post.
+
+    Parameters
+    ----------
+    post_id : int
+        ID of the post to update.
+    category : str
+        New category.
+    text : str
+        New text body.
+
+    Returns
+    -------
+    bool
+        ``True`` if the post existed and was updated.
+    """
+    if _use_db():
+        assert Post is not None
+        post = Post.query.filter_by(id=post_id).first()  # type: ignore[attr-defined]
+        if not post:
+            return False
+        post.category = category
+        post.text = text
+        db.session.commit()
+        return True
+
+    posts = load_posts()
+    updated = False
+    for p in posts:
+        if p.get("id") == post_id:
+            p["category"] = category
+            p["text"] = text
+            updated = True
+            break
+    if updated:
+        save_posts(posts)
+    return updated
+
+
 def delete_post(post_id: int) -> bool:
     if _use_db():
         assert Post is not None

@@ -17,6 +17,7 @@ def display_menu(user: Dict[str, str]):
             print("5. 投稿を削除する")
         print("6. ランキングを見る")
         print("7. ポイント履歴を見る")
+        print("8. 投稿を編集する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -39,6 +40,8 @@ def display_menu(user: Dict[str, str]):
             show_ranking()
         elif choice == "7":
             show_points_history()
+        elif choice == "8":
+            edit_post_cli(user)
         elif choice == "0":
             break
         else:
@@ -106,6 +109,30 @@ def remove_post():
         print("削除しました")
     else:
         print("該当IDがありません")
+
+
+def edit_post_cli(user: Dict[str, str]):
+    try:
+        post_id = int(input("編集するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    posts = utils.load_posts()
+    post = next((p for p in posts if p.get("id") == post_id), None)
+    if not post:
+        print("該当IDがありません")
+        return
+    if user["role"] != "admin" and user["username"] != post.get("author"):
+        print("権限がありません")
+        return
+
+    category = input(f"カテゴリ[{post.get('category','')}] : ").strip() or post.get("category", "")
+    text = input(f"内容[{post.get('text','')}] : ").strip() or post.get("text", "")
+    if not text:
+        print("内容が空です")
+        return
+    utils.update_post(post_id, category, text)
+    print("更新しました")
 
 
 def show_ranking():

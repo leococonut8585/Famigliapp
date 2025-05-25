@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>投稿作成</h1>
+<h1>{{ '投稿編集' if edit else '投稿作成' }}</h1>
 <form method="post">
     {{ form.hidden_tag() }}
     <p>{{ form.category.label }}<br>{{ form.category(size=20) }}</p>
