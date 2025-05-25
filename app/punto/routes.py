@@ -9,9 +9,10 @@ from flask import (
     flash,
     request,
 )
+from datetime import datetime
 
 from . import bp
-from .forms import EditPointsForm
+from .forms import EditPointsForm, HistoryFilterForm
 from app import utils
 
 
@@ -78,5 +79,37 @@ def rankings():
         ranking=ranking,
         metric=metric,
         period=period,
+        user=user,
+    )
+
+
+@bp.route("/history", methods=["GET", "POST"])
+def history():
+    """Display points change history."""
+
+    user = session.get("user")
+    form = HistoryFilterForm()
+    start = end = None
+    username = ""
+    entries = []
+
+    if form.validate_on_submit():
+        username = form.username.data or ""
+        if form.start.data:
+            try:
+                start = datetime.strptime(form.start.data, "%Y-%m-%d")
+            except ValueError:
+                flash("開始日の形式が正しくありません")
+        if form.end.data:
+            try:
+                end = datetime.strptime(form.end.data, "%Y-%m-%d")
+            except ValueError:
+                flash("終了日の形式が正しくありません")
+
+    entries = utils.filter_points_history(start=start, end=end, username=username)
+    return render_template(
+        "punto/punto_history.html",
+        form=form,
+        entries=entries,
         user=user,
     )
