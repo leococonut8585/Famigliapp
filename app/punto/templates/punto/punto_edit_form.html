@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ username }} のポイント編集</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.a.label }}<br>{{ form.a(size=5) }}</p>
+    <p>{{ form.o.label }}<br>{{ form.o(size=5) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

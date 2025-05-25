@@ -27,8 +27,10 @@ def create_app() -> "Flask":
             _migrate.init_app(app, db)
 
     from .auth import bp as auth_bp
+    from .punto import bp as punto_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(punto_bp)
 
     if db is not None:
         from . import models  # noqa: F401
