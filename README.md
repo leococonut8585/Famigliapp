@@ -28,3 +28,13 @@ python run.py
 
 ポイント情報は `points.json`、投稿情報は `posts.json` としてプロジェクトのルートディレクトリに保存されます。初回実行時に自動生成され、アプリの操作内容に応じて更新されます。
 
+
+## データベース
+
+Flask と SQLAlchemy を利用したモデル定義を `app/models.py` に追加しました。
+マイグレーション用のスクリプトは `migrations/` 以下に配置してあり、
+`flask db init` → `flask db migrate` → `flask db upgrade` の流れで
+データベーススキーマを管理できます。アプリは引き続き JSON ファイルも
+利用できるため、`app.utils` には JSON から DB へ同期する補助関数を
+用意しています。
+
