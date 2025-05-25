@@ -6,6 +6,21 @@
     {{ form.hidden_tag() }}
     <p>{{ form.a.label }}<br>{{ form.a(size=5) }}</p>
     <p>{{ form.o.label }}<br>{{ form.o(size=5) }}</p>
+    <p>{{ form.u.label }}<br>{{ form.u(size=5, readonly=True) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const a = document.getElementById('{{ form.a.id }}');
+    const o = document.getElementById('{{ form.o.id }}');
+    const u = document.getElementById('{{ form.u.id }}');
+    function updateU() {
+        const av = parseInt(a.value) || 0;
+        const ov = parseInt(o.value) || 0;
+        u.value = av - ov;
+    }
+    a.addEventListener('input', updateU);
+    o.addEventListener('input', updateU);
+});
+</script>
 {% endblock %}

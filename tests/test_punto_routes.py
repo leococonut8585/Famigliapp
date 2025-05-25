@@ -37,3 +37,14 @@ def test_rankings_route():
         assert res.status_code == 200
         assert b"u1" in res.data
         assert b"u2" in res.data
+
+
+def test_edit_form_displays_u_points():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "admin@example.com"}
+        res = client.get("/punto/edit/u1")
+        assert res.status_code == 200
+        assert "Uポイント".encode("utf-8") in res.data

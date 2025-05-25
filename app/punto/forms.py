@@ -10,4 +10,5 @@ class EditPointsForm(FlaskForm):
 
     a = IntegerField("Aポイント", validators=[DataRequired()])
     o = IntegerField("Oポイント", validators=[DataRequired()])
+    u = IntegerField("Uポイント", render_kw={"readonly": True})
     submit = SubmitField("保存")
