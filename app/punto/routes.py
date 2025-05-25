@@ -1,7 +1,5 @@
 """Routes for Punto blueprint."""
 
-from datetime import datetime
-from typing import Dict
 
 from flask import (
     render_template,
