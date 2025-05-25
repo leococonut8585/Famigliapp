@@ -75,10 +75,10 @@ def edit_points():
 
 def show_posts():
     category = input("カテゴリ(空欄は全て): ").strip()
-    posts = utils.load_posts()
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    posts = utils.filter_posts(category=category, author=author, keyword=keyword)
     for p in posts:
-        if category and p['category'] != category:
-            continue
         print(f"[{p['id']}] {p['timestamp']} {p['author']} {p['category']} {p['text']}")
 
 

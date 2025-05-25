@@ -127,3 +127,16 @@ def test_get_ranking_monthly_and_yearly():
     assert ranking_month == [("u3", 3)]
     ranking_year = utils.get_ranking("A", period="yearly", end=now)
     assert ranking_year == [("u3", 3), ("u2", 2)]
+
+
+def test_filter_posts():
+    utils.add_post("u1", "bravissimo", "hello world")
+    utils.add_post("u2", "bravissimo", "goodbye world")
+    utils.add_post("u1", "corso", "hello again")
+
+    assert len(utils.filter_posts(category="bravissimo")) == 2
+    assert len(utils.filter_posts(author="u1")) == 2
+    kw = utils.filter_posts(keyword="goodbye")
+    assert len(kw) == 1 and kw[0]["author"] == "u2"
+    combo = utils.filter_posts(category="bravissimo", author="u2")
+    assert len(combo) == 1 and combo[0]["author"] == "u2"

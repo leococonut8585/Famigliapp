@@ -78,6 +78,25 @@ def delete_post(post_id: int) -> bool:
     return True
 
 
+def filter_posts(
+    category: str = "",
+    author: str = "",
+    keyword: str = "",
+) -> List[Dict[str, str]]:
+    """Filter posts by category, author and keyword."""
+    posts = load_posts()
+    results: List[Dict[str, str]] = []
+    for p in posts:
+        if category and p.get("category") != category:
+            continue
+        if author and p.get("author") != author:
+            continue
+        if keyword and keyword not in p.get("text", ""):
+            continue
+        results.append(p)
+    return results
+
+
 def login(username: str, password: str) -> Optional[Dict[str, str]]:
     user = config.USERS.get(username)
     if user and user['password'] == password:
