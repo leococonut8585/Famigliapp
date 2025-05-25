@@ -44,7 +44,7 @@ def edit(username: str):
     points = utils.load_points()
     old_a = points.get(username, {}).get("A", 0)
     old_o = points.get(username, {}).get("O", 0)
-    form = EditPointsForm(a=old_a, o=old_o)
+    form = EditPointsForm(a=old_a, o=old_o, u=old_a - old_o)
     if form.validate_on_submit():
         points[username] = {"A": form.a.data, "O": form.o.data}
         utils.save_points(points)
@@ -52,6 +52,7 @@ def edit(username: str):
         flash("保存しました")
         return redirect(url_for("punto.dashboard"))
 
+    form.u.data = form.a.data - form.o.data
     return render_template("punto/punto_edit_form.html", form=form, username=username)
 
 
