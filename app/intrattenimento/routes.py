@@ -1,0 +1,71 @@
+from datetime import datetime
+import os
+
+from flask import render_template, session, redirect, url_for, flash, request
+from werkzeug.utils import secure_filename
+
+from . import bp
+from .forms import AddIntrattenimentoForm, IntrattenimentoFilterForm
+from . import utils
+
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+
+
+@bp.before_request
+def require_login():
+    if 'user' not in session:
+        return redirect(url_for('auth.login', next=request.url))
+
+
+@bp.route('/')
+def index():
+    user = session.get('user')
+    form = IntrattenimentoFilterForm(request.args)
+    include_expired = user.get('role') == 'admin'
+    posts = utils.filter_posts(
+        author=form.author.data or '',
+        keyword=form.keyword.data or '',
+        include_expired=include_expired,
+    )
+    return render_template(
+        'intrattenimento/intrattenimento_list.html',
+        posts=posts,
+        form=form,
+        user=user,
+    )
+
+
+@bp.route('/add', methods=['GET', 'POST'])
+def add():
+    user = session.get('user')
+    form = AddIntrattenimentoForm()
+    if form.validate_on_submit():
+        filename = None
+        if form.attachment.data and form.attachment.data.filename:
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            filename = secure_filename(form.attachment.data.filename)
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            form.attachment.data.save(path)
+        utils.add_post(
+            user['username'],
+            form.title.data,
+            form.body.data,
+            form.end_date.data,
+            filename,
+        )
+        flash('投稿しました')
+        return redirect(url_for('intrattenimento.index'))
+    return render_template('intrattenimento/intrattenimento_post_form.html', form=form, user=user)
+
+
+@bp.route('/delete/<int:post_id>')
+def delete(post_id: int):
+    user = session.get('user')
+    if user.get('role') != 'admin':
+        flash('権限がありません')
+        return redirect(url_for('intrattenimento.index'))
+    if utils.delete_post(post_id):
+        flash('削除しました')
+    else:
+        flash('該当IDがありません')
+    return redirect(url_for('intrattenimento.index'))
