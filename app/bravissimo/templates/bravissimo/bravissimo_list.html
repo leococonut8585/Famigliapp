@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Bravissimo!</h1>
+<form method="get">
+    {{ form.author.label }} {{ form.author(size=10) }}
+    {{ form.keyword.label }} {{ form.keyword(size=10) }}
+    {{ form.submit() }}
+</form>
+<ul>
+{% for p in posts %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.text }}
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('bravissimo.delete', post_id=p.id) }}">削除</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+{% if user.role == 'admin' %}
+<p><a href="{{ url_for('bravissimo.add') }}">投稿する</a></p>
+{% endif %}
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}

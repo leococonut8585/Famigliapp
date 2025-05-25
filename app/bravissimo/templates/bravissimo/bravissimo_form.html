@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Bravissimo! 投稿</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.text.label }}<br>{{ form.text(rows=4, cols=40) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

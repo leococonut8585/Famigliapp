@@ -1,0 +1,49 @@
+import config
+from app import create_app, utils
+import pytest
+import tempfile
+from pathlib import Path
+
+flask = pytest.importorskip("flask")
+
+
+def setup_module(module):
+    global _tmpdir
+    _tmpdir = tempfile.TemporaryDirectory()
+    config.POINTS_FILE = Path(_tmpdir.name) / "points.json"
+    config.POSTS_FILE = Path(_tmpdir.name) / "posts.json"
+    config.POINTS_HISTORY_FILE = Path(_tmpdir.name) / "points_history.json"
+
+    utils.POINTS_PATH = Path(config.POINTS_FILE)
+    utils.POSTS_PATH = Path(config.POSTS_FILE)
+    utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+
+    utils.save_points({"admin": {"A": 0, "O": 0}})
+
+
+def teardown_module(module):
+    _tmpdir.cleanup()
+
+
+def test_add_and_list_bravissimo():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.post("/bravissimo/add", data={"text": "good"}, follow_redirects=True)
+        assert res.status_code == 200
+        assert b"good" in res.data
+        # ensure list page shows the post
+        res = client.get("/bravissimo/")
+        assert b"good" in res.data
+
+
+def test_add_requires_admin():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.post("/bravissimo/add", data={"text": "hello"}, follow_redirects=True)
+        assert "権限がありません".encode("utf-8") in res.data

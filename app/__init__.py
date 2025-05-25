@@ -29,10 +29,12 @@ def create_app() -> "Flask":
     from .auth import bp as auth_bp
     from .punto import bp as punto_bp
     from .posts import bp as posts_bp
+    from .bravissimo import bp as bravissimo_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(punto_bp)
     app.register_blueprint(posts_bp)
+    app.register_blueprint(bravissimo_bp)
 
     if db is not None:
         from . import models  # noqa: F401
