@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import config
 
 POINTS_PATH = Path(config.POINTS_FILE)
+POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 POSTS_PATH = Path(config.POSTS_FILE)
 
 
@@ -15,6 +16,26 @@ def load_points() -> Dict[str, Dict[str, int]]:
             return json.load(f)
     else:
         return {}
+
+
+def load_points_history() -> List[Dict[str, str]]:
+    if POINTS_HISTORY_PATH.exists():
+        with open(POINTS_HISTORY_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+
+def log_points_change(username: str, delta_a: int, delta_o: int, timestamp: Optional[datetime] = None) -> None:
+    history = load_points_history()
+    ts = timestamp or datetime.now()
+    history.append({
+        'username': username,
+        'A': delta_a,
+        'O': delta_o,
+        'timestamp': ts.isoformat(timespec='seconds'),
+    })
+    with open(POINTS_HISTORY_PATH, 'w', encoding='utf-8') as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
 
 
 def save_points(points: Dict[str, Dict[str, int]]) -> None:
@@ -68,7 +89,12 @@ def login(username: str, password: str) -> Optional[Dict[str, str]]:
     return None
 
 
-def get_ranking(metric: str = "A") -> List[Tuple[str, int]]:
+def get_ranking(
+    metric: str = "A",
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
+    period: Optional[str] = None,
+) -> List[Tuple[str, int]]:
     """Return ranking list of users by the specified metric.
 
     Parameters
@@ -82,13 +108,45 @@ def get_ranking(metric: str = "A") -> List[Tuple[str, int]]:
         Sorted list of (username, value) pairs in descending order.
     """
     metric = metric.upper()
-    points = load_points()
-    ranking: List[Tuple[str, int]] = []
-    for user, p in points.items():
-        if metric == "U":
-            value = p.get("A", 0) - p.get("O", 0)
-        else:
-            value = p.get(metric, 0)
-        ranking.append((user, value))
-    ranking.sort(key=lambda x: x[1], reverse=True)
-    return ranking
+
+    if period:
+        period = period.lower()
+        now = end or datetime.now()
+        if period == "weekly":
+            start = now - timedelta(days=7)
+        elif period == "monthly":
+            start = now - timedelta(days=30)
+
+    if start or end:
+        if start is None:
+            start = datetime.min
+        if end is None:
+            end = datetime.max
+        history = load_points_history()
+        ranking_dict: Dict[str, int] = {}
+        for entry in history:
+            ts = datetime.fromisoformat(entry.get("timestamp"))
+            if start <= ts <= end:
+                username = entry.get("username")
+                delta_a = entry.get("A", 0)
+                delta_o = entry.get("O", 0)
+                if metric == "U":
+                    value = delta_a - delta_o
+                elif metric == "A":
+                    value = delta_a
+                else:
+                    value = delta_o
+                ranking_dict[username] = ranking_dict.get(username, 0) + value
+        ranking = sorted(ranking_dict.items(), key=lambda x: x[1], reverse=True)
+        return ranking
+    else:
+        points = load_points()
+        ranking: List[Tuple[str, int]] = []
+        for user, p in points.items():
+            if metric == "U":
+                value = p.get("A", 0) - p.get("O", 0)
+            else:
+                value = p.get(metric, 0)
+            ranking.append((user, value))
+        ranking.sort(key=lambda x: x[1], reverse=True)
+        return ranking

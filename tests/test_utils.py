@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 import app.utils as utils
 import config
@@ -11,6 +12,8 @@ def setup_function():
         os.remove(config.POINTS_FILE)
     if os.path.exists(config.POSTS_FILE):
         os.remove(config.POSTS_FILE)
+    if os.path.exists(config.POINTS_HISTORY_FILE):
+        os.remove(config.POINTS_HISTORY_FILE)
     utils.save_points({"user1": {"A": 1, "O": 0}})
 
 
@@ -19,6 +22,8 @@ def teardown_function():
         os.remove(config.POINTS_FILE)
     if os.path.exists(config.POSTS_FILE):
         os.remove(config.POSTS_FILE)
+    if os.path.exists(config.POINTS_HISTORY_FILE):
+        os.remove(config.POINTS_HISTORY_FILE)
 
 
 def test_login_success():
@@ -71,3 +76,17 @@ def test_get_ranking():
     assert ranking_a[0] == ("u1", 5)
     ranking_u = utils.get_ranking("U")
     assert ranking_u[0] == ("u1", 4)
+
+
+def test_get_ranking_with_period():
+    ts1 = datetime(2021, 1, 1, 10, 0, 0)
+    ts2 = datetime(2021, 1, 2, 10, 0, 0)
+    ts3 = datetime(2021, 1, 8, 10, 0, 0)
+    utils.log_points_change("u1", 5, 0, ts1)
+    utils.log_points_change("u2", 3, 0, ts2)
+    utils.log_points_change("u1", 2, 0, ts3)
+    start = datetime(2021, 1, 1)
+    end = datetime(2021, 1, 7)
+    ranking = utils.get_ranking("A", start=start, end=end)
+    assert ranking[0] == ("u1", 5)
+    assert ranking[1] == ("u2", 3)
