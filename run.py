@@ -109,11 +109,15 @@ def show_ranking():
     if metric not in {"A", "O", "U"}:
         print("A, O, U のいずれかを入力してください")
         return
-    period = input("期間を指定 (all/weekly/custom): ").strip().lower()
+    period = input("期間を指定 (all/weekly/monthly/yearly/custom): ").strip().lower()
     start = end = None
     kwargs = {}
     if period == "weekly":
         kwargs["period"] = "weekly"
+    elif period == "monthly":
+        kwargs["period"] = "monthly"
+    elif period == "yearly":
+        kwargs["period"] = "yearly"
     elif period == "custom":
         s = input("開始日 YYYY-MM-DD: ").strip()
         e = input("終了日 YYYY-MM-DD: ").strip()
