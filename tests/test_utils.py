@@ -183,3 +183,14 @@ def test_filter_points_history():
     assert len(results) == 1
     assert results[0]["username"] == "u2"
     assert results[0]["timestamp"] == ts2.isoformat(timespec="seconds")
+
+
+def test_export_history_csv(tmp_path):
+    ts = datetime(2021, 5, 1, 8, 0, 0)
+    utils.log_points_change("u1", 1, 0, ts)
+    csv_path = tmp_path / "hist.csv"
+    utils.export_points_history_csv(str(csv_path))
+    with open(csv_path, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f.readlines()]
+    assert lines[0] == "timestamp,username,A,O"
+    assert lines[1].startswith(ts.isoformat(timespec="seconds") + ",u1,1,0")
