@@ -26,3 +26,5 @@ instance/
 # Operating System files
 .DS_Store
 Thumbs.db
+points.json
+posts.json
