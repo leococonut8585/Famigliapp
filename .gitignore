@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtualenv
+venv/
+*/venv/
+.venv/
+
+# Environment variables
+.env
+*.env
+
+# SQLite database
+*.db
+*.sqlite3
+
+# Instance folder (Flask specific, might contain config or db)
+instance/
+
+# VS Code
+.vscode/
+
+# Operating System files
+.DS_Store
+Thumbs.db
