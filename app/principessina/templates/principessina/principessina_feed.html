@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Principessina</h1>
+<form method="get">
+    {{ form.author.label }} {{ form.author(size=10) }}
+    {{ form.keyword.label }} {{ form.keyword(size=10) }}
+    {{ form.submit() }}
+</form>
+<ul>
+{% for p in posts %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.body }}
+        {% if p.filename %}
+            <a href="{{ url_for('static', filename='uploads/' + p.filename) }}">{{ p.filename }}</a>
+        {% endif %}
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('principessina.delete', post_id=p.id) }}">削除</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('principessina.add') }}">投稿する</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
