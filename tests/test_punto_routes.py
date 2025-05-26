@@ -60,3 +60,21 @@ def test_history_route():
         res = client.get("/punto/history")
         assert res.status_code == 200
         assert "ポイント履歴".encode("utf-8") in res.data
+
+
+def test_export_history_csv(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.log_points_change("u1", 2, 1)
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "u1", "role": "user", "email": "u1@example.com"}
+        res = client.get("/punto/history/export", follow_redirects=True)
+        assert res.status_code == 200
+        assert "権限がありません".encode("utf-8") in res.data
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "admin@example.com"}
+        res = client.get("/punto/history/export")
+        assert res.status_code == 200
+        assert res.headers["Content-Type"].startswith("text/csv")
+        assert b"timestamp" in res.data

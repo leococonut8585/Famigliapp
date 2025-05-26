@@ -8,8 +8,11 @@ from flask import (
     url_for,
     flash,
     request,
+    make_response,
 )
 from datetime import datetime
+import csv
+import io
 
 from . import bp
 from .forms import EditPointsForm, HistoryFilterForm
@@ -113,3 +116,31 @@ def history():
         entries=entries,
         user=user,
     )
+
+
+@bp.route("/history/export")
+def export_history_csv():
+    """ポイント履歴をCSVダウンロードする。管理者専用。"""
+
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("punto.history"))
+
+    entries = utils.load_points_history()
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["timestamp", "username", "A", "O"])
+    for e in entries:
+        writer.writerow([
+            e.get("timestamp", ""),
+            e.get("username", ""),
+            e.get("A", 0),
+            e.get("O", 0),
+        ])
+    response = make_response(buf.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=points_history.csv"
+    )
+    return response
