@@ -483,8 +483,9 @@ def show_quests() -> None:
     quests = quest_utils.load_quests()
     for q in quests:
         due = f" (期限: {q['due_date']})" if q.get("due_date") else ""
+        assignee = f" (対象: {q['assigned_to']})" if q.get('assigned_to') else ""
         print(
-            f"[{q['id']}] {q['title']}{due} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
+            f"[{q['id']}] {q['title']}{due}{assignee} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
         )
 
 
@@ -492,6 +493,7 @@ def add_quest_cli(user: Dict[str, str]) -> None:
     title = input("タイトル: ").strip()
     body = input("内容: ").strip()
     due_s = input("期限 YYYY-MM-DD(空欄はなし): ").strip()
+    assigned_to = input("対象ユーザー(空欄はなし): ").strip()
     due_date = None
     if due_s:
         try:
@@ -499,7 +501,7 @@ def add_quest_cli(user: Dict[str, str]) -> None:
         except ValueError:
             print("日付の形式が正しくありません")
             return
-    quest_utils.add_quest(user["username"], title, body, due_date)
+    quest_utils.add_quest(user["username"], title, body, due_date, assigned_to)
     print("投稿しました")
 
 

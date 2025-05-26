@@ -22,7 +22,7 @@ def save_quests(quests):
         json.dump(quests, f, ensure_ascii=False, indent=2)
 
 
-def add_quest(author, title, body, due_date: Optional[date] = None):
+def add_quest(author, title, body, due_date: Optional[date] = None, assigned_to: str = ""):
     """Add a quest entry."""
 
     quests = load_quests()
@@ -34,6 +34,7 @@ def add_quest(author, title, body, due_date: Optional[date] = None):
             "title": title,
             "body": body,
             "due_date": due_date.isoformat() if hasattr(due_date, "isoformat") and due_date else None,
+            "assigned_to": assigned_to,
             "status": "open",
             "accepted_by": "",
             "reward": "",
