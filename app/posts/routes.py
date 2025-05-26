@@ -1,12 +1,22 @@
 """Routes for Posts blueprint."""
 
 from flask import render_template, session, redirect, url_for, flash, request
+from datetime import datetime
 
 from . import bp
 from .forms import AddPostForm, PostFilterForm
 from app import utils
 from app.utils import send_email
 import config
+
+
+def _parse_date(s: str):
+    try:
+        if s:
+            return datetime.fromisoformat(s)
+    except ValueError:
+        pass
+    return None
 
 
 @bp.before_request
@@ -25,6 +35,8 @@ def index():
         category=form.category.data or "",
         author=form.author.data or "",
         keyword=form.keyword.data or "",
+        start=_parse_date(form.start_date.data),
+        end=_parse_date(form.end_date.data),
     )
     return render_template("posts/posts_list.html", posts=posts, form=form, user=user)
 

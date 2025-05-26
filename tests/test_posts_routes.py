@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from datetime import datetime, timedelta
 
 import config
 from app import create_app, utils
@@ -36,6 +37,9 @@ def test_add_and_list_post():
         res = client.post("/posts/add", data={"category": "news", "text": "hello"}, follow_redirects=True)
         assert res.status_code == 200
         assert b"hello" in res.data
+        tomorrow = (datetime.now() + timedelta(days=1)).date().isoformat()
+        res = client.get(f"/posts/?start_date={tomorrow}")
+        assert b"hello" not in res.data
 
 
 def test_delete_post_route():
