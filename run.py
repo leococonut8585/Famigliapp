@@ -78,6 +78,7 @@ def display_menu(user: Dict[str, str]):
             print("44. Questを編集する")
             print("45. ResocontoをCSV出力")
         print("46. カレンダー統計を見る")
+        print("47. ポイント推移サマリを見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -217,6 +218,8 @@ def display_menu(user: Dict[str, str]):
                 print("権限がありません")
         elif choice == "46":
             show_calendario_stats()
+        elif choice == "47":
+            show_points_graph_cli()
         elif choice == "0":
             break
         else:
@@ -875,6 +878,26 @@ def show_calendario_stats() -> None:
         if off is not None:
             line += f" 休日数 {off}"
         print(line)
+
+
+def show_points_graph_cli() -> None:
+    """ポイント履歴サマリを表示する。"""
+
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d")
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d")
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+
+    summary = utils.get_points_history_summary(start=start, end=end)
+    for label, a, o in zip(summary["labels"], summary["A"], summary["O"]):
+        print(f"{label} A:{a} O:{o}")
 
 
 def show_calendario_rules() -> None:

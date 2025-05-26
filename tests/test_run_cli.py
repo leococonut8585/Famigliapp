@@ -1,7 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 
 import pytest
 
@@ -9,6 +9,7 @@ flask = pytest.importorskip("flask")
 
 import config
 from app.quest_box import utils
+from app import utils as app_utils
 from app.resoconto import utils as resoconto_utils
 import run
 
@@ -76,3 +77,29 @@ def test_export_resoconto_csv(tmp_path, capsys):
     with open(csv_path, "r", encoding="utf-8") as f:
         contents = f.read()
     assert "u1" in contents
+
+
+def test_show_points_graph_cli(tmp_path, capsys):
+    """ポイント履歴サマリ表示の確認"""
+
+    config.POINTS_HISTORY_FILE = os.path.join(tmp_path, "hist.json")
+    app_utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+
+    ts1 = datetime(2023, 1, 1, 10, 0, 0)
+    ts2 = datetime(2023, 1, 2, 10, 0, 0)
+    app_utils.log_points_change("u1", 1, 0, ts1)
+    app_utils.log_points_change("u1", 2, 0, ts2)
+
+    inputs = iter(["2023-01-01", "2023-01-02"])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.show_points_graph_cli()
+    run.input = old_input
+
+    out_lines = capsys.readouterr().out.strip().splitlines()
+    assert "2023-01-01 A:1 O:0" in out_lines[0]
+    assert "2023-01-02 A:2 O:0" in out_lines[1]
