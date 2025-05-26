@@ -17,6 +17,22 @@ from .forms import AddIntrattenimentoForm, IntrattenimentoFilterForm
 from . import utils
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
+ALLOWED_EXTENSIONS = {
+    'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp3', 'mp4', 'mov'
+}
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def _allowed_file(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _file_size(fs) -> int:
+    pos = fs.stream.tell()
+    fs.stream.seek(0, os.SEEK_END)
+    size = fs.stream.tell()
+    fs.stream.seek(pos)
+    return size
 
 
 @bp.before_request
@@ -62,8 +78,15 @@ def add():
     if form.validate_on_submit():
         filename = None
         if form.attachment.data and form.attachment.data.filename:
+            fname = form.attachment.data.filename
+            if not _allowed_file(fname):
+                flash('許可されていないファイル形式です')
+                return render_template('intrattenimento/intrattenimento_post_form.html', form=form, user=user)
+            if _file_size(form.attachment.data) > MAX_ATTACHMENT_SIZE:
+                flash('ファイルサイズが大きすぎます')
+                return render_template('intrattenimento/intrattenimento_post_form.html', form=form, user=user)
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(form.attachment.data.filename)
+            filename = secure_filename(fname)
             path = os.path.join(UPLOAD_FOLDER, filename)
             form.attachment.data.save(path)
         utils.add_post(
