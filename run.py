@@ -80,6 +80,9 @@ def display_menu(user: Dict[str, str]):
             print("45. ResocontoをCSV出力")
         print("46. カレンダー統計を見る")
         print("47. ポイント推移サマリを見る")
+        if user["role"] == "admin":
+            print("48. Scatola Capriccio アンケートを見る")
+            print("49. Scatola Capriccio アンケートを投稿")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -221,6 +224,16 @@ def display_menu(user: Dict[str, str]):
             show_calendario_stats()
         elif choice == "47":
             show_points_graph_cli()
+        elif choice == "48":
+            if user["role"] == "admin":
+                show_scatola_capriccio_surveys(user)
+            else:
+                print("権限がありません")
+        elif choice == "49":
+            if user["role"] == "admin":
+                add_scatola_capriccio_survey(user)
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -766,6 +779,26 @@ def add_scatola_capriccio_post(user: Dict[str, str]) -> None:
         print("内容が空です")
         return
     scatola_capriccio_utils.add_post(user["username"], body)
+    print("投稿しました")
+
+
+def show_scatola_capriccio_surveys(user: Dict[str, str]) -> None:
+    surveys = scatola_capriccio_utils.load_surveys()
+    for s in surveys:
+        targets = ",".join(s.get("targets", []))
+        print(
+            f"[{s['id']}] {s['timestamp']} {s['author']} {targets} {s.get('question','')}"
+        )
+
+
+def add_scatola_capriccio_survey(user: Dict[str, str]) -> None:
+    question = input("質問: ").strip()
+    targets = input("対象ユーザー(カンマ区切り): ").strip()
+    target_list = [t.strip() for t in targets.split(',') if t.strip()]
+    if not question:
+        print("内容が空です")
+        return
+    scatola_capriccio_utils.add_survey(user["username"], question, target_list)
     print("投稿しました")
 
 

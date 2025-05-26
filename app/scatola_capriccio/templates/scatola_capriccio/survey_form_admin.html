@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>アンケート投稿</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.question.label }}<br>{{ form.question(rows=4, cols=40) }}</p>
+    <p>{{ form.targets.label }}<br>{{ form.targets(size=40) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
