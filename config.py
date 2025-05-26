@@ -7,6 +7,7 @@ USERS = {
 POINTS_FILE = "points.json"
 POINTS_HISTORY_FILE = "points_history.json"
 POSTS_FILE = "posts.json"
+COMMENTS_FILE = "comments.json"
 INTRATTENIMENTO_FILE = "intrattenimento.json"
 CORSO_FILE = "corso.json"
 SCATOLA_FILE = "scatola_capriccio.json"

@@ -19,6 +19,16 @@
         {% if user.role == 'admin' %}
             <a href="{{ url_for('posts.delete', post_id=p.id) }}">削除</a>
         {% endif %}
+        <ul>
+        {% for c in p.comments %}
+            <li>{{ c.author }}: {{ c.text }}</li>
+        {% endfor %}
+        </ul>
+        <form method="post" action="{{ url_for('posts.comment', post_id=p.id) }}">
+            {{ comment_form.hidden_tag() }}
+            {{ comment_form.text(rows=2, cols=30) }}
+            {{ comment_form.submit() }}
+        </form>
     </li>
 {% endfor %}
 </ul>

@@ -20,6 +20,8 @@ def setup_module(module):
     _tmpdir = tempfile.TemporaryDirectory()
     config.QUEST_BOX_FILE = os.path.join(_tmpdir.name, "quests.json")
     utils.QUESTS_PATH = Path(config.QUEST_BOX_FILE)
+    config.COMMENTS_FILE = os.path.join(_tmpdir.name, "comments.json")
+    app_utils.COMMENTS_PATH = Path(config.COMMENTS_FILE)
 
 
 def teardown_module(module):
@@ -153,3 +155,24 @@ def test_show_intrattenimento_cli_date_filter(capsys):
     out = capsys.readouterr().out
     assert "new" in out
     assert "old" not in out
+
+
+def test_comment_post_cli(capsys):
+    app_utils.save_posts([])
+    app_utils.add_post("u1", "c", "b")
+    post_id = app_utils.load_posts()[0]["id"]
+
+    inputs = iter([str(post_id), "good"])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.comment_post_cli({"username": "u2", "role": "user", "email": "u2@example.com"})
+    run.input = old_input
+
+    out = capsys.readouterr().out
+    assert "投稿しました" in out
+    comments = app_utils.get_comments(post_id)
+    assert comments[0]["text"] == "good"

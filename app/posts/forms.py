@@ -22,3 +22,10 @@ class PostFilterForm(FlaskForm):
     start_date = StringField("開始日", validators=[Optional()])
     end_date = StringField("終了日", validators=[Optional()])
     submit = SubmitField("絞り込み")
+
+
+class CommentForm(FlaskForm):
+    """Form to add a comment."""
+
+    text = TextAreaField("コメント", validators=[DataRequired()])
+    submit = SubmitField("送信")

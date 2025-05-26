@@ -4,7 +4,7 @@ from flask import render_template, session, redirect, url_for, flash, request
 from datetime import datetime
 
 from . import bp
-from .forms import AddPostForm, PostFilterForm
+from .forms import AddPostForm, PostFilterForm, CommentForm
 from app import utils
 from app.utils import send_email
 import config
@@ -38,7 +38,12 @@ def index():
         start=_parse_date(form.start_date.data),
         end=_parse_date(form.end_date.data),
     )
-    return render_template("posts/posts_list.html", posts=posts, form=form, user=user)
+    comment_form = CommentForm()
+    for p in posts:
+        p["comments"] = utils.get_comments(p.get("id"))
+    return render_template(
+        "posts/posts_list.html", posts=posts, form=form, comment_form=comment_form, user=user
+    )
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -91,4 +96,18 @@ def delete(post_id: int):
         flash("削除しました")
     else:
         flash("該当IDがありません")
+    return redirect(url_for("posts.index"))
+
+
+@bp.route("/comment/<int:post_id>", methods=["POST"])
+def comment(post_id: int):
+    """Add a comment to a post."""
+
+    user = session.get("user")
+    form = CommentForm()
+    if form.validate_on_submit():
+        utils.add_comment(post_id, user["username"], form.text.data)
+        flash("コメントを追加しました")
+    else:
+        flash("入力内容に誤りがあります")
     return redirect(url_for("posts.index"))
