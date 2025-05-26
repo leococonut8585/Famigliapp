@@ -9,6 +9,7 @@
         {% if q.assigned_to %}(対象: {{ q.assigned_to }}){% endif %}
         <a href="{{ url_for('quest_box.detail', quest_id=q.id) }}">詳細</a>
         {% if user.role == 'admin' %}
+            <a href="{{ url_for('quest_box.edit', quest_id=q.id) }}">編集</a>
             <a href="{{ url_for('quest_box.delete', quest_id=q.id) }}">削除</a>
         {% endif %}
     </li>

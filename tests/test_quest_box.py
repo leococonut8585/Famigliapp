@@ -103,3 +103,23 @@ def test_add_with_assigned_to():
         res = client.get("/quest_box/")
         assert b"user2" in res.data
 
+
+def test_edit_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.add_quest("user1", "orig", "body", None)
+    quest_id = utils.load_quests()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.post(
+            f"/quest_box/edit/{quest_id}",
+            data={"title": "new", "body": "b", "due_date": "2030-05-01", "assigned_to": "u2"},
+            follow_redirects=True,
+        )
+        assert res.status_code == 200
+        q = utils.load_quests()[0]
+        assert q["title"] == "new"
+        assert q["due_date"] == "2030-05-01"
+        assert q["assigned_to"] == "u2"
+

@@ -75,6 +75,7 @@ def display_menu(user: Dict[str, str]):
         if user["role"] == "admin":
             print("42. カレンダールールを見る")
             print("43. カレンダールールを編集する")
+            print("44. Questを編集する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -200,6 +201,11 @@ def display_menu(user: Dict[str, str]):
         elif choice == "43":
             if user["role"] == "admin":
                 edit_calendario_rules()
+            else:
+                print("権限がありません")
+        elif choice == "44":
+            if user["role"] == "admin":
+                edit_quest_cli()
             else:
                 print("権限がありません")
         elif choice == "0":
@@ -564,6 +570,44 @@ def set_quest_reward_cli() -> None:
     reward = input("報酬: ").strip()
     if quest_utils.set_reward(quest_id, reward):
         print("保存しました")
+    else:
+        print("該当IDがありません")
+
+
+def edit_quest_cli() -> None:
+    """Edit an existing quest entry."""
+    try:
+        quest_id = int(input("編集するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+
+    quests = quest_utils.load_quests()
+    quest = next((q for q in quests if q.get("id") == quest_id), None)
+    if not quest:
+        print("該当IDがありません")
+        return
+
+    title = input(f"タイトル[{quest.get('title','')}] : ").strip() or quest.get("title", "")
+    body = input(f"内容[{quest.get('body','')}] : ").strip() or quest.get("body", "")
+    due_s = input(
+        f"期限 YYYY-MM-DD[{quest.get('due_date','')}] : "
+    ).strip() or quest.get("due_date", "")
+    assigned_to = (
+        input(f"対象ユーザー[{quest.get('assigned_to','')}] : ").strip()
+        or quest.get("assigned_to", "")
+    )
+
+    due_date = None
+    if due_s:
+        try:
+            due_date = datetime.strptime(due_s, "%Y-%m-%d").date()
+        except ValueError:
+            print("日付の形式が正しくありません")
+            return
+
+    if quest_utils.update_quest(quest_id, title, body, due_date, assigned_to):
+        print("更新しました")
     else:
         print("該当IDがありません")
 
