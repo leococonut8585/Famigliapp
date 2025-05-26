@@ -4,6 +4,7 @@ from datetime import datetime
 
 from app import utils
 from app.intrattenimento import utils as intrattenimento_utils
+from app.resoconto import utils as resoconto_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -24,6 +25,8 @@ def display_menu(user: Dict[str, str]):
         if user["role"] == "admin":
             print("11. intrattenimento 投稿を削除する")
         print("12. 履歴をCSV出力")
+        print("13. Resoconto を見る")
+        print("14. Resoconto に投稿する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -59,6 +62,10 @@ def display_menu(user: Dict[str, str]):
                 print("権限がありません")
         elif choice == "12":
             export_history_csv()
+        elif choice == "13":
+            show_resoconto(user)
+        elif choice == "14":
+            add_resoconto(user)
         elif choice == "0":
             break
         else:
@@ -259,6 +266,29 @@ def delete_intrattenimento_post() -> None:
         print("削除しました")
     else:
         print("該当IDがありません")
+
+
+def show_resoconto(user: Dict[str, str]) -> None:
+    reports = resoconto_utils.load_reports()
+    if user["role"] == "admin":
+        for r in reports:
+            print(f"[{r['id']}] {r['date']} {r['author']} {r['body']}")
+    else:
+        for r in reports:
+            if r.get("author") == user["username"]:
+                print(f"[{r['id']}] {r['date']} {r['body']}")
+
+
+def add_resoconto(user: Dict[str, str]) -> None:
+    date_s = input("日付 YYYY-MM-DD: ").strip()
+    body = input("内容: ").strip()
+    try:
+        d = datetime.strptime(date_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    resoconto_utils.add_report(user["username"], d, body)
+    print("投稿しました")
 
 
 def main():

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Resoconto</h1>
+<ul>
+{% for r in reports %}
+    <li>[{{ r.id }}] {{ r.date }} {{ r.body }}</li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('resoconto.add') }}">投稿する</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
