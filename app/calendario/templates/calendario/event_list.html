@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>予定一覧</h1>
+<ul>
+{% for ev in events %}
+    <li>[{{ ev.id }}] {{ ev.date }} {{ ev.title }}
+        {% if ev.description %}- {{ ev.description }}{% endif %}
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('calendario.delete', event_id=ev.id) }}">削除</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
+
