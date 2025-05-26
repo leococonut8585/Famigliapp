@@ -1,7 +1,15 @@
 from datetime import datetime
 import os
 
-from flask import render_template, session, redirect, url_for, flash, request
+from flask import (
+    render_template,
+    session,
+    redirect,
+    url_for,
+    flash,
+    request,
+    send_from_directory,
+)
 from werkzeug.utils import secure_filename
 
 from . import bp
@@ -68,4 +76,24 @@ def delete(post_id: int):
         flash('削除しました')
     else:
         flash('該当IDがありません')
+    return redirect(url_for('intrattenimento.index'))
+
+
+@bp.route('/download/<path:filename>')
+def download(filename: str):
+    """添付ファイルのダウンロード。公開期限切れの場合はユーザーには許可しない。"""
+    user = session.get('user')
+    posts = utils.load_posts()
+    for p in posts:
+        if p.get('filename') == filename:
+            end_date = p.get('end_date')
+            if user.get('role') != 'admin' and end_date:
+                try:
+                    if datetime.fromisoformat(end_date) < datetime.now():
+                        flash('公開期間が終了しています')
+                        return redirect(url_for('intrattenimento.index'))
+                except ValueError:
+                    pass
+            return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+    flash('ファイルが見つかりません')
     return redirect(url_for('intrattenimento.index'))

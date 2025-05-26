@@ -67,3 +67,24 @@ def test_expired_hidden_for_user():
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
         res = client.get("/intrattenimento/")
         assert b"old" in res.data
+
+
+def test_download_requires_valid_period(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
+    filepath = os.path.join("static", "uploads", "file.txt")
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write("x")
+    past = datetime.now() - timedelta(days=1)
+    utils.add_post("admin", "t", "b", past.date(), "file.txt")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get("/intrattenimento/download/file.txt")
+        assert res.status_code == 302
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/intrattenimento/download/file.txt")
+        assert res.status_code == 200
+
