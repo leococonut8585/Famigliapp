@@ -28,3 +28,14 @@ def test_get_ranking():
     ranking = utils.get_ranking()
     assert ranking[0][0] == "u1" and ranking[0][1] == 2
     assert ranking[1][0] == "u2" and ranking[1][1] == 1
+
+
+def test_filter_reports():
+    utils.save_reports([])
+    utils.add_report("u1", date.fromisoformat("2025-01-05"), "a")
+    utils.add_report("u2", date.fromisoformat("2025-01-10"), "b")
+    start = date.fromisoformat("2025-01-07")
+    end = date.fromisoformat("2025-01-15")
+    res = utils.filter_reports(author="u2", start=start, end=end)
+    assert len(res) == 1
+    assert res[0]["author"] == "u2"

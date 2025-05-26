@@ -103,3 +103,24 @@ def test_show_points_graph_cli(tmp_path, capsys):
     out_lines = capsys.readouterr().out.strip().splitlines()
     assert "2023-01-01 A:1 O:0" in out_lines[0]
     assert "2023-01-02 A:2 O:0" in out_lines[1]
+
+
+def test_show_resoconto_cli_filtered(capsys):
+    resoconto_utils.save_reports([])
+    resoconto_utils.add_report("u1", date(2030, 1, 1), "a")
+    resoconto_utils.add_report("u2", date(2030, 1, 2), "b")
+
+    user = {"username": "admin", "role": "admin", "email": "a@example.com"}
+    inputs = iter(["u2", "2030-01-02", "2030-01-03"])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.show_resoconto(user)
+    run.input = old_input
+
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 1
+    assert "u2" in lines[0]

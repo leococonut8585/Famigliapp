@@ -45,6 +45,31 @@ def delete_report(report_id: int) -> bool:
     return True
 
 
+def filter_reports(
+    author: str = "",
+    start: Optional[date] = None,
+    end: Optional[date] = None,
+) -> List[Dict[str, str]]:
+    """Return reports filtered by author and date range."""
+
+    reports = load_reports()
+    results: List[Dict[str, str]] = []
+    for r in reports:
+        if author and r.get("author") != author:
+            continue
+        d_str = r.get("date")
+        try:
+            d = date.fromisoformat(d_str) if d_str else None
+        except ValueError:
+            d = None
+        if start and d and d < start:
+            continue
+        if end and d and d > end:
+            continue
+        results.append(r)
+    return results
+
+
 def get_ranking(start: Optional[date] = None, end: Optional[date] = None) -> List[Tuple[str, int]]:
     """指定期間内のユーザー別報告数ランキングを返す。"""
 
