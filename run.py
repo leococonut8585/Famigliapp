@@ -8,6 +8,7 @@ from app import utils
 from app.intrattenimento import utils as intrattenimento_utils
 from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
+from app.resoconto.tasks import start_scheduler
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
 from app.lezzione import utils as lezzione_utils
@@ -746,6 +747,7 @@ def assign_calendario_employee() -> None:
         print("該当IDがありません")
 
 def main():
+    start_scheduler()
     username = input("ユーザー名: ")
     password = getpass.getpass("パスワード: ")
     user = utils.login(username, password)
