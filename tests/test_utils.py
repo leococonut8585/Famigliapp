@@ -1,7 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import app.utils as utils
 import config
@@ -139,6 +139,9 @@ def test_filter_posts():
     assert len(kw) == 1 and kw[0]["author"] == "u2"
     combo = utils.filter_posts(category="bravissimo", author="u2")
     assert len(combo) == 1 and combo[0]["author"] == "u2"
+    start = datetime.now() + timedelta(days=1)
+    future = utils.filter_posts(start=start)
+    assert future == []
 
 
 def test_update_post():

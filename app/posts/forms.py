@@ -19,4 +19,6 @@ class PostFilterForm(FlaskForm):
     category = StringField("カテゴリ", validators=[Optional()])
     author = StringField("投稿者", validators=[Optional()])
     keyword = StringField("検索語", validators=[Optional()])
+    start_date = StringField("開始日", validators=[Optional()])
+    end_date = StringField("終了日", validators=[Optional()])
     submit = SubmitField("絞り込み")

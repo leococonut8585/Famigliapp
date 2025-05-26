@@ -250,7 +250,24 @@ def show_posts():
     category = input("カテゴリ(空欄は全て): ").strip()
     author = input("投稿者(空欄は全て): ").strip()
     keyword = input("検索語(空欄は全て): ").strip()
-    posts = utils.filter_posts(category=category, author=author, keyword=keyword)
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d")
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d")
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    posts = utils.filter_posts(
+        category=category,
+        author=author,
+        keyword=keyword,
+        start=start,
+        end=end,
+    )
     for p in posts:
         print(f"[{p['id']}] {p['timestamp']} {p['author']} {p['category']} {p['text']}")
 

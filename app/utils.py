@@ -318,8 +318,10 @@ def filter_posts(
     category: str = "",
     author: str = "",
     keyword: str = "",
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
 ) -> List[Dict[str, str]]:
-    """Filter posts by category, author and keyword."""
+    """Filter posts by category, author, keyword and date range."""
     if _use_db():
         assert Post is not None and User is not None
         query = Post.query  # type: ignore[attr-defined]
@@ -329,6 +331,10 @@ def filter_posts(
             query = query.join(User).filter(User.username == author)
         if keyword:
             query = query.filter(Post.text.contains(keyword))
+        if start:
+            query = query.filter(Post.timestamp >= start)
+        if end:
+            query = query.filter(Post.timestamp <= end)
         results = []
         for p in query.all():
             results.append(
@@ -351,6 +357,15 @@ def filter_posts(
             continue
         if keyword and keyword not in p.get("text", ""):
             continue
+        if start or end:
+            try:
+                ts = datetime.fromisoformat(p.get("timestamp"))
+            except Exception:
+                continue
+            if start and ts < start:
+                continue
+            if end and ts > end:
+                continue
         results.append(p)
     return results
 
