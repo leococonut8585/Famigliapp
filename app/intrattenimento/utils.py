@@ -59,8 +59,11 @@ def filter_posts(
     for p in posts:
         if author and p.get("author") != author:
             continue
-        if keyword and keyword not in (p.get("title", "") + p.get("body", "")):
-            continue
+        if keyword:
+            title = p.get("title", "")
+            body = p.get("body", "")
+            if keyword.lower() not in (title + body).lower():
+                continue
         ts_str = p.get("timestamp")
         if start or end:
             try:

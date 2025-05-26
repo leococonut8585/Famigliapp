@@ -107,3 +107,11 @@ def test_filter_by_date():
     assert "new" in titles
     assert "old" not in titles
 
+
+def test_filter_posts_case_insensitive():
+    utils.save_posts([])
+    utils.add_post("admin", "Hello", "World")
+    res = utils.filter_posts(keyword="hello")
+    assert len(res) == 1
+    assert res[0]["title"] == "Hello"
+

@@ -48,3 +48,11 @@ def test_add_list_and_delete(tmp_path):
         res = client.get(f"/monsignore/delete/{post_id}", follow_redirects=True)
         assert res.status_code == 200
         assert utils.load_posts() == []
+
+
+def test_filter_posts_case_insensitive():
+    utils.save_posts([])
+    utils.add_post("admin", "Hello")
+    res = utils.filter_posts(keyword="hello")
+    assert len(res) == 1
+    assert res[0]["body"] == "Hello"
