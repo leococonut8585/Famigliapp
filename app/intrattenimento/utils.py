@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from datetime import datetime
+from typing import List, Dict, Optional
 
 import config
 
@@ -43,15 +44,33 @@ def delete_post(post_id):
     return True
 
 
-def filter_posts(author="", keyword="", include_expired=False):
+def filter_posts(
+    author: str = "",
+    keyword: str = "",
+    include_expired: bool = False,
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
+) -> List[Dict[str, str]]:
+    """Filter intrattenimento posts by various criteria."""
+
     posts = load_posts()
-    results = []
+    results: List[Dict[str, str]] = []
     now = datetime.now()
     for p in posts:
         if author and p.get("author") != author:
             continue
         if keyword and keyword not in (p.get("title", "") + p.get("body", "")):
             continue
+        ts_str = p.get("timestamp")
+        if start or end:
+            try:
+                ts = datetime.fromisoformat(ts_str) if ts_str else None
+            except Exception:
+                ts = None
+            if start and ts and ts < start:
+                continue
+            if end and ts and ts > end:
+                continue
         end_date = p.get("end_date")
         if not include_expired and end_date:
             try:

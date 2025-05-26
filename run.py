@@ -412,12 +412,27 @@ def export_history_csv() -> None:
 def show_intrattenimento(user: Dict[str, str]) -> None:
     author = input("投稿者(空欄は全て): ").strip()
     keyword = input("検索語(空欄は全て): ").strip()
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
     include_expired = False
     if user["role"] == "admin":
         incl = input("公開終了済みも表示？(y/N): ").strip().lower()
         include_expired = incl == "y"
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d")
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d")
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
     posts = intrattenimento_utils.filter_posts(
-        author=author, keyword=keyword, include_expired=include_expired
+        author=author,
+        keyword=keyword,
+        include_expired=include_expired,
+        start=start,
+        end=end,
     )
     for p in posts:
         end = p.get("end_date", "")

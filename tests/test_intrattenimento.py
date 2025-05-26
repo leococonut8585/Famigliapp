@@ -88,3 +88,22 @@ def test_download_requires_valid_period(tmp_path):
         res = client.get("/intrattenimento/download/file.txt")
         assert res.status_code == 200
 
+
+def test_filter_by_date():
+    """filter_postsで日付範囲が適用されることを確認"""
+
+    utils.save_posts([])
+    utils.add_post("admin", "old", "body")
+    posts = utils.load_posts()
+    posts[0]["timestamp"] = (
+        datetime.now() - timedelta(days=3)
+    ).isoformat(timespec="seconds")
+    utils.save_posts(posts)
+    utils.add_post("admin", "new", "body")
+
+    start = datetime.now() - timedelta(days=1)
+    result = utils.filter_posts(start=start)
+    titles = [p.get("title") for p in result]
+    assert "new" in titles
+    assert "old" not in titles
+

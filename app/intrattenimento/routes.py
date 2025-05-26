@@ -30,10 +30,22 @@ def index():
     user = session.get('user')
     form = IntrattenimentoFilterForm(request.args)
     include_expired = user.get('role') == 'admin'
+    start_dt = (
+        datetime.combine(form.start_date.data, datetime.min.time())
+        if form.start_date.data
+        else None
+    )
+    end_dt = (
+        datetime.combine(form.end_date.data, datetime.max.time())
+        if form.end_date.data
+        else None
+    )
     posts = utils.filter_posts(
         author=form.author.data or '',
         keyword=form.keyword.data or '',
         include_expired=include_expired,
+        start=start_dt,
+        end=end_dt,
     )
     return render_template(
         'intrattenimento/intrattenimento_list.html',
