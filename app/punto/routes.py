@@ -118,6 +118,37 @@ def history():
     )
 
 
+@bp.route("/graph", methods=["GET", "POST"])
+def graph():
+    """Display graph of points history."""
+
+    user = session.get("user")
+    form = HistoryFilterForm()
+    start = end = None
+    if form.validate_on_submit():
+        if form.start.data:
+            try:
+                start = datetime.strptime(form.start.data, "%Y-%m-%d")
+            except ValueError:
+                flash("開始日の形式が正しくありません")
+        if form.end.data:
+            try:
+                end = datetime.strptime(form.end.data, "%Y-%m-%d")
+            except ValueError:
+                flash("終了日の形式が正しくありません")
+
+    data = utils.get_points_history_summary(start=start, end=end)
+
+    return render_template(
+        "punto/punto_graph.html",
+        form=form,
+        labels=data["labels"],
+        a_data=data["A"],
+        o_data=data["O"],
+        user=user,
+    )
+
+
 @bp.route("/history/export")
 def export_history_csv():
     """ポイント履歴をCSVダウンロードする。管理者専用。"""
