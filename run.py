@@ -6,6 +6,7 @@ from app import utils
 from app.intrattenimento import utils as intrattenimento_utils
 from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
+from app.principessina import utils as principessina_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -32,6 +33,8 @@ def display_menu(user: Dict[str, str]):
         print("16. Resoconto に投稿する")
         if user["role"] == "admin":
             print("17. Resoconto ランキングを見る")
+        print("18. Principessina を見る")
+        print("19. Principessina に投稿する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -80,6 +83,10 @@ def display_menu(user: Dict[str, str]):
                 show_resoconto_ranking()
             else:
                 print("権限がありません")
+        elif choice == "18":
+            show_principessina(user)
+        elif choice == "19":
+            add_principessina_post(user)
         elif choice == "0":
             break
         else:
@@ -352,6 +359,23 @@ def show_resoconto_ranking() -> None:
     ranking = resoconto_utils.get_ranking(start=start, end=end)
     for i, (user, count) in enumerate(ranking, 1):
         print(f"{i}. {user}: {count}")
+
+
+def show_principessina(user: Dict[str, str]) -> None:
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    posts = principessina_utils.filter_posts(author=author, keyword=keyword)
+    for p in posts:
+        print(f"[{p['id']}] {p['timestamp']} {p['author']} {p.get('body','')}")
+
+
+def add_principessina_post(user: Dict[str, str]) -> None:
+    body = input("本文: ").strip()
+    if not body:
+        print("内容が空です")
+        return
+    principessina_utils.add_post(user["username"], body)
+    print("投稿しました")
 
 
 def main():
