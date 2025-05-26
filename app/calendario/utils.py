@@ -7,7 +7,16 @@ from typing import List, Dict
 
 from app.utils import send_email
 
-DEFAULT_RULES = {"max_consecutive_days": 5, "min_staff_per_day": 1}
+DEFAULT_RULES = {
+    "max_consecutive_days": 5,
+    "min_staff_per_day": 1,
+    # 組み合わせに関する追加ルール
+    "forbidden_pairs": [],  # [["taro", "hanako"], ...]
+    "required_pairs": [],   # [["alice", "bob"], ...]
+    # 属性別の勤務者チェックに使用する設定
+    "required_attributes": {},  # {"A": 1, "B": 1}
+    "employee_attributes": {},  # {"taro": "A", "hanako": "B"}
+}
 import config
 
 EVENTS_PATH = Path(getattr(config, "CALENDAR_FILE", "events.json"))
@@ -126,4 +135,60 @@ def check_rules_and_notify() -> None:
         if cnt < rules.get("min_staff_per_day", 1):
             if admin_email:
                 send_email("人数不足警告", f"{d} has only {cnt} staff", admin_email)
+
+    # --- 以下は追加のルールチェック ---
+    events_by_date_emps: Dict[str, List[str]] = {}
+    for e in events:
+        emp = e.get("employee")
+        if not emp:
+            continue
+        d = e.get("date")
+        events_by_date_emps.setdefault(d, []).append(emp)
+
+    forbidden_pairs = rules.get("forbidden_pairs", [])
+    required_pairs = rules.get("required_pairs", [])
+    required_attrs = rules.get("required_attributes", {})
+    emp_attrs = rules.get("employee_attributes", {})
+
+    for d, emps in events_by_date_emps.items():
+        # forbiddens
+        for pair in forbidden_pairs:
+            if len(pair) >= 2 and pair[0] in emps and pair[1] in emps:
+                if admin_email:
+                    send_email(
+                        "組み合わせ禁止警告",
+                        f"{pair[0]} and {pair[1]} overlap on {d}",
+                        admin_email,
+                    )
+        # required pairs
+        for pair in required_pairs:
+            if len(pair) >= 2:
+                a, b = pair[0], pair[1]
+                if (a in emps) ^ (b in emps):
+                    if admin_email:
+                        send_email(
+                            "組み合わせ不足警告",
+                            f"{a} and {b} must work together on {d}",
+                            admin_email,
+                        )
+
+        if required_attrs:
+            attr_counts: Dict[str, int] = {k: 0 for k in required_attrs}
+            for emp in emps:
+                attr = emp_attrs.get(emp)
+                if isinstance(attr, list):
+                    for a in attr:
+                        if a in attr_counts:
+                            attr_counts[a] += 1
+                elif attr in attr_counts:
+                    attr_counts[attr] += 1
+            for attr, min_cnt in required_attrs.items():
+                if attr_counts.get(attr, 0) < min_cnt:
+                    if admin_email:
+                        send_email(
+                            "属性不足警告",
+                            f"{d} lacks enough {attr} staff",
+                            admin_email,
+                        )
+
 
