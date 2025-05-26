@@ -1,4 +1,8 @@
 from flask import render_template, session, redirect, url_for, flash, request
+import os
+from werkzeug.utils import secure_filename
+
+UPLOAD_FOLDER = os.path.join("static", "uploads")
 
 from . import bp
 from .forms import AddBravissimoForm, BravissimoFilterForm
@@ -33,7 +37,12 @@ def add():
         return redirect(url_for("bravissimo.index"))
     form = AddBravissimoForm()
     if form.validate_on_submit():
-        utils.add_post(user["username"], "bravissimo", form.text.data)
+        filename = None
+        if form.audio.data and form.audio.data.filename:
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            filename = secure_filename(form.audio.data.filename)
+            form.audio.data.save(os.path.join(UPLOAD_FOLDER, filename))
+        utils.add_post(user["username"], "bravissimo", form.text.data, filename)
         flash("投稿しました")
         return redirect(url_for("bravissimo.index"))
     return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
