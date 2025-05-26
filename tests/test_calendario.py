@@ -53,3 +53,18 @@ def test_delete_event_route():
         assert res.status_code == 200
         assert utils.load_events() == []
 
+
+def test_delete_event_as_user():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.add_event(date.fromisoformat("2025-03-01"), "nodel", "")
+    event_id = utils.load_events()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get(f"/calendario/delete/{event_id}")
+        assert res.status_code == 302
+        follow = client.get(res.headers["Location"])
+        assert "権限がありません".encode("utf-8") in follow.data
+        assert len(utils.load_events()) == 1
+
