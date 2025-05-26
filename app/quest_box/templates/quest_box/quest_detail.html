@@ -4,6 +4,7 @@
 <h1>{{ quest.title }}</h1>
 <p>{{ quest.body }}</p>
 <p>状態: {{ quest.status }}</p>
+{% if quest.due_date %}<p>期限: {{ quest.due_date }}</p>{% endif %}
 {% if quest.reward %}<p>報酬: {{ quest.reward }}</p>{% endif %}
 {% if quest.status == 'open' %}
     <a href="{{ url_for('quest_box.accept', quest_id=quest.id) }}">Accept</a>

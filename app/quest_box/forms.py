@@ -1,7 +1,7 @@
 """Forms for Quest Box blueprint."""
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField
+from wtforms import StringField, TextAreaField, SubmitField, DateField
 from wtforms.validators import DataRequired, Optional
 
 
@@ -10,6 +10,7 @@ class QuestForm(FlaskForm):
 
     title = StringField("タイトル", validators=[DataRequired()])
     body = TextAreaField("内容", validators=[DataRequired()])
+    due_date = DateField("期限", validators=[Optional()])
     submit = SubmitField("投稿")
 
 

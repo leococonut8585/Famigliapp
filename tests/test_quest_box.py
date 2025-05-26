@@ -28,17 +28,22 @@ def test_add_and_list_quest():
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
-        res = client.post("/quest_box/add", data={"title": "t", "body": "b"}, follow_redirects=True)
+        res = client.post(
+            "/quest_box/add",
+            data={"title": "t", "body": "b", "due_date": "2030-01-01"},
+            follow_redirects=True,
+        )
         assert res.status_code == 200
         assert "投稿しました".encode("utf-8") in res.data
         res = client.get("/quest_box/")
         assert b"t" in res.data
+        assert b"2030-01-01" in res.data
 
 
 def test_accept_and_complete():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "q", "b")
+    utils.add_quest("user1", "q", "b", None)
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -54,7 +59,7 @@ def test_accept_and_complete():
 def test_delete_route():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "x", "y")
+    utils.add_quest("user1", "x", "y", None)
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -67,7 +72,7 @@ def test_delete_route():
 def test_reward_route():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "r", "b")
+    utils.add_quest("user1", "r", "b", None)
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:

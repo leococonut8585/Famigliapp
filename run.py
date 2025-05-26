@@ -490,7 +490,15 @@ def show_quests() -> None:
 def add_quest_cli(user: Dict[str, str]) -> None:
     title = input("タイトル: ").strip()
     body = input("内容: ").strip()
-    quest_utils.add_quest(user["username"], title, body)
+    due_s = input("期限 YYYY-MM-DD(空欄はなし): ").strip()
+    due_date = None
+    if due_s:
+        try:
+            due_date = datetime.strptime(due_s, "%Y-%m-%d").date()
+        except ValueError:
+            print("日付の形式が正しくありません")
+            return
+    quest_utils.add_quest(user["username"], title, body, due_date)
     print("投稿しました")
 
 
