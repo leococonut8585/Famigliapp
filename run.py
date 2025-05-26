@@ -4,6 +4,7 @@ from datetime import datetime
 
 from app import utils
 from app.intrattenimento import utils as intrattenimento_utils
+from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
 
 
@@ -24,9 +25,11 @@ def display_menu(user: Dict[str, str]):
         print("10. intrattenimento に投稿する")
         if user["role"] == "admin":
             print("11. intrattenimento 投稿を削除する")
-        print("12. 履歴をCSV出力")
-        print("13. Resoconto を見る")
-        print("14. Resoconto に投稿する")
+        print("12. Corso を見る")
+        print("13. Corso に投稿する")
+        print("14. 履歴をCSV出力")
+        print("15. Resoconto を見る")
+        print("16. Resoconto に投稿する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -61,10 +64,14 @@ def display_menu(user: Dict[str, str]):
             else:
                 print("権限がありません")
         elif choice == "12":
-            export_history_csv()
+            show_corso(user)
         elif choice == "13":
-            show_resoconto(user)
+            add_corso_post(user)
         elif choice == "14":
+            export_history_csv()
+        elif choice == "15":
+            show_resoconto(user)
+        elif choice == "16":
             add_resoconto(user)
         elif choice == "0":
             break
@@ -266,6 +273,38 @@ def delete_intrattenimento_post() -> None:
         print("削除しました")
     else:
         print("該当IDがありません")
+
+
+def show_corso(user: Dict[str, str]) -> None:
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    include_expired = False
+    if user["role"] == "admin":
+        incl = input("公開終了済みも表示？(y/N): ").strip().lower()
+        include_expired = incl == "y"
+    posts = corso_utils.filter_posts(
+        author=author, keyword=keyword, include_expired=include_expired
+    )
+    for p in posts:
+        end = p.get("end_date", "")
+        print(
+            f"[{p['id']}] {p['timestamp']} {p['author']} {p.get('title','')} {end} {p.get('body','')}"
+        )
+
+
+def add_corso_post(user: Dict[str, str]) -> None:
+    title = input("タイトル: ").strip()
+    body = input("本文: ").strip()
+    end_s = input("公開終了日 YYYY-MM-DD(空欄はなし): ").strip()
+    end_date = None
+    if end_s:
+        try:
+            end_date = datetime.strptime(end_s, "%Y-%m-%d").date()
+        except ValueError:
+            print("日付の形式が正しくありません")
+            return
+    corso_utils.add_post(user["username"], title, body, end_date)
+    print("投稿しました")
 
 
 def show_resoconto(user: Dict[str, str]) -> None:
