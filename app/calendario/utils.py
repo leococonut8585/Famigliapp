@@ -7,6 +7,32 @@ from typing import List, Dict, Set, Optional
 
 from app.utils import send_email
 
+
+def _notify_all(subject: str, body: str) -> None:
+    """Send email notification to all configured users."""
+    for info in config.USERS.values():
+        email = info.get("email")
+        if email:
+            send_email(subject, body, email)
+
+
+def _notify_event(action: str, event: Dict[str, str], old: str = "") -> None:
+    """Notify all users about calendar event changes."""
+    title = event.get("title", "")
+    date_str = event.get("date", "")
+    if action == "add":
+        body = f"{date_str} に '{title}' が追加されました"
+    elif action == "delete":
+        body = f"{date_str} の '{title}' が削除されました"
+    elif action == "move":
+        body = f"'{title}' の日付が {old} から {date_str} に変更されました"
+    elif action == "assign":
+        emp = event.get("employee", "")
+        body = f"{date_str} の '{title}' の担当が {emp} に設定されました"
+    else:
+        body = f"{date_str}: {title} updated"
+    _notify_all("カレンダー更新", body)
+
 DEFAULT_RULES = {
     "max_consecutive_days": 5,
     "min_staff_per_day": 1,
@@ -49,15 +75,19 @@ def add_event(event_date: date, title: str, description: str, employee: str) -> 
     )
     save_events(events)
     check_rules_and_notify()
+    _notify_event("add", events[-1])
 
 
 def delete_event(event_id: int) -> bool:
     events = load_events()
+    event = next((e for e in events if e.get("id") == event_id), None)
     new_events = [e for e in events if e.get("id") != event_id]
     if len(new_events) == len(events):
         return False
     save_events(new_events)
     check_rules_and_notify()
+    if event:
+        _notify_event("delete", event)
     return True
 
 
@@ -76,28 +106,37 @@ def save_rules(rules: Dict[str, int]) -> None:
 def move_event(event_id: int, new_date: date) -> bool:
     events = load_events()
     updated = False
+    changed = None
     for e in events:
         if e.get("id") == event_id:
+            old = e.get("date", "")
             e["date"] = new_date.isoformat()
             updated = True
+            changed = e
             break
     if updated:
         save_events(events)
         check_rules_and_notify()
+        if changed:
+            _notify_event("move", changed, old)
     return updated
 
 
 def assign_employee(event_id: int, employee: str) -> bool:
     events = load_events()
     updated = False
+    changed = None
     for e in events:
         if e.get("id") == event_id:
             e["employee"] = employee
             updated = True
+            changed = e
             break
     if updated:
         save_events(events)
         check_rules_and_notify()
+        if changed:
+            _notify_event("assign", changed)
     return updated
 
 
