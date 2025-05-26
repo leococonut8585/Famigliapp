@@ -20,9 +20,9 @@ def index():
     user = session.get("user")
     form = BravissimoFilterForm(request.args)
     posts = utils.filter_posts(
-        category="bravissimo",
         author=form.author.data or "",
         keyword=form.keyword.data or "",
+        target=form.target.data or "",
     )
     return render_template(
         "bravissimo/bravissimo_list.html", posts=posts, form=form, user=user
@@ -42,7 +42,12 @@ def add():
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             filename = secure_filename(form.audio.data.filename)
             form.audio.data.save(os.path.join(UPLOAD_FOLDER, filename))
-        utils.add_post(user["username"], "bravissimo", form.text.data, filename)
+        utils.add_post(
+            user["username"],
+            form.text.data,
+            filename,
+            target=form.target.data or "",
+        )
         flash("投稿しました")
         return redirect(url_for("bravissimo.index"))
     return render_template("bravissimo/bravissimo_form.html", form=form, user=user)

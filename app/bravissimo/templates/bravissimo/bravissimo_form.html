@@ -5,6 +5,7 @@
 <form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     <p>{{ form.text.label }}<br>{{ form.text(rows=4, cols=40) }}</p>
+    <p>{{ form.target.label }}<br>{{ form.target(size=20) }}</p>
     <p>{{ form.audio.label }}<br>{{ form.audio() }}</p>
     <p>{{ form.submit() }}</p>
 </form>
