@@ -59,6 +59,8 @@ python run.py
 45. ResocontoをCSV出力 (管理者のみ)
 46. カレンダー統計を見る
 47. ポイント推移サマリを見る
+48. Scatola Capriccio アンケートを見る (管理者のみ)
+49. Scatola Capriccio アンケートを投稿 (管理者のみ)
 0. **終了** ― アプリを終了します。
 
 ### 投稿のフィルタ
