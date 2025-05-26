@@ -3,6 +3,13 @@ import json
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple
 from datetime import datetime, timedelta
+import smtplib
+from email.message import EmailMessage
+
+try:
+    from flask_mail import Message
+except Exception:  # pragma: no cover - optional dependency
+    Message = None  # type: ignore
 
 try:
     from flask import current_app
@@ -21,6 +28,28 @@ import config
 POINTS_PATH = Path(config.POINTS_FILE)
 POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 POSTS_PATH = Path(config.POSTS_FILE)
+
+
+def send_email(subject: str, body: str, to: str) -> None:
+    """Send an email using Flask-Mail if available, otherwise smtplib."""
+
+    if current_app is not None and Message is not None and "mail" in current_app.extensions:
+        msg = Message(
+            subject=subject,
+            recipients=[to],
+            body=body,
+            sender=getattr(current_app.config, "MAIL_SENDER", "famigliapp@example.com"),
+        )
+        current_app.extensions["mail"].send(msg)
+        return
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = getattr(config, "MAIL_SENDER", "famigliapp@example.com")
+    msg["To"] = to
+    msg.set_content(body)
+    with smtplib.SMTP(getattr(config, "MAIL_SERVER", "localhost"), getattr(config, "MAIL_PORT", 25)) as smtp:
+        smtp.send_message(msg)
 
 
 def _use_db() -> bool:
@@ -91,7 +120,11 @@ def filter_points_history(
     return results
 
 
-def log_points_change(username: str, delta_a: int, delta_o: int, timestamp: Optional[datetime] = None) -> None:
+def log_points_change(
+    username: str, delta_a: int, delta_o: int, timestamp: Optional[datetime] = None
+) -> None:
+    """Record a change in points and send a notification email."""
+
     ts = timestamp or datetime.now()
     if _use_db():
         assert PointsHistory is not None and User is not None
@@ -108,18 +141,23 @@ def log_points_change(username: str, delta_a: int, delta_o: int, timestamp: Opti
         )
         db.session.add(history)
         db.session.commit()
-        return
-    history = load_points_history()
-    history.append(
-        {
-            "username": username,
-            "A": delta_a,
-            "O": delta_o,
-            "timestamp": ts.isoformat(timespec="seconds"),
-        }
-    )
-    with open(POINTS_HISTORY_PATH, "w", encoding="utf-8") as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
+    else:
+        history = load_points_history()
+        history.append(
+            {
+                "username": username,
+                "A": delta_a,
+                "O": delta_o,
+                "timestamp": ts.isoformat(timespec="seconds"),
+            }
+        )
+        with open(POINTS_HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+
+    email = config.USERS.get(username, {}).get("email")
+    if email:
+        body = f"A: {delta_a}  O: {delta_o}"
+        send_email("Points updated", body, email)
 
 
 def save_points(points: Dict[str, Dict[str, int]]) -> None:

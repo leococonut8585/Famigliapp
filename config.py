@@ -19,3 +19,7 @@ MONSIGNORE_FILE = "monsignore.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
 SQLALCHEMY_DATABASE_URI = "sqlite:///famigliapp.db"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+MAIL_SERVER = "localhost"
+MAIL_PORT = 25
+MAIL_SENDER = "famigliapp@example.com"
