@@ -110,3 +110,50 @@ def test_rule_violation_sends_email(monkeypatch):
     utils.add_event(date.fromisoformat("2025-05-02"), "w2", "", "taro")
     assert len(dummy.sent) > 0
 
+
+def test_forbidden_pair(monkeypatch):
+    dummy = DummySMTP()
+    monkeypatch.setattr(app_utils.smtplib, "SMTP", lambda *a, **k: dummy)
+    utils.save_events([])
+    utils.save_rules(
+        {
+            "max_consecutive_days": 5,
+            "min_staff_per_day": 1,
+            "forbidden_pairs": [["taro", "hanako"]],
+        }
+    )
+    utils.add_event(date.fromisoformat("2025-06-01"), "s1", "", "taro")
+    utils.add_event(date.fromisoformat("2025-06-01"), "s2", "", "hanako")
+    assert len(dummy.sent) > 0
+
+
+def test_required_pair(monkeypatch):
+    dummy = DummySMTP()
+    monkeypatch.setattr(app_utils.smtplib, "SMTP", lambda *a, **k: dummy)
+    utils.save_events([])
+    utils.save_rules(
+        {
+            "max_consecutive_days": 5,
+            "min_staff_per_day": 1,
+            "required_pairs": [["taro", "hanako"]],
+        }
+    )
+    utils.add_event(date.fromisoformat("2025-07-01"), "s1", "", "taro")
+    assert len(dummy.sent) > 0
+
+
+def test_required_attribute(monkeypatch):
+    dummy = DummySMTP()
+    monkeypatch.setattr(app_utils.smtplib, "SMTP", lambda *a, **k: dummy)
+    utils.save_events([])
+    utils.save_rules(
+        {
+            "max_consecutive_days": 5,
+            "min_staff_per_day": 1,
+            "required_attributes": {"A": 1},
+            "employee_attributes": {"taro": "B"},
+        }
+    )
+    utils.add_event(date.fromisoformat("2025-08-01"), "s1", "", "taro")
+    assert len(dummy.sent) > 0
+
