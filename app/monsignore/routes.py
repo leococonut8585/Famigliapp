@@ -2,7 +2,7 @@
 
 import os
 from flask import render_template, session, redirect, url_for, flash, request
-from werkzeug.utils import secure_filename
+from app.utils import save_uploaded_file
 
 from . import bp
 from .forms import AddMonsignoreForm, MonsignoreFilterForm
@@ -37,9 +37,11 @@ def add():
     if form.validate_on_submit():
         filename = None
         if form.image.data and form.image.data.filename:
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(form.image.data.filename)
-            form.image.data.save(os.path.join(UPLOAD_FOLDER, filename))
+            try:
+                filename = save_uploaded_file(form.image.data, UPLOAD_FOLDER)
+            except ValueError as e:
+                flash(str(e))
+                return render_template("monsignore/monsignore_form.html", form=form, user=user)
         utils.add_post(user["username"], form.body.data, filename)
         flash("投稿しました")
         return redirect(url_for("monsignore.index"))

@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
+import pytest
 
 import app.utils as utils
 import config
@@ -248,3 +249,48 @@ def test_get_growth_ranking(monkeypatch):
 
     ranking = utils.get_growth_ranking("A", "weekly")
     assert ranking[0][0] == "u2"
+
+
+def test_save_uploaded_file(tmp_path):
+    import io
+
+    class DummyFS:
+        def __init__(self, data, filename):
+            self.stream = io.BytesIO(data)
+            self.filename = filename
+
+        def save(self, dst):
+            with open(dst, "wb") as f:
+                f.write(self.stream.getvalue())
+
+    upload_dir = tmp_path / "up"
+    fs = DummyFS(b"data", "test.txt")
+    fname = utils.save_uploaded_file(fs, str(upload_dir))
+    saved = upload_dir / fname
+    assert saved.exists()
+    assert saved.read_bytes() == b"data"
+
+
+def test_save_uploaded_file_invalid(tmp_path):
+    import io
+
+    class DummyFS:
+        def __init__(self, data, filename):
+            self.stream = io.BytesIO(data)
+            self.filename = filename
+
+        def save(self, dst):
+            with open(dst, "wb") as f:
+                f.write(self.stream.getvalue())
+
+    fs = DummyFS(b"data", "bad.exe")
+    with pytest.raises(ValueError):
+        utils.save_uploaded_file(fs, str(tmp_path))
+
+
+def test_save_local_file(tmp_path):
+    src = tmp_path / "orig.txt"
+    src.write_bytes(b"hello")
+    dest_dir = tmp_path / "dest"
+    fname = utils.save_local_file(str(src), str(dest_dir))
+    assert (dest_dir / fname).read_bytes() == b"hello"
