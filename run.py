@@ -1,6 +1,7 @@
 import getpass
 import os
 import shutil
+import json
 from typing import Dict
 from datetime import datetime
 
@@ -71,6 +72,9 @@ def display_menu(user: Dict[str, str]):
             print("39. カレンダーのイベント削除")
         print("40. カレンダーのイベント移動")
         print("41. カレンダーの担当者割当")
+        if user["role"] == "admin":
+            print("42. カレンダールールを見る")
+            print("43. カレンダールールを編集する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -188,6 +192,16 @@ def display_menu(user: Dict[str, str]):
             move_calendario_event()
         elif choice == "41":
             assign_calendario_employee()
+        elif choice == "42":
+            if user["role"] == "admin":
+                show_calendario_rules()
+            else:
+                print("権限がありません")
+        elif choice == "43":
+            if user["role"] == "admin":
+                edit_calendario_rules()
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -756,6 +770,33 @@ def assign_calendario_employee() -> None:
         print("更新しました")
     else:
         print("該当IDがありません")
+
+
+def show_calendario_rules() -> None:
+    """現在のカレンダー運用ルールを表示する。"""
+    rules = calendario_utils.load_rules()
+    print(json.dumps(rules, ensure_ascii=False, indent=2))
+
+
+def edit_calendario_rules() -> None:
+    """主要なカレンダールールを編集する。"""
+    rules = calendario_utils.load_rules()
+    try:
+        max_days = input(
+            f"連勤最大日数[{rules.get('max_consecutive_days', 5)}]: "
+        ).strip()
+        if max_days:
+            rules['max_consecutive_days'] = int(max_days)
+        min_staff = input(
+            f"最低人数[{rules.get('min_staff_per_day', 1)}]: "
+        ).strip()
+        if min_staff:
+            rules['min_staff_per_day'] = int(min_staff)
+    except ValueError:
+        print("数値を入力してください")
+        return
+    calendario_utils.save_rules(rules)
+    print("保存しました")
 
 def main():
     start_scheduler()
