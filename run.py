@@ -473,14 +473,33 @@ def add_corso_post(user: Dict[str, str]) -> None:
 
 
 def show_resoconto(user: Dict[str, str]) -> None:
-    reports = resoconto_utils.load_reports()
+    """Display resoconto reports with optional filtering."""
+
+    author = ""
     if user["role"] == "admin":
-        for r in reports:
-            print(f"[{r['id']}] {r['date']} {r['author']} {r['body']}")
-    else:
-        for r in reports:
-            if r.get("author") == user["username"]:
-                print(f"[{r['id']}] {r['date']} {r['body']}")
+        author = input("ユーザー名(空欄は全員): ").strip()
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d").date()
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+
+    if user["role"] != "admin":
+        author = user["username"]
+
+    reports = resoconto_utils.filter_reports(author=author, start=start, end=end)
+    for r in reports:
+        if user["role"] == "admin":
+            print(f"[{r['id']}] {r['date']} {r.get('author','')} {r.get('body','')}")
+        else:
+            print(f"[{r['id']}] {r['date']} {r.get('body','')}")
 
 
 def add_resoconto(user: Dict[str, str]) -> None:
