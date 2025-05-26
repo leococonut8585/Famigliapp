@@ -157,3 +157,14 @@ def test_required_attribute(monkeypatch):
     utils.add_event(date.fromisoformat("2025-08-01"), "s1", "", "taro")
     assert len(dummy.sent) > 0
 
+
+def test_compute_employee_stats():
+    utils.save_events([])
+    utils.add_event(date(2030, 1, 1), "s", "", "taro")
+    utils.add_event(date(2030, 1, 2), "s", "", "taro")
+    stats = utils.compute_employee_stats(
+        start=date(2030, 1, 1), end=date(2030, 1, 3)
+    )
+    assert stats["taro"]["work_days"] == 2
+    assert stats["taro"]["off_days"] == 1
+

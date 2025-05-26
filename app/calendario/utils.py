@@ -3,7 +3,7 @@
 import json
 from datetime import date, timedelta
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Set, Optional
 
 from app.utils import send_email
 
@@ -190,5 +190,49 @@ def check_rules_and_notify() -> None:
                             f"{d} lacks enough {attr} staff",
                             admin_email,
                         )
+
+
+def compute_employee_stats(
+    start: Optional[date] = None, end: Optional[date] = None
+) -> Dict[str, Dict[str, int]]:
+    """Return work/off day counts for each employee.
+
+    Parameters
+    ----------
+    start, end : Optional[date]
+        Date range to aggregate. When both are provided, ``off_days`` will
+        be included in the result based on the number of days in the range.
+    """
+
+    events = load_events()
+    by_emp: Dict[str, Set[date]] = {}
+    for e in events:
+        emp = e.get("employee")
+        d_str = e.get("date")
+        if not emp or not d_str:
+            continue
+        try:
+            d = date.fromisoformat(d_str)
+        except ValueError:
+            continue
+        if start and d < start:
+            continue
+        if end and d > end:
+            continue
+        by_emp.setdefault(emp, set()).add(d)
+
+    total_days = None
+    if start is not None and end is not None:
+        total_days = (end - start).days + 1
+
+    stats: Dict[str, Dict[str, int]] = {}
+    for emp, dates in by_emp.items():
+        work = len(dates)
+        data: Dict[str, int] = {"work_days": work}
+        if total_days is not None:
+            data["off_days"] = total_days - work
+        stats[emp] = data
+
+    return stats
 
 
