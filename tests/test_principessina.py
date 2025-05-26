@@ -51,3 +51,18 @@ def test_delete_route():
         assert res.status_code == 200
         assert utils.load_posts() == []
 
+
+def test_download_route(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
+    filepath = os.path.join("static", "uploads", "file.txt")
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write("x")
+    utils.add_post("user1", "body", "file.txt")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get("/principessina/download/file.txt")
+        assert res.status_code == 200
+
