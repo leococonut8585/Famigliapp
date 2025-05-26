@@ -14,6 +14,7 @@ QUEST_BOX_FILE = "quests.json"
 CALENDAR_FILE = "events.json"
 RESOCONTO_FILE = "resoconto.json"
 PRINCIPESSINA_FILE = "principessina.json"
+MONSIGNORE_FILE = "monsignore.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
 SQLALCHEMY_DATABASE_URI = "sqlite:///famigliapp.db"
 SQLALCHEMY_TRACK_MODIFICATIONS = False

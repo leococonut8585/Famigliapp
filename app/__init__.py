@@ -34,6 +34,7 @@ def create_app() -> "Flask":
     from .corso import bp as corso_bp
     from .principessina import bp as principessina_bp
     from .scatola_capriccio import bp as scatola_capriccio_bp
+    from .monsignore import bp as monsignore_bp
     from .quest_box import bp as quest_box_bp
     from .calendario import bp as calendario_bp
     from .resoconto import bp as resoconto_bp
@@ -46,6 +47,7 @@ def create_app() -> "Flask":
     app.register_blueprint(corso_bp)
     app.register_blueprint(principessina_bp)
     app.register_blueprint(scatola_capriccio_bp)
+    app.register_blueprint(monsignore_bp)
     app.register_blueprint(quest_box_bp)
     app.register_blueprint(calendario_bp)
     app.register_blueprint(resoconto_bp)
