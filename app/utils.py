@@ -330,7 +330,7 @@ def filter_posts(
         if author:
             query = query.join(User).filter(User.username == author)
         if keyword:
-            query = query.filter(Post.text.contains(keyword))
+            query = query.filter(Post.text.ilike(f"%{keyword}%"))
         if start:
             query = query.filter(Post.timestamp >= start)
         if end:
@@ -355,7 +355,7 @@ def filter_posts(
             continue
         if author and p.get("author") != author:
             continue
-        if keyword and keyword not in p.get("text", ""):
+        if keyword and keyword.lower() not in p.get("text", "").lower():
             continue
         if start or end:
             try:
