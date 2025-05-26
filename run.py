@@ -7,6 +7,7 @@ from app.intrattenimento import utils as intrattenimento_utils
 from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
 from app.principessina import utils as principessina_utils
+from app.quest_box import utils as quest_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -35,6 +36,13 @@ def display_menu(user: Dict[str, str]):
             print("17. Resoconto ランキングを見る")
         print("18. Principessina を見る")
         print("19. Principessina に投稿する")
+        print("20. Quest一覧を見る")
+        print("21. Questを投稿する")
+        print("22. QuestをAcceptする")
+        print("23. Questを完了する")
+        if user["role"] == "admin":
+            print("24. Questを削除する")
+            print("25. Quest報酬を設定する")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -87,6 +95,24 @@ def display_menu(user: Dict[str, str]):
             show_principessina(user)
         elif choice == "19":
             add_principessina_post(user)
+        elif choice == "20":
+            show_quests()
+        elif choice == "21":
+            add_quest_cli(user)
+        elif choice == "22":
+            accept_quest_cli(user)
+        elif choice == "23":
+            complete_quest_cli(user)
+        elif choice == "24":
+            if user["role"] == "admin":
+                delete_quest_cli()
+            else:
+                print("権限がありません")
+        elif choice == "25":
+            if user["role"] == "admin":
+                set_quest_reward_cli()
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -376,6 +402,70 @@ def add_principessina_post(user: Dict[str, str]) -> None:
         return
     principessina_utils.add_post(user["username"], body)
     print("投稿しました")
+
+
+def show_quests() -> None:
+    quests = quest_utils.load_quests()
+    for q in quests:
+        print(
+            f"[{q['id']}] {q['title']} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
+        )
+
+
+def add_quest_cli(user: Dict[str, str]) -> None:
+    title = input("タイトル: ").strip()
+    body = input("内容: ").strip()
+    quest_utils.add_quest(user["username"], title, body)
+    print("投稿しました")
+
+
+def accept_quest_cli(user: Dict[str, str]) -> None:
+    try:
+        quest_id = int(input("AcceptするID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if quest_utils.accept_quest(quest_id, user["username"]):
+        print("Acceptしました")
+    else:
+        print("操作できません")
+
+
+def complete_quest_cli(user: Dict[str, str]) -> None:
+    try:
+        quest_id = int(input("完了するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if quest_utils.complete_quest(quest_id):
+        print("完了しました")
+    else:
+        print("操作できません")
+
+
+def delete_quest_cli() -> None:
+    try:
+        quest_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if quest_utils.delete_quest(quest_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
+
+
+def set_quest_reward_cli() -> None:
+    try:
+        quest_id = int(input("報酬を設定するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    reward = input("報酬: ").strip()
+    if quest_utils.set_reward(quest_id, reward):
+        print("保存しました")
+    else:
+        print("該当IDがありません")
 
 
 def main():
