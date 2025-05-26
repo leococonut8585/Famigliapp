@@ -11,5 +11,6 @@ class EventForm(FlaskForm):
     date = DateField("日付", validators=[DataRequired()])
     title = StringField("タイトル", validators=[DataRequired()])
     description = TextAreaField("内容", validators=[Optional()])
+    employee = StringField("従業員", validators=[Optional()])
     submit = SubmitField("保存")
 
