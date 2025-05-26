@@ -194,3 +194,23 @@ def test_export_history_csv(tmp_path):
         lines = [line.strip() for line in f.readlines()]
     assert lines[0] == "timestamp,username,A,O"
     assert lines[1].startswith(ts.isoformat(timespec="seconds") + ",u1,1,0")
+
+
+def test_get_points_history_summary():
+    """Summary of points history should aggregate daily totals."""
+
+    ts1 = datetime(2021, 6, 1, 10, 0, 0)
+    ts2 = datetime(2021, 6, 1, 15, 0, 0)
+    ts3 = datetime(2021, 6, 2, 9, 0, 0)
+
+    utils.log_points_change("u1", 1, 0, ts1)
+    utils.log_points_change("u2", 2, 1, ts2)
+    utils.log_points_change("u1", -1, 2, ts3)
+
+    start = datetime(2021, 6, 1)
+    end = datetime(2021, 6, 2, 23, 59, 59)
+    summary = utils.get_points_history_summary(start=start, end=end)
+
+    assert summary["labels"] == ["2021-06-01", "2021-06-02"]
+    assert summary["A"] == [3, -1]
+    assert summary["O"] == [1, 2]
