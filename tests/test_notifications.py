@@ -55,3 +55,18 @@ def test_post_add_sends_email(monkeypatch):
         res = client.post("/posts/add", data={"category": "news", "text": "hello"}, follow_redirects=True)
         assert res.status_code == 200
     assert len(dummy.sent) == len(config.USERS)
+
+
+def test_line_notification(monkeypatch):
+    dummy = DummySMTP()
+    monkeypatch.setattr(utils.smtplib, "SMTP", lambda *a, **k: dummy)
+    msgs = []
+
+    def dummy_line(msg):
+        msgs.append(msg)
+
+    monkeypatch.setattr(utils, "send_line_notify", dummy_line)
+    config.LINE_NOTIFY_TOKEN = "token"
+    utils.log_points_change("user1", 2, 0)
+    assert msgs and "Points updated" in msgs[0]
+    config.LINE_NOTIFY_TOKEN = ""
