@@ -30,6 +30,8 @@ def display_menu(user: Dict[str, str]):
         print("14. 履歴をCSV出力")
         print("15. Resoconto を見る")
         print("16. Resoconto に投稿する")
+        if user["role"] == "admin":
+            print("17. Resoconto ランキングを見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -73,6 +75,11 @@ def display_menu(user: Dict[str, str]):
             show_resoconto(user)
         elif choice == "16":
             add_resoconto(user)
+        elif choice == "17":
+            if user["role"] == "admin":
+                show_resoconto_ranking()
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -328,6 +335,23 @@ def add_resoconto(user: Dict[str, str]) -> None:
         return
     resoconto_utils.add_report(user["username"], d, body)
     print("投稿しました")
+
+
+def show_resoconto_ranking() -> None:
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d").date()
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    ranking = resoconto_utils.get_ranking(start=start, end=end)
+    for i, (user, count) in enumerate(ranking, 1):
+        print(f"{i}. {user}: {count}")
 
 
 def main():

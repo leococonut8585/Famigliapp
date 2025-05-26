@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, date
 from pathlib import Path
+from typing import Optional, List, Tuple, Dict
 
 import config
 
@@ -41,3 +42,25 @@ def delete_report(report_id: int) -> bool:
         return False
     save_reports(new_reports)
     return True
+
+
+def get_ranking(start: Optional[date] = None, end: Optional[date] = None) -> List[Tuple[str, int]]:
+    """指定期間内のユーザー別報告数ランキングを返す。"""
+
+    reports = load_reports()
+    counts: Dict[str, int] = {}
+    for r in reports:
+        d_str = r.get("date")
+        try:
+            d = date.fromisoformat(d_str) if d_str else None
+        except ValueError:
+            d = None
+        if start and d and d < start:
+            continue
+        if end and d and d > end:
+            continue
+        user = r.get("author")
+        if user:
+            counts[user] = counts.get(user, 0) + 1
+
+    return sorted(counts.items(), key=lambda x: x[1], reverse=True)
