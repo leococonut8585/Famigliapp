@@ -84,6 +84,7 @@ def display_menu(user: Dict[str, str]):
         if user["role"] == "admin":
             print("48. Scatola Capriccio アンケートを見る")
             print("49. Scatola Capriccio アンケートを投稿")
+        print("50. 上昇率ランキングを見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -235,6 +236,8 @@ def display_menu(user: Dict[str, str]):
                 add_scatola_capriccio_survey(user)
             else:
                 print("権限がありません")
+        elif choice == "50":
+            show_growth_ranking()
         elif choice == "0":
             break
         else:
@@ -373,6 +376,24 @@ def show_ranking():
     ranking = utils.get_ranking(metric, **kwargs)
     for i, (user, value) in enumerate(ranking, 1):
         print(f"{i}. {user}: {value}")
+
+
+def show_growth_ranking():
+    metric = input("ランキング種別を選択 (A/O/U): ").strip().upper()
+    if metric not in {"A", "O", "U"}:
+        print("A, O, U のいずれかを入力してください")
+        return
+    period = input("期間を指定 (weekly/monthly/yearly): ").strip().lower()
+    if period not in {"weekly", "monthly", "yearly"}:
+        print("weekly, monthly, yearly のいずれかを入力してください")
+        return
+    ranking = utils.get_growth_ranking(metric, period)
+    for i, (user, rate) in enumerate(ranking, 1):
+        if rate == float("inf"):
+            rate_str = "∞"
+        else:
+            rate_str = f"{rate * 100:.1f}%"
+        print(f"{i}. {user}: {rate_str}")
 
 
 def show_points_history():
