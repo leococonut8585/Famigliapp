@@ -14,3 +14,11 @@ class EventForm(FlaskForm):
     employee = StringField("従業員", validators=[Optional()])
     submit = SubmitField("保存")
 
+
+class StatsForm(FlaskForm):
+    """Form to filter statistics by date range."""
+
+    start = DateField("開始日", validators=[Optional()])
+    end = DateField("終了日", validators=[Optional()])
+    submit = SubmitField("表示")
+

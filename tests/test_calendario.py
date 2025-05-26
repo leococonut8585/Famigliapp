@@ -168,3 +168,19 @@ def test_compute_employee_stats():
     assert stats["taro"]["work_days"] == 2
     assert stats["taro"]["off_days"] == 1
 
+
+def test_stats_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_events([])
+    utils.add_event(date(2030, 1, 1), "s", "", "taro")
+    utils.add_event(date(2030, 1, 2), "s", "", "taro")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/calendario/stats?start=2030-01-01&end=2030-01-03")
+        assert res.status_code == 200
+        assert b"taro" in res.data
+        assert b"2" in res.data
+        assert "休日数".encode("utf-8") in res.data
+
