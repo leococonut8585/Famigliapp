@@ -14,4 +14,6 @@ class AddIntrattenimentoForm(FlaskForm):
 class IntrattenimentoFilterForm(FlaskForm):
     author = StringField('投稿者', validators=[Optional()])
     keyword = StringField('キーワード', validators=[Optional()])
+    start_date = DateField('開始日', validators=[Optional()])
+    end_date = DateField('終了日', validators=[Optional()])
     submit = SubmitField('絞り込み')

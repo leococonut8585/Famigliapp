@@ -11,6 +11,7 @@ import config
 from app.quest_box import utils
 from app import utils as app_utils
 from app.resoconto import utils as resoconto_utils
+from app.intrattenimento import utils as intra_utils
 import run
 
 
@@ -124,3 +125,31 @@ def test_show_resoconto_cli_filtered(capsys):
     lines = capsys.readouterr().out.strip().splitlines()
     assert len(lines) == 1
     assert "u2" in lines[0]
+
+
+def test_show_intrattenimento_cli_date_filter(capsys):
+    config.INTRATTENIMENTO_FILE = os.path.join(_tmpdir.name, "intra.json")
+    intra_utils.INTRATTENIMENTO_PATH = Path(config.INTRATTENIMENTO_FILE)
+    intra_utils.save_posts([])
+    intra_utils.add_post("admin", "old", "b")
+    posts = intra_utils.load_posts()
+    posts[0]["timestamp"] = (
+        datetime(2030, 1, 1, 10, 0, 0)
+    ).isoformat(timespec="seconds")
+    intra_utils.save_posts(posts)
+    intra_utils.add_post("admin", "new", "b")
+
+    user = {"username": "admin", "role": "admin", "email": "a@example.com"}
+    inputs = iter(["", "", "2030-01-02", "2030-01-03", "n"])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.show_intrattenimento(user)
+    run.input = old_input
+
+    out = capsys.readouterr().out
+    assert "new" in out
+    assert "old" not in out
