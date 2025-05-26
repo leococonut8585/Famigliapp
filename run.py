@@ -76,6 +76,7 @@ def display_menu(user: Dict[str, str]):
             print("42. カレンダールールを見る")
             print("43. カレンダールールを編集する")
             print("44. Questを編集する")
+            print("45. ResocontoをCSV出力")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -206,6 +207,11 @@ def display_menu(user: Dict[str, str]):
         elif choice == "44":
             if user["role"] == "admin":
                 edit_quest_cli()
+            else:
+                print("権限がありません")
+        elif choice == "45":
+            if user["role"] == "admin":
+                export_resoconto_csv()
             else:
                 print("権限がありません")
         elif choice == "0":
@@ -497,6 +503,17 @@ def show_resoconto_ranking() -> None:
     ranking = resoconto_utils.get_ranking(start=start, end=end)
     for i, (user, count) in enumerate(ranking, 1):
         print(f"{i}. {user}: {count}")
+
+
+def export_resoconto_csv() -> None:
+    """ResocontoデータをCSVに出力する。"""
+
+    path = input("出力先CSVファイル: ").strip()
+    if not path:
+        print("ファイル名を入力してください")
+        return
+    resoconto_utils.export_reports_csv(path)
+    print("エクスポートしました")
 
 
 def show_principessina(user: Dict[str, str]) -> None:

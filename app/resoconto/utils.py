@@ -2,6 +2,7 @@ import json
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
+import csv
 
 import config
 
@@ -64,3 +65,21 @@ def get_ranking(start: Optional[date] = None, end: Optional[date] = None) -> Lis
             counts[user] = counts.get(user, 0) + 1
 
     return sorted(counts.items(), key=lambda x: x[1], reverse=True)
+
+
+def export_reports_csv(path: str) -> None:
+    """レソコント履歴をCSV形式で保存する。"""
+
+    reports = load_reports()
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["id", "date", "author", "body", "timestamp"])
+        for r in reports:
+            writer.writerow([
+                r.get("id"),
+                r.get("date", ""),
+                r.get("author", ""),
+                r.get("body", ""),
+                r.get("timestamp", ""),
+            ])
+
