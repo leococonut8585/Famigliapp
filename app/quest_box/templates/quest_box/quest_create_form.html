@@ -6,6 +6,7 @@
     {{ form.hidden_tag() }}
     <p>{{ form.title.label }}<br>{{ form.title(size=40) }}</p>
     <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>
+    <p>{{ form.due_date.label }}<br>{{ form.due_date() }}</p>
     <p>{{ form.submit() }}</p>
 </form>
 {% endblock %}

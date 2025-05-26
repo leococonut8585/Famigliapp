@@ -32,7 +32,7 @@ def add():
     user = session.get("user")
     form = QuestForm()
     if form.validate_on_submit():
-        utils.add_quest(user["username"], form.title.data, form.body.data)
+        utils.add_quest(user["username"], form.title.data, form.body.data, form.due_date.data)
         flash("投稿しました")
         return redirect(url_for("quest_box.index"))
     return render_template("quest_box/quest_create_form.html", form=form, user=user)

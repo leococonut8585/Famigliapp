@@ -32,7 +32,7 @@ python run.py
 18. **Principessina を見る** ― ベイビー報告の一覧を表示します。
 19. **Principessina に投稿する** ― 新しいベイビー報告を追加します。
 20. **Quest一覧を見る** ― 登録されたQuestを一覧表示します。
-21. **Questを投稿する** ― 新しいQuestを作成します。
+21. **Questを投稿する** ― 新しいQuestを作成します。投稿時に任意で期限日を入力できるようになりました。
 22. **QuestをAcceptする** ― 指定したQuestを引き受けます。
 23. **Questを完了する** ― Accept済みのQuestを完了扱いにします。
 24. **Questを削除する** ― 管理者のみ利用可能。IDを指定してQuestを削除します。
