@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Corso 投稿</h1>
+<form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>{{ form.title.label }}<br>{{ form.title(size=40) }}</p>
+    <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>
+    <p>{{ form.end_date.label }}<br>{{ form.end_date() }}</p>
+    <p>{{ form.attachment.label }}<br>{{ form.attachment() }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}
+
