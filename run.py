@@ -8,6 +8,7 @@ from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
+from app.lezzione import utils as lezzione_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -43,6 +44,9 @@ def display_menu(user: Dict[str, str]):
         if user["role"] == "admin":
             print("24. Questを削除する")
             print("25. Quest報酬を設定する")
+        print("26. Lezzione一覧を見る")
+        print("27. Lezzioneをスケジュールする")
+        print("28. Lezzioneにフィードバックする")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -113,6 +117,12 @@ def display_menu(user: Dict[str, str]):
                 set_quest_reward_cli()
             else:
                 print("権限がありません")
+        elif choice == "26":
+            show_lezzione_entries(user)
+        elif choice == "27":
+            schedule_lezzione(user)
+        elif choice == "28":
+            add_lezzione_feedback_cli(user)
         elif choice == "0":
             break
         else:
@@ -464,6 +474,48 @@ def set_quest_reward_cli() -> None:
     reward = input("報酬: ").strip()
     if quest_utils.set_reward(quest_id, reward):
         print("保存しました")
+    else:
+        print("該当IDがありません")
+
+
+def show_lezzione_entries(user: Dict[str, str]) -> None:
+    entries = lezzione_utils.load_entries()
+    for e in entries:
+        if user["role"] != "admin" and e.get("author") != user["username"]:
+            continue
+        print(
+            f"[{e['id']}] {e['lesson_date']} {e['author']} {e['title']} {e.get('feedback','')}")
+    
+
+def schedule_lezzione(user: Dict[str, str]) -> None:
+    date_s = input("日付 YYYY-MM-DD: ").strip()
+    title = input("タイトル: ").strip()
+    try:
+        d = datetime.strptime(date_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    lezzione_utils.add_schedule(user["username"], d, title)
+    print("登録しました")
+
+
+def add_lezzione_feedback_cli(user: Dict[str, str]) -> None:
+    try:
+        entry_id = int(input("フィードバックするID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    entries = lezzione_utils.load_entries()
+    entry = next((e for e in entries if e.get("id") == entry_id), None)
+    if not entry:
+        print("該当IDがありません")
+        return
+    if user["role"] != "admin" and entry.get("author") != user["username"]:
+        print("権限がありません")
+        return
+    body = input("内容: ").strip()
+    if lezzione_utils.add_feedback(entry_id, body):
+        print("投稿しました")
     else:
         print("該当IDがありません")
 
