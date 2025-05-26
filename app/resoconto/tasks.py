@@ -10,7 +10,8 @@ except Exception:  # pragma: no cover - optional dependency
 
 import config
 from app.utils import send_email
-from app import utils
+from app import utils as post_utils
+from . import utils as res_utils
 
 
 scheduler = BackgroundScheduler() if BackgroundScheduler else None  # type: ignore
@@ -25,7 +26,7 @@ def collect_post_stats() -> Tuple[List[Tuple[str, int]], Dict[str, int]]:
         Ranking list of (author, count) and analysis summary.
     """
 
-    posts = utils.load_posts()
+    posts = post_utils.load_posts()
     ranking_dict: Dict[str, int] = {}
     category_count: Dict[str, int] = {}
     for p in posts:
@@ -64,6 +65,43 @@ def daily_post_job() -> Dict[str, object]:
     return {"ranking": ranking, "summary": summary}
 
 
+def analyze_reports() -> Tuple[List[Tuple[str, int]], Dict[str, str]]:
+    """簡易的にレソコント内容を解析してランキングとコメントを返す。"""
+
+    reports = res_utils.load_reports()
+    word_counts: Dict[str, int] = {}
+    for r in reports:
+        author = r.get("author")
+        body = r.get("body", "")
+        if author:
+            word_counts[author] = word_counts.get(author, 0) + len(body.split())
+
+    ranking = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)
+
+    analysis: Dict[str, str] = {}
+    for user, count in word_counts.items():
+        analysis[user] = "詳細な報告です" if count > 20 else "簡潔な報告です"
+
+    return ranking, analysis
+
+
+def daily_report_job() -> Dict[str, object]:
+    """業務報告を集計し管理者へ送信するジョブ。"""
+
+    ranking, analysis = analyze_reports()
+    lines = ["Resoconto analysis:"]
+    for user, cnt in ranking:
+        comment = analysis.get(user, "")
+        lines.append(f"{user}: {cnt} words - {comment}")
+    body = "\n".join(lines)
+
+    admin_email = config.USERS.get("admin", {}).get("email")
+    if admin_email:
+        send_email("Daily resoconto analysis", body, admin_email)
+
+    return {"ranking": ranking, "analysis": analysis}
+
+
 def start_scheduler() -> None:
     """Start APScheduler to run the daily job at 4 AM."""
 
@@ -72,5 +110,6 @@ def start_scheduler() -> None:
 
     if not scheduler.get_jobs():
         scheduler.add_job(lambda: daily_post_job(), "cron", hour=4)
+        scheduler.add_job(lambda: daily_report_job(), "cron", hour=4, minute=5)
         scheduler.start()
 
