@@ -82,6 +82,7 @@ Web 版では各コメントの作者または管理者が編集できるリン�
 ## 通知設定
 
 `config.py` の `LINE_NOTIFY_TOKEN` にトークンを設定すると、メール送信に加えて LINE Notify へも同じ内容が送信されます。空のままの場合は LINE への通知は行われません。
+同様に `PUSHBULLET_TOKEN` を設定すると Pushbullet 経由でスマホや PC へ直接通知を送れます。
 
 ## Web 版の起動方法
 

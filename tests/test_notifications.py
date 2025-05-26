@@ -70,3 +70,18 @@ def test_line_notification(monkeypatch):
     utils.log_points_change("user1", 2, 0)
     assert msgs and "Points updated" in msgs[0]
     config.LINE_NOTIFY_TOKEN = ""
+
+
+def test_pushbullet_notification(monkeypatch):
+    dummy = DummySMTP()
+    monkeypatch.setattr(utils.smtplib, "SMTP", lambda *a, **k: dummy)
+    pushes = []
+
+    def dummy_push(title, body):
+        pushes.append((title, body))
+
+    monkeypatch.setattr(utils, "send_pushbullet_notify", dummy_push)
+    config.PUSHBULLET_TOKEN = "token"
+    utils.log_points_change("user1", 3, 0)
+    assert pushes and "Points updated" in pushes[0][0]
+    config.PUSHBULLET_TOKEN = ""
