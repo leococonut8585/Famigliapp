@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
+import io
 
 import config
 import pytest
@@ -75,4 +76,29 @@ def test_filter_posts_case_insensitive():
     res = utils.filter_posts(keyword="hello")
     assert len(res) == 1
     assert res[0]["title"] == "Hello"
+
+
+def test_reject_invalid_extension():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        data = {"title": "t", "body": "b", "end_date": "", "attachment": (io.BytesIO(b"x"), "bad.exe")}
+        res = client.post("/corso/add", data=data, follow_redirects=True)
+        assert "許可されていないファイル形式です".encode("utf-8") in res.data
+        assert utils.load_posts() == []
+
+
+def test_reject_large_file():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        big = io.BytesIO(b"x" * (10 * 1024 * 1024 + 1))
+        data = {"title": "t", "body": "b", "end_date": "", "attachment": (big, "big.txt")}
+        res = client.post("/corso/add", data=data, follow_redirects=True)
+        assert "ファイルサイズが大きすぎます".encode("utf-8") in res.data
+        assert utils.load_posts() == []
 

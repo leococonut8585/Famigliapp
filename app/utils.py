@@ -7,6 +7,7 @@ import smtplib
 from email.message import EmailMessage
 import urllib.request
 import urllib.parse
+import os
 
 try:
     from flask_mail import Message
@@ -31,6 +32,37 @@ POINTS_PATH = Path(config.POINTS_FILE)
 POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 POSTS_PATH = Path(config.POSTS_FILE)
 COMMENTS_PATH = Path(getattr(config, "COMMENTS_FILE", "comments.json"))
+
+# File upload settings
+ALLOWED_EXTENSIONS = {
+    "txt",
+    "pdf",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "mp3",
+    "mp4",
+    "mov",
+    "wav",
+}
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def allowed_file(filename: str) -> bool:
+    """Return True if the filename has an allowed extension."""
+
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def file_size(fs) -> int:
+    """Return file size for a Werkzeug ``FileStorage`` object."""
+
+    pos = fs.stream.tell()
+    fs.stream.seek(0, os.SEEK_END)
+    size = fs.stream.tell()
+    fs.stream.seek(pos)
+    return size
 
 
 def send_email(subject: str, body: str, to: str) -> None:

@@ -3,6 +3,7 @@ from app import create_app, utils
 import pytest
 import tempfile
 from pathlib import Path
+import io
 
 flask = pytest.importorskip("flask")
 
@@ -81,3 +82,28 @@ def test_filter_by_target():
         assert b"nice" in res.data
         res = client.get("/bravissimo/?target=user2")
         assert b"nice" not in res.data
+
+
+def test_reject_invalid_extension():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        data = {"text": "x", "audio": (io.BytesIO(b"x"), "bad.exe")}
+        res = client.post("/bravissimo/add", data=data, follow_redirects=True)
+        assert "許可されていないファイル形式です".encode("utf-8") in res.data
+        assert utils.load_posts() == []
+
+
+def test_reject_large_file():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        big = io.BytesIO(b"x" * (10 * 1024 * 1024 + 1))
+        data = {"text": "x", "audio": (big, "big.wav")}
+        res = client.post("/bravissimo/add", data=data, follow_redirects=True)
+        assert "ファイルサイズが大きすぎます".encode("utf-8") in res.data
+        assert utils.load_posts() == []

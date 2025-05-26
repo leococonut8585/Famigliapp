@@ -1,6 +1,7 @@
 from flask import render_template, session, redirect, url_for, flash, request
 import os
 from werkzeug.utils import secure_filename
+from app.utils import allowed_file, file_size, MAX_ATTACHMENT_SIZE
 
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 
@@ -39,8 +40,15 @@ def add():
     if form.validate_on_submit():
         filename = None
         if form.audio.data and form.audio.data.filename:
+            fname = form.audio.data.filename
+            if not allowed_file(fname):
+                flash("許可されていないファイル形式です")
+                return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
+            if file_size(form.audio.data) > MAX_ATTACHMENT_SIZE:
+                flash("ファイルサイズが大きすぎます")
+                return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(form.audio.data.filename)
+            filename = secure_filename(fname)
             form.audio.data.save(os.path.join(UPLOAD_FOLDER, filename))
         utils.add_post(
             user["username"],
