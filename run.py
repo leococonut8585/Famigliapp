@@ -77,6 +77,7 @@ def display_menu(user: Dict[str, str]):
             print("43. カレンダールールを編集する")
             print("44. Questを編集する")
             print("45. ResocontoをCSV出力")
+        print("46. カレンダー統計を見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -214,6 +215,8 @@ def display_menu(user: Dict[str, str]):
                 export_resoconto_csv()
             else:
                 print("権限がありません")
+        elif choice == "46":
+            show_calendario_stats()
         elif choice == "0":
             break
         else:
@@ -848,6 +851,30 @@ def assign_calendario_employee() -> None:
         print("更新しました")
     else:
         print("該当IDがありません")
+
+
+def show_calendario_stats() -> None:
+    """Display work/off day counts for each employee."""
+
+    start_s = input("開始日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    end_s = input("終了日 YYYY-MM-DD(空欄は指定なし): ").strip()
+    start = end = None
+    try:
+        if start_s:
+            start = datetime.strptime(start_s, "%Y-%m-%d").date()
+        if end_s:
+            end = datetime.strptime(end_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+
+    stats = calendario_utils.compute_employee_stats(start=start, end=end)
+    for emp, data in stats.items():
+        line = f"{emp}: 勤務日数 {data['work_days']}"
+        off = data.get("off_days")
+        if off is not None:
+            line += f" 休日数 {off}"
+        print(line)
 
 
 def show_calendario_rules() -> None:
