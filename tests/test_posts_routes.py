@@ -91,3 +91,23 @@ def test_add_comment_route():
         assert res.status_code == 200
         comments = utils.get_comments(post_id)
         assert comments[0]["text"] == "c"
+
+
+def test_edit_comment_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        utils.add_post("user1", "cat", "body")
+        post_id = utils.load_posts()[0]["id"]
+        utils.add_comment(post_id, "user1", "before")
+        comment_id = utils.load_comments()[0]["id"]
+        res = client.post(
+            f"/posts/comment/edit/{comment_id}",
+            data={"text": "after"},
+            follow_redirects=True,
+        )
+        assert res.status_code == 200
+        assert "コメントを更新しました".encode("utf-8") in res.data
+        assert utils.get_comments(post_id)[0]["text"] == "after"

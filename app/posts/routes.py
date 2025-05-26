@@ -111,3 +111,26 @@ def comment(post_id: int):
     else:
         flash("入力内容に誤りがあります")
     return redirect(url_for("posts.index"))
+
+
+@bp.route("/comment/edit/<int:comment_id>", methods=["GET", "POST"])
+def edit_comment(comment_id: int):
+    """Edit an existing comment (author or admin)."""
+
+    user = session.get("user")
+    comments = utils.load_comments()
+    comment = next((c for c in comments if c.get("id") == comment_id), None)
+    if not comment:
+        flash("該当IDがありません")
+        return redirect(url_for("posts.index"))
+    if user["role"] != "admin" and user["username"] != comment.get("author"):
+        flash("権限がありません")
+        return redirect(url_for("posts.index"))
+
+    form = CommentForm(text=comment.get("text"))
+    if form.validate_on_submit():
+        utils.update_comment(comment_id, form.text.data)
+        flash("コメントを更新しました")
+        return redirect(url_for("posts.index"))
+
+    return render_template("posts/comment_form.html", form=form, user=user, edit=True)

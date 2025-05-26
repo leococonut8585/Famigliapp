@@ -562,10 +562,23 @@ def get_growth_ranking(metric: str = "U", period: str = "weekly") -> List[Tuple[
 
 def load_comments() -> List[Dict[str, str]]:
     """Load comments from storage."""
-    if COMMENTS_PATH.exists():
-        with open(COMMENTS_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    if not COMMENTS_PATH.exists():
+        return []
+
+    with open(COMMENTS_PATH, "r", encoding="utf-8") as f:
+        comments = json.load(f)
+
+    # ensure id field exists
+    changed = False
+    next_id = max((c.get("id", 0) for c in comments), default=0) + 1
+    for c in comments:
+        if "id" not in c:
+            c["id"] = next_id
+            next_id += 1
+            changed = True
+    if changed:
+        save_comments(comments)
+    return comments
 
 
 def save_comments(comments: List[Dict[str, str]]) -> None:
@@ -575,10 +588,18 @@ def save_comments(comments: List[Dict[str, str]]) -> None:
 
 
 def add_comment(post_id: int, author: str, text: str) -> None:
-    """Add a comment to the specified post."""
+    """Add a comment to the specified post.
+
+    新規コメントを保存する際に一意な ``id`` を振っておく。既存コメント
+    ファイルには ``id`` フィールドが無い場合もあるため、最大値から
+    採番する形で互換性を保つ。
+    """
+
     comments = load_comments()
+    next_id = max((c.get("id", 0) for c in comments), default=0) + 1
     comments.append(
         {
+            "id": next_id,
             "post_id": post_id,
             "author": author,
             "text": text,
@@ -588,6 +609,50 @@ def add_comment(post_id: int, author: str, text: str) -> None:
     save_comments(comments)
 
 
+def update_comment(comment_id: int, text: str) -> bool:
+    """Update an existing comment text.
+
+    Parameters
+    ----------
+    comment_id : int
+        ID of the comment to update.
+    text : str
+        New comment body.
+
+    Returns
+    -------
+    bool
+        ``True`` if the comment existed and was updated.
+    """
+
+    comments = load_comments()
+    updated = False
+    for c in comments:
+        if c.get("id") == comment_id:
+            c["text"] = text
+            updated = True
+            break
+    if updated:
+        save_comments(comments)
+    return updated
+
+
 def get_comments(post_id: int) -> List[Dict[str, str]]:
-    """Return comments for a given post."""
-    return [c for c in load_comments() if c.get("post_id") == post_id]
+    """Return comments for a given post.
+
+    旧形式で ``id`` が保存されていないコメントが存在する場合は、ここで
+    採番して返す。ファイル自体は更新しないが、表示時に ID が無いことに
+    よるエラーを防ぐ。
+    """
+
+    results = []
+    next_id = 1
+    for c in load_comments():
+        if c.get("post_id") != post_id:
+            continue
+        if "id" not in c:
+            c = c.copy()
+            c["id"] = next_id
+            next_id += 1
+        results.append(c)
+    return results
