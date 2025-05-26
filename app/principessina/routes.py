@@ -11,6 +11,7 @@ from flask import (
     send_from_directory,
 )
 from werkzeug.utils import secure_filename
+from app.utils import allowed_file, file_size, MAX_ATTACHMENT_SIZE
 
 from . import bp
 from .forms import AddPrincipessinaForm, PrincipessinaFilterForm
@@ -46,8 +47,19 @@ def add():
     if form.validate_on_submit():
         filename = None
         if form.attachment.data and form.attachment.data.filename:
+            fname = form.attachment.data.filename
+            if not allowed_file(fname):
+                flash("許可されていないファイル形式です")
+                return render_template(
+                    "principessina/principessina_post_form.html", form=form, user=user
+                )
+            if file_size(form.attachment.data) > MAX_ATTACHMENT_SIZE:
+                flash("ファイルサイズが大きすぎます")
+                return render_template(
+                    "principessina/principessina_post_form.html", form=form, user=user
+                )
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            filename = secure_filename(form.attachment.data.filename)
+            filename = secure_filename(fname)
             form.attachment.data.save(os.path.join(UPLOAD_FOLDER, filename))
         utils.add_post(user["username"], form.body.data, filename)
         flash("投稿しました")
