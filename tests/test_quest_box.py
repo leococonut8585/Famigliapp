@@ -84,3 +84,22 @@ def test_reward_route():
         )
         assert res.status_code == 200
         assert utils.load_quests()[0]["reward"] == "100"
+
+
+def test_add_with_assigned_to():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.post(
+            "/quest_box/add",
+            data={"title": "t2", "body": "b2", "assigned_to": "user2"},
+            follow_redirects=True,
+        )
+        assert res.status_code == 200
+        quests = utils.load_quests()
+        assert quests[0]["assigned_to"] == "user2"
+        res = client.get("/quest_box/")
+        assert b"user2" in res.data
+

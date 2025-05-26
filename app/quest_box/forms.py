@@ -11,6 +11,7 @@ class QuestForm(FlaskForm):
     title = StringField("タイトル", validators=[DataRequired()])
     body = TextAreaField("内容", validators=[DataRequired()])
     due_date = DateField("期限", validators=[Optional()])
+    assigned_to = StringField("対象ユーザー", validators=[Optional()])
     submit = SubmitField("投稿")
 
 
