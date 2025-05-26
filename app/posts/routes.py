@@ -5,6 +5,8 @@ from flask import render_template, session, redirect, url_for, flash, request
 from . import bp
 from .forms import AddPostForm, PostFilterForm
 from app import utils
+from app.utils import send_email
+import config
 
 
 @bp.before_request
@@ -35,6 +37,8 @@ def add():
     form = AddPostForm()
     if form.validate_on_submit():
         utils.add_post(user["username"], form.category.data or "", form.text.data)
+        for u in config.USERS.values():
+            send_email("New post", form.text.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("posts.index"))
     return render_template("posts/post_form.html", form=form, user=user)

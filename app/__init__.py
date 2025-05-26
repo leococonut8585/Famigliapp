@@ -5,12 +5,15 @@ from typing import Optional
 try:
     from flask_sqlalchemy import SQLAlchemy
     from flask_migrate import Migrate
+    from flask_mail import Mail
 except Exception:  # pragma: no cover - optional dependency
     SQLAlchemy = None  # type: ignore
     Migrate = None  # type: ignore
+    Mail = None  # type: ignore
 
 db = SQLAlchemy() if SQLAlchemy else None  # type: ignore
 _migrate = Migrate() if Migrate else None  # type: ignore
+mail = Mail() if Mail else None  # type: ignore
 
 
 def create_app() -> "Flask":
@@ -20,6 +23,9 @@ def create_app() -> "Flask":
 
     app = Flask(__name__)
     app.config.from_object("config")
+
+    if mail is not None:
+        mail.init_app(app)
 
     if db is not None:
         db.init_app(app)
