@@ -8,6 +8,7 @@ from flask import (
     flash,
     request,
 )
+from datetime import date
 
 from . import bp
 from .forms import QuestForm, RewardForm
@@ -111,3 +112,38 @@ def reward(quest_id: int):
         flash("保存しました")
         return redirect(url_for("quest_box.detail", quest_id=quest_id))
     return render_template("quest_box/order_create_form.html", form=form, user=user)
+
+
+@bp.route("/edit/<int:quest_id>", methods=["GET", "POST"])
+def edit(quest_id: int):
+    """Edit an existing quest entry."""
+    user = session.get("user")
+    if user["role"] != "admin":
+        flash("権限がありません")
+        return redirect(url_for("quest_box.detail", quest_id=quest_id))
+
+    quests = utils.load_quests()
+    quest = next((q for q in quests if q.get("id") == quest_id), None)
+    if not quest:
+        flash("該当IDがありません")
+        return redirect(url_for("quest_box.index"))
+
+    form = QuestForm(
+        title=quest.get("title"),
+        body=quest.get("body"),
+        due_date=date.fromisoformat(quest["due_date"]) if quest.get("due_date") else None,
+        assigned_to=quest.get("assigned_to", ""),
+    )
+
+    if form.validate_on_submit():
+        utils.update_quest(
+            quest_id,
+            form.title.data,
+            form.body.data,
+            form.due_date.data,
+            form.assigned_to.data or "",
+        )
+        flash("保存しました")
+        return redirect(url_for("quest_box.detail", quest_id=quest_id))
+
+    return render_template("quest_box/quest_create_form.html", form=form, user=user)

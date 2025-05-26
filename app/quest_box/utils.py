@@ -82,3 +82,45 @@ def set_reward(quest_id, reward):
             save_quests(quests)
             return True
     return False
+
+
+def update_quest(
+    quest_id: int,
+    title: str,
+    body: str,
+    due_date: Optional[date] = None,
+    assigned_to: str = "",
+) -> bool:
+    """Update an existing quest entry.
+
+    Parameters
+    ----------
+    quest_id : int
+        ID of the quest to update.
+    title : str
+        Updated title.
+    body : str
+        Updated body text.
+    due_date : Optional[date], optional
+        New due date, by default ``None``.
+    assigned_to : str, optional
+        Assigned user, by default ``""``.
+
+    Returns
+    -------
+    bool
+        ``True`` if quest existed and was updated.
+    """
+
+    quests = load_quests()
+    for q in quests:
+        if q.get("id") == quest_id:
+            q["title"] = title
+            q["body"] = body
+            q["due_date"] = (
+                due_date.isoformat() if hasattr(due_date, "isoformat") and due_date else None
+            )
+            q["assigned_to"] = assigned_to
+            save_quests(quests)
+            return True
+    return False
