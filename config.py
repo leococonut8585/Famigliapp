@@ -26,3 +26,4 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 MAIL_SERVER = "localhost"
 MAIL_PORT = 25
 MAIL_SENDER = "famigliapp@example.com"
+LINE_NOTIFY_TOKEN = ""

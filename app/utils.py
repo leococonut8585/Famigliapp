@@ -5,6 +5,8 @@ from typing import Dict, Optional, List, Tuple
 from datetime import datetime, timedelta
 import smtplib
 from email.message import EmailMessage
+import urllib.request
+import urllib.parse
 
 try:
     from flask_mail import Message
@@ -51,6 +53,26 @@ def send_email(subject: str, body: str, to: str) -> None:
     msg.set_content(body)
     with smtplib.SMTP(getattr(config, "MAIL_SERVER", "localhost"), getattr(config, "MAIL_PORT", 25)) as smtp:
         smtp.send_message(msg)
+    send_line_notify(f"{subject}\n{body}")
+
+
+def send_line_notify(message: str) -> None:
+    """Send notification via LINE Notify if token is configured."""
+
+    token = getattr(config, "LINE_NOTIFY_TOKEN", "")
+    if not token:
+        return
+    data = urllib.parse.urlencode({"message": message}).encode()
+    req = urllib.request.Request(
+        "https://notify-api.line.me/api/notify",
+        data=data,
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):  # pragma: no cover - network
+            pass
+    except Exception:
+        pass
 
 
 def _use_db() -> bool:
