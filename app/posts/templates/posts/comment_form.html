@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ 'コメント編集' if edit else 'コメント追加' }}</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.text.label }}<br>{{ form.text(rows=3, cols=40) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}
