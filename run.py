@@ -12,6 +12,7 @@ from app.resoconto import utils as resoconto_utils
 from app.resoconto.tasks import start_scheduler
 from app.intrattenimento.tasks import start_scheduler as start_intrattenimento_scheduler
 from app.lezzione.tasks import start_scheduler as start_lezzione_scheduler
+from app.principessina.tasks import start_scheduler as start_principessina_scheduler
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
 from app.lezzione import utils as lezzione_utils
@@ -1020,6 +1021,7 @@ def main():
     start_scheduler()
     start_intrattenimento_scheduler()
     start_lezzione_scheduler()
+    start_principessina_scheduler()
     username = input("ユーザー名: ")
     password = getpass.getpass("パスワード: ")
     user = utils.login(username, password)
