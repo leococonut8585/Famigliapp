@@ -482,8 +482,9 @@ def add_principessina_post(user: Dict[str, str]) -> None:
 def show_quests() -> None:
     quests = quest_utils.load_quests()
     for q in quests:
+        due = f" (期限: {q['due_date']})" if q.get("due_date") else ""
         print(
-            f"[{q['id']}] {q['title']} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
+            f"[{q['id']}] {q['title']}{due} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
         )
 
 
