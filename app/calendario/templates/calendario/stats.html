@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>勤務統計</h1>
+<form method="get">
+    {{ form.start.label }} {{ form.start() }}
+    {{ form.end.label }} {{ form.end() }}
+    {{ form.submit() }}
+</form>
+<table>
+<tr><th>従業員</th><th>勤務日数</th>{% if stats and stats.values()|list and stats.values()|list[0].get('off_days') is not none %}<th>休日数</th>{% endif %}</tr>
+{% for emp, data in stats.items() %}
+<tr><td>{{ emp }}</td><td>{{ data['work_days'] }}</td>{% if data.get('off_days') is not none %}<td>{{ data['off_days'] }}</td>{% endif %}</tr>
+{% endfor %}
+</table>
+<p><a href="{{ url_for('calendario.index') }}">戻る</a></p>
+{% endblock %}

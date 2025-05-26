@@ -12,7 +12,7 @@ from flask import (
 )
 
 from . import bp
-from .forms import EventForm
+from .forms import EventForm, StatsForm
 from . import utils
 
 
@@ -83,4 +83,21 @@ def assign(event_id: int):
     else:
         flash("該当IDがありません")
     return redirect(url_for("calendario.index"))
+
+
+@bp.route("/stats", methods=["GET", "POST"])
+def stats():
+    """Show work/off day statistics for employees."""
+
+    user = session.get("user")
+    form = StatsForm(request.values)
+    start = form.start.data
+    end = form.end.data
+    stats = utils.compute_employee_stats(start=start, end=end)
+    return render_template(
+        "calendario/stats.html",
+        form=form,
+        stats=stats,
+        user=user,
+    )
 
