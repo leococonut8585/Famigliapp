@@ -54,6 +54,7 @@ def send_email(subject: str, body: str, to: str) -> None:
     with smtplib.SMTP(getattr(config, "MAIL_SERVER", "localhost"), getattr(config, "MAIL_PORT", 25)) as smtp:
         smtp.send_message(msg)
     send_line_notify(f"{subject}\n{body}")
+    send_pushbullet_notify(subject, body)
 
 
 def send_line_notify(message: str) -> None:
@@ -67,6 +68,25 @@ def send_line_notify(message: str) -> None:
         "https://notify-api.line.me/api/notify",
         data=data,
         headers={"Authorization": f"Bearer {token}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):  # pragma: no cover - network
+            pass
+    except Exception:
+        pass
+
+
+def send_pushbullet_notify(title: str, body: str) -> None:
+    """Send notification via Pushbullet if token is configured."""
+
+    token = getattr(config, "PUSHBULLET_TOKEN", "")
+    if not token:
+        return
+    data = json.dumps({"type": "note", "title": title, "body": body}).encode()
+    req = urllib.request.Request(
+        "https://api.pushbullet.com/v2/pushes",
+        data=data,
+        headers={"Access-Token": token, "Content-Type": "application/json"},
     )
     try:
         with urllib.request.urlopen(req, timeout=10):  # pragma: no cover - network
