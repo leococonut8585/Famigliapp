@@ -2,7 +2,7 @@ import getpass
 import os
 import shutil
 import json
-from typing import Dict
+from typing import Dict, List
 from datetime import datetime
 
 from app import utils
@@ -1020,9 +1020,50 @@ def show_calendario_rules() -> None:
     print(json.dumps(rules, ensure_ascii=False, indent=2))
 
 
+def _parse_pairs(text: str) -> List[List[str]]:
+    pairs = []
+    for item in text.split(','):
+        names = [p.strip() for p in item.split('-') if p.strip()]
+        if len(names) >= 2:
+            pairs.append(names[:2])
+    return pairs
+
+
+def _parse_kv(text: str) -> Dict[str, str]:
+    result: Dict[str, str] = {}
+    for item in text.split(','):
+        if ':' not in item:
+            continue
+        k, v = item.split(':', 1)
+        k = k.strip()
+        v = v.strip()
+        if k and v:
+            result[k] = v
+    return result
+
+
+def _parse_kv_int(text: str) -> Dict[str, int]:
+    result: Dict[str, int] = {}
+    for item in text.split(','):
+        if ':' not in item:
+            continue
+        k, v = item.split(':', 1)
+        k = k.strip()
+        v = v.strip()
+        if not k or not v:
+            continue
+        try:
+            result[k] = int(v)
+        except ValueError:
+            pass
+    return result
+
+
 def edit_calendario_rules() -> None:
-    """主要なカレンダールールを編集する。"""
+    """カレンダールールを編集する。"""
+
     rules = calendario_utils.load_rules()
+
     try:
         max_days = input(
             f"連勤最大日数[{rules.get('max_consecutive_days', 5)}]: "
@@ -1037,6 +1078,37 @@ def edit_calendario_rules() -> None:
     except ValueError:
         print("数値を入力してください")
         return
+
+    current_forbidden = ','.join('-'.join(p) for p in rules.get('forbidden_pairs', []))
+    forbidden = input(
+        f"禁止組み合わせ[{current_forbidden}]: "
+    ).strip()
+    if forbidden:
+        rules['forbidden_pairs'] = _parse_pairs(forbidden)
+
+    current_required = ','.join('-'.join(p) for p in rules.get('required_pairs', []))
+    required = input(
+        f"必須組み合わせ[{current_required}]: "
+    ).strip()
+    if required:
+        rules['required_pairs'] = _parse_pairs(required)
+
+    current_emp_attr = ','.join(f"{k}:{v}" for k, v in rules.get('employee_attributes', {}).items())
+    emp_attrs = input(
+        f"従業員属性[{current_emp_attr}]: "
+    ).strip()
+    if emp_attrs:
+        rules['employee_attributes'] = _parse_kv(emp_attrs)
+
+    current_req_attr = ','.join(
+        f"{k}:{v}" for k, v in rules.get('required_attributes', {}).items()
+    )
+    req_attrs = input(
+        f"属性ごとの必要人数[{current_req_attr}]: "
+    ).strip()
+    if req_attrs:
+        rules['required_attributes'] = _parse_kv_int(req_attrs)
+
     calendario_utils.save_rules(rules)
     print("保存しました")
 

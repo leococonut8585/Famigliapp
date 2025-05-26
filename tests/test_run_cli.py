@@ -12,6 +12,7 @@ from app.quest_box import utils
 from app import utils as app_utils
 from app.resoconto import utils as resoconto_utils
 from app.intrattenimento import utils as intra_utils
+from app.calendario import utils as calendario_utils
 import run
 
 
@@ -176,3 +177,37 @@ def test_comment_post_cli(capsys):
     assert "投稿しました" in out
     comments = app_utils.get_comments(post_id)
     assert comments[0]["text"] == "good"
+
+
+def test_edit_calendario_rules_cli(tmp_path, capsys):
+    config.CALENDAR_RULES_FILE = os.path.join(tmp_path, "rules.json")
+    calendario_utils.RULES_PATH = Path(config.CALENDAR_RULES_FILE)
+    calendario_utils.save_rules(calendario_utils.DEFAULT_RULES.copy())
+
+    inputs = iter([
+        "6",  # max days
+        "2",  # min staff
+        "taro-hanako,alice-bob",  # forbidden pairs
+        "alice-bob",  # required pairs
+        "taro:A,hanako:B",  # employee attributes
+        "A:1,B:2",  # required attributes
+    ])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.edit_calendario_rules()
+    run.input = old_input
+
+    out = capsys.readouterr().out
+    assert "保存しました" in out
+
+    rules = calendario_utils.load_rules()
+    assert rules["max_consecutive_days"] == 6
+    assert rules["min_staff_per_day"] == 2
+    assert ["taro", "hanako"] in rules["forbidden_pairs"]
+    assert ["alice", "bob"] in rules["required_pairs"]
+    assert rules["employee_attributes"]["taro"] == "A"
+    assert rules["required_attributes"]["B"] == 2
