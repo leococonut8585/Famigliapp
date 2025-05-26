@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Resoconto 投稿</h1>
+<form method="post">
+    {{ form.csrf_token }}
+    {{ form.date.label }} {{ form.date() }}<br>
+    {{ form.body.label }} {{ form.body(rows=4, cols=40) }}<br>
+    {{ form.submit() }}
+</form>
+<p><a href="{{ url_for('resoconto.index') }}">戻る</a></p>
+{% endblock %}

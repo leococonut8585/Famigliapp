@@ -34,6 +34,7 @@ def create_app() -> "Flask":
     from .scatola_capriccio import bp as scatola_capriccio_bp
     from .quest_box import bp as quest_box_bp
     from .calendario import bp as calendario_bp
+    from .resoconto import bp as resoconto_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(punto_bp)
@@ -43,6 +44,7 @@ def create_app() -> "Flask":
     app.register_blueprint(scatola_capriccio_bp)
     app.register_blueprint(quest_box_bp)
     app.register_blueprint(calendario_bp)
+    app.register_blueprint(resoconto_bp)
 
     if db is not None:
         from . import models  # noqa: F401
