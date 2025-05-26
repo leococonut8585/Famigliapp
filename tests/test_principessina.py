@@ -66,3 +66,11 @@ def test_download_route(tmp_path):
         res = client.get("/principessina/download/file.txt")
         assert res.status_code == 200
 
+
+def test_filter_posts_case_insensitive():
+    utils.save_posts([])
+    utils.add_post("admin", "Hello")
+    res = utils.filter_posts(keyword="hello")
+    assert len(res) == 1
+    assert res[0]["body"] == "Hello"
+

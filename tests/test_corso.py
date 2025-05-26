@@ -68,3 +68,11 @@ def test_expired_hidden_for_user():
         res = client.get("/corso/")
         assert b"old" in res.data
 
+
+def test_filter_posts_case_insensitive():
+    utils.save_posts([])
+    utils.add_post("admin", "Hello", "World")
+    res = utils.filter_posts(keyword="hello")
+    assert len(res) == 1
+    assert res[0]["title"] == "Hello"
+

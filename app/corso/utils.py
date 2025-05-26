@@ -64,8 +64,11 @@ def filter_posts(author="", keyword="", include_expired=False):
     for p in posts:
         if author and p.get("author") != author:
             continue
-        if keyword and keyword not in (p.get("title", "") + p.get("body", "")):
-            continue
+        if keyword:
+            title = p.get("title", "")
+            body = p.get("body", "")
+            if keyword.lower() not in (title + body).lower():
+                continue
         end_date = p.get("end_date")
         if not include_expired and end_date:
             try:

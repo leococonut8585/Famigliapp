@@ -54,7 +54,7 @@ def filter_posts(author="", keyword=""):
     for p in posts:
         if author and p.get("author") != author:
             continue
-        if keyword and keyword not in p.get("body", ""):
+        if keyword and keyword.lower() not in p.get("body", "").lower():
             continue
         results.append(p)
     return results
