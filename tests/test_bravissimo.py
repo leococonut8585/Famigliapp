@@ -47,3 +47,24 @@ def test_add_requires_admin():
             sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
         res = client.post("/bravissimo/add", data={"text": "hello"}, follow_redirects=True)
         assert "権限がありません".encode("utf-8") in res.data
+
+
+def test_add_with_audio(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    audio_path = tmp_path / "test.wav"
+    audio_path.write_bytes(b"dummy")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        with open(audio_path, "rb") as f:
+            res = client.post(
+                "/bravissimo/add",
+                data={"text": "bravo", "audio": (f, "test.wav")},
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
+        assert res.status_code == 200
+        assert b"bravo" in res.data
+        assert b"<audio" in res.data
+    assert Path("static/uploads/test.wav").exists()

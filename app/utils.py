@@ -187,7 +187,7 @@ def save_posts(posts: List[Dict[str, str]]) -> None:
         json.dump(posts, f, ensure_ascii=False, indent=2)
 
 
-def add_post(author: str, category: str, text: str) -> None:
+def add_post(author: str, category: str, text: str, filename: Optional[str] = None) -> None:
     if _use_db():
         assert Post is not None and User is not None
         user = User.query.filter_by(username=author).first()  # type: ignore[attr-defined]
@@ -213,6 +213,8 @@ def add_post(author: str, category: str, text: str) -> None:
         "text": text,
         "timestamp": datetime.now().isoformat(timespec="seconds"),
     }
+    if filename:
+        post["filename"] = filename
     posts.append(post)
     save_posts(posts)
 
@@ -298,6 +300,7 @@ def filter_posts(
                     "category": p.category,
                     "text": p.text,
                     "timestamp": p.timestamp.isoformat(timespec="seconds"),
+                    "filename": None,
                 }
             )
         return results
