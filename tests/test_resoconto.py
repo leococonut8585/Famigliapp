@@ -66,3 +66,16 @@ def test_ranking_route():
         assert res.status_code == 200
         assert b"user1" in res.data
         assert b"user2" in res.data
+
+
+def test_export_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.add_report("user1", date.fromisoformat("2025-04-01"), "x")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/resoconto/export")
+        assert res.status_code == 200
+        assert res.headers["Content-Type"].startswith("text/csv")
+        assert "user1" in res.data.decode("utf-8")

@@ -1,4 +1,15 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from flask import (
+    Blueprint,
+    render_template,
+    session,
+    redirect,
+    url_for,
+    flash,
+    request,
+    make_response,
+)
+import io
+import csv
 from datetime import date
 from .forms import ResocontoForm
 from . import utils
@@ -69,3 +80,30 @@ def rankings():
 
     ranking = utils.get_ranking(start=start, end=end)
     return render_template('resoconto/resoconto_ranking.html', ranking=ranking, user=user)
+
+
+@bp.route('/export')
+def export_csv():
+    """報告履歴をCSVダウンロードする。管理者専用。"""
+
+    user = session.get('user')
+    if user.get('role') != 'admin':
+        flash('権限がありません')
+        return redirect(url_for('resoconto.index'))
+
+    reports = utils.load_reports()
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(['id', 'date', 'author', 'body', 'timestamp'])
+    for r in reports:
+        writer.writerow([
+            r.get('id'),
+            r.get('date', ''),
+            r.get('author', ''),
+            r.get('body', ''),
+            r.get('timestamp', ''),
+        ])
+    response = make_response(buf.getvalue())
+    response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    response.headers['Content-Disposition'] = 'attachment; filename=resoconto.csv'
+    return response

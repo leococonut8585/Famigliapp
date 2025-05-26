@@ -9,6 +9,7 @@ flask = pytest.importorskip("flask")
 
 import config
 from app.quest_box import utils
+from app.resoconto import utils as resoconto_utils
 import run
 
 
@@ -53,3 +54,25 @@ def test_edit_quest_cli(capsys):
     assert q["title"] == "new"
     assert q["due_date"] == "2031-01-01"
     assert q["assigned_to"] == "u2"
+
+
+def test_export_resoconto_csv(tmp_path, capsys):
+    resoconto_utils.save_reports([])
+    resoconto_utils.add_report("u1", date(2030, 1, 1), "body")
+    csv_path = tmp_path / "res.csv"
+
+    inputs = iter([str(csv_path)])
+
+    def fake_input(prompt=""):
+        return next(inputs)
+
+    old_input = run.input
+    run.input = fake_input
+    run.export_resoconto_csv()
+    run.input = old_input
+
+    out = capsys.readouterr().out
+    assert "エクスポートしました" in out
+    with open(csv_path, "r", encoding="utf-8") as f:
+        contents = f.read()
+    assert "u1" in contents
