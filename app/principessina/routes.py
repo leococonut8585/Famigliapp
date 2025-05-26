@@ -8,6 +8,7 @@ from flask import (
     url_for,
     flash,
     request,
+    send_from_directory,
 )
 from werkzeug.utils import secure_filename
 
@@ -66,5 +67,17 @@ def delete(post_id: int):
         flash("削除しました")
     else:
         flash("該当IDがありません")
+    return redirect(url_for("principessina.index"))
+
+
+@bp.route("/download/<path:filename>")
+def download(filename: str):
+    """添付ファイルのダウンロード."""
+
+    posts = utils.load_posts()
+    for p in posts:
+        if p.get("filename") == filename:
+            return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+    flash("ファイルが見つかりません")
     return redirect(url_for("principessina.index"))
 

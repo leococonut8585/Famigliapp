@@ -11,7 +11,7 @@
 {% for p in posts %}
     <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.body }}
         {% if p.filename %}
-            <a href="{{ url_for('static', filename='uploads/' + p.filename) }}">{{ p.filename }}</a>
+            <a href="{{ url_for('principessina.download', filename=p.filename) }}">{{ p.filename }}</a>
         {% endif %}
         {% if user.role == 'admin' %}
             <a href="{{ url_for('principessina.delete', post_id=p.id) }}">削除</a>
