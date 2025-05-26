@@ -415,3 +415,28 @@ def export_points_history_csv(path: str) -> None:
                     entry.get("O", 0),
                 ]
             )
+
+
+def get_points_history_summary(
+    start: Optional[datetime] = None, end: Optional[datetime] = None
+) -> Dict[str, List[int]]:
+    """Return aggregated points history for graphing.
+
+    The result contains ``labels`` (date strings), ``A`` values and ``O`` values
+    for each date within the range.
+    """
+
+    history = filter_points_history(start=start, end=end)
+    data: Dict[str, Dict[str, int]] = {}
+    for entry in history:
+        date_str = datetime.fromisoformat(entry.get("timestamp")).date().isoformat()
+        if date_str not in data:
+            data[date_str] = {"A": 0, "O": 0}
+        data[date_str]["A"] += entry.get("A", 0)
+        data[date_str]["O"] += entry.get("O", 0)
+
+    labels = sorted(data.keys())
+    a_values = [data[d]["A"] for d in labels]
+    o_values = [data[d]["O"] for d in labels]
+
+    return {"labels": labels, "A": a_values, "O": o_values}

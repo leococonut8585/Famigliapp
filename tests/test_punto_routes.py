@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from datetime import datetime
 
 import config
 from app import create_app, utils
@@ -78,3 +79,20 @@ def test_export_history_csv(tmp_path):
         assert res.status_code == 200
         assert res.headers["Content-Type"].startswith("text/csv")
         assert b"timestamp" in res.data
+
+
+def test_graph_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    ts = datetime(2021, 6, 1, 10, 0, 0)
+    utils.log_points_change("u1", 1, 0, ts)
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "admin@example.com"}
+        res = client.post(
+            "/punto/graph",
+            data={"start": "2021-06-01", "end": "2021-06-02"},
+        )
+        assert res.status_code == 200
+        assert b"pointsChart" in res.data
+        assert b"2021-06-01" in res.data

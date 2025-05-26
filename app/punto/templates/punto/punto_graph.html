@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>ポイント推移グラフ</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.start.label }} {{ form.start(size=12) }}</p>
+    <p>{{ form.end.label }} {{ form.end(size=12) }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+<canvas id="pointsChart" width="400" height="200"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = {{ labels|tojson }};
+    const dataA = {{ a_data|tojson }};
+    const dataO = {{ o_data|tojson }};
+    const ctx = document.getElementById('pointsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {label: 'A', data: dataA, borderColor: 'blue', fill: false},
+                {label: 'O', data: dataO, borderColor: 'red', fill: false}
+            ]
+        }
+    });
+</script>
+<p><a href="{{ url_for('punto.dashboard') }}">戻る</a></p>
+{% endblock %}
