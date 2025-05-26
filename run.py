@@ -1,4 +1,6 @@
 import getpass
+import os
+import shutil
 from typing import Dict
 from datetime import datetime
 
@@ -9,6 +11,10 @@ from app.resoconto import utils as resoconto_utils
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
 from app.lezzione import utils as lezzione_utils
+from app.bravissimo import utils as bravissimo_utils
+from app.scatola_capriccio import utils as scatola_capriccio_utils
+from app.monsignore import utils as monsignore_utils
+from app.calendario import utils as calendario_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -47,6 +53,23 @@ def display_menu(user: Dict[str, str]):
         print("26. Lezzione一覧を見る")
         print("27. Lezzioneをスケジュールする")
         print("28. Lezzioneにフィードバックする")
+        print("29. Bravissimo を見る")
+        if user["role"] == "admin":
+            print("30. Bravissimo に投稿する")
+            print("31. Bravissimo 投稿を削除する")
+        if user["role"] == "admin":
+            print("32. Scatola Capriccio を見る")
+        print("33. Scatola Capriccio に投稿する")
+        print("34. Monsignore を見る")
+        print("35. Monsignore に投稿する")
+        if user["role"] == "admin":
+            print("36. Monsignore 投稿を削除する")
+        print("37. カレンダーを見る")
+        print("38. カレンダーにイベント追加")
+        if user["role"] == "admin":
+            print("39. カレンダーのイベント削除")
+        print("40. カレンダーのイベント移動")
+        print("41. カレンダーの担当者割当")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -123,6 +146,47 @@ def display_menu(user: Dict[str, str]):
             schedule_lezzione(user)
         elif choice == "28":
             add_lezzione_feedback_cli(user)
+        elif choice == "29":
+            show_bravissimo_posts(user)
+        elif choice == "30":
+            if user["role"] == "admin":
+                add_bravissimo_post(user)
+            else:
+                print("権限がありません")
+        elif choice == "31":
+            if user["role"] == "admin":
+                delete_bravissimo_post()
+            else:
+                print("権限がありません")
+        elif choice == "32":
+            if user["role"] == "admin":
+                show_scatola_capriccio_posts(user)
+            else:
+                print("権限がありません")
+        elif choice == "33":
+            add_scatola_capriccio_post(user)
+        elif choice == "34":
+            show_monsignore_posts(user)
+        elif choice == "35":
+            add_monsignore_post(user)
+        elif choice == "36":
+            if user["role"] == "admin":
+                delete_monsignore_post()
+            else:
+                print("権限がありません")
+        elif choice == "37":
+            show_calendario_events()
+        elif choice == "38":
+            add_calendario_event(user)
+        elif choice == "39":
+            if user["role"] == "admin":
+                delete_calendario_event()
+            else:
+                print("権限がありません")
+        elif choice == "40":
+            move_calendario_event()
+        elif choice == "41":
+            assign_calendario_employee()
         elif choice == "0":
             break
         else:
@@ -519,6 +583,167 @@ def add_lezzione_feedback_cli(user: Dict[str, str]) -> None:
     else:
         print("該当IDがありません")
 
+
+def show_bravissimo_posts(user: Dict[str, str]) -> None:
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    posts = bravissimo_utils.filter_posts(author=author, keyword=keyword)
+    for p in posts:
+        fname = p.get("filename", "")
+        text = p.get("text", p.get("body", ""))
+        print(f"[{p['id']}] {p['timestamp']} {p['author']} {fname} {text}")
+
+
+def add_bravissimo_post(user: Dict[str, str]) -> None:
+    text = input("内容: ").strip()
+    audio = input("音声ファイルパス(空欄はなし): ").strip()
+    filename = None
+    if audio:
+        os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
+        fname = os.path.basename(audio)
+        dest = os.path.join("static", "uploads", fname)
+        try:
+            shutil.copy(audio, dest)
+            filename = fname
+        except Exception as e:
+            print("ファイルを保存できません", e)
+            return
+    bravissimo_utils.add_post(user["username"], text, filename)
+    print("投稿しました")
+
+
+def delete_bravissimo_post() -> None:
+    try:
+        post_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if bravissimo_utils.delete_post(post_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
+
+
+def show_scatola_capriccio_posts(user: Dict[str, str]) -> None:
+    posts = scatola_capriccio_utils.load_posts()
+    for p in posts:
+        print(f"[{p['id']}] {p['timestamp']} {p['author']} {p.get('body','')}")
+
+
+def add_scatola_capriccio_post(user: Dict[str, str]) -> None:
+    body = input("内容: ").strip()
+    if not body:
+        print("内容が空です")
+        return
+    scatola_capriccio_utils.add_post(user["username"], body)
+    print("投稿しました")
+
+
+def show_monsignore_posts(user: Dict[str, str]) -> None:
+    author = input("投稿者(空欄は全て): ").strip()
+    keyword = input("検索語(空欄は全て): ").strip()
+    posts = monsignore_utils.filter_posts(author=author, keyword=keyword)
+    for p in posts:
+        fname = p.get("filename", "")
+        print(
+            f"[{p['id']}] {p['timestamp']} {p['author']} {fname} {p.get('body','')}"
+        )
+
+
+def add_monsignore_post(user: Dict[str, str]) -> None:
+    body = input("本文: ").strip()
+    img = input("画像ファイルパス(空欄はなし): ").strip()
+    filename = None
+    if img:
+        os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
+        fname = os.path.basename(img)
+        dest = os.path.join("static", "uploads", fname)
+        try:
+            shutil.copy(img, dest)
+            filename = fname
+        except Exception as e:
+            print("ファイルを保存できません", e)
+            return
+    monsignore_utils.add_post(user["username"], body, filename)
+    print("投稿しました")
+
+
+def delete_monsignore_post() -> None:
+    try:
+        post_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if monsignore_utils.delete_post(post_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
+
+
+def show_calendario_events() -> None:
+    events = calendario_utils.load_events()
+    events.sort(key=lambda e: e.get("date"))
+    for e in events:
+        print(
+            f"[{e['id']}] {e['date']} {e['title']} {e.get('employee','')} {e.get('description','')}"
+        )
+
+
+def add_calendario_event(user: Dict[str, str]) -> None:
+    date_s = input("日付 YYYY-MM-DD: ").strip()
+    title = input("タイトル: ").strip()
+    description = input("説明: ").strip()
+    employee = input("担当者: ").strip()
+    try:
+        d = datetime.strptime(date_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    calendario_utils.add_event(d, title, description, employee)
+    print("追加しました")
+
+
+def delete_calendario_event() -> None:
+    try:
+        event_id = int(input("削除するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    if calendario_utils.delete_event(event_id):
+        print("削除しました")
+    else:
+        print("該当IDがありません")
+
+
+def move_calendario_event() -> None:
+    try:
+        event_id = int(input("移動するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    date_s = input("新しい日付 YYYY-MM-DD: ").strip()
+    try:
+        new_date = datetime.strptime(date_s, "%Y-%m-%d").date()
+    except ValueError:
+        print("日付の形式が正しくありません")
+        return
+    if calendario_utils.move_event(event_id, new_date):
+        print("移動しました")
+    else:
+        print("該当IDがありません")
+
+
+def assign_calendario_employee() -> None:
+    try:
+        event_id = int(input("担当を設定するID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    employee = input("担当者: ").strip()
+    if calendario_utils.assign_employee(event_id, employee):
+        print("更新しました")
+    else:
+        print("該当IDがありません")
 
 def main():
     username = input("ユーザー名: ")
