@@ -493,3 +493,59 @@ def get_points_history_summary(
     o_values = [data[d]["O"] for d in labels]
 
     return {"labels": labels, "A": a_values, "O": o_values}
+
+
+def get_growth_ranking(metric: str = "U", period: str = "weekly") -> List[Tuple[str, float]]:
+    """Return ranking based on growth rate of the specified metric.
+
+    The growth rate is calculated by comparing the total gain in the current
+    period with that of the previous period. If the previous period total is
+    zero, the rate is treated as infinite when the current total is positive.
+    """
+
+    metric = metric.upper()
+    period = period.lower()
+
+    if period == "weekly":
+        days = 7
+    elif period == "monthly":
+        days = 30
+    elif period == "yearly":
+        days = 365
+    else:  # pragma: no cover - invalid period
+        raise ValueError("invalid period")
+
+    end = datetime.now()
+    start = end - timedelta(days=days)
+    prev_start = start - timedelta(days=days)
+    prev_end = start - timedelta(seconds=1)
+
+    current = filter_points_history(start=start, end=end)
+    previous = filter_points_history(start=prev_start, end=prev_end)
+
+    def accumulate(entries: List[Dict[str, str]]) -> Dict[str, int]:
+        data: Dict[str, int] = {}
+        for e in entries:
+            val = 0
+            if metric == "U":
+                val = e.get("A", 0) - e.get("O", 0)
+            else:
+                val = e.get(metric, 0)
+            user = e.get("username")
+            data[user] = data.get(user, 0) + val
+        return data
+
+    current_totals = accumulate(current)
+    prev_totals = accumulate(previous)
+
+    ranking: List[Tuple[str, float]] = []
+    for user, cur in current_totals.items():
+        prev = prev_totals.get(user, 0)
+        if prev == 0:
+            rate = float("inf") if cur > 0 else 0.0
+        else:
+            rate = (cur - prev) / abs(prev)
+        ranking.append((user, rate))
+
+    ranking.sort(key=lambda x: x[1], reverse=True)
+    return ranking

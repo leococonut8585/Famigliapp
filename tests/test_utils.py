@@ -224,3 +224,27 @@ def test_get_points_history_summary():
     assert summary["labels"] == ["2021-06-01", "2021-06-02"]
     assert summary["A"] == [3, -1]
     assert summary["O"] == [1, 2]
+
+
+def test_get_growth_ranking(monkeypatch):
+    """Verify growth rate ranking calculation."""
+
+    # Prepare history for two weeks
+    now = datetime(2021, 7, 15, 12, 0, 0)
+    week_ago = now - timedelta(days=7)
+    two_weeks_ago = now - timedelta(days=14)
+
+    utils.log_points_change("u1", 2, 0, two_weeks_ago)
+    utils.log_points_change("u1", 1, 0, week_ago)
+    utils.log_points_change("u2", 1, 0, two_weeks_ago)
+    utils.log_points_change("u2", 3, 0, week_ago)
+
+    class DummyDateTime(datetime):
+        @classmethod
+        def now(cls):  # type: ignore[override]
+            return now
+
+    monkeypatch.setattr(utils, "datetime", DummyDateTime)
+
+    ranking = utils.get_growth_ranking("A", "weekly")
+    assert ranking[0][0] == "u2"
