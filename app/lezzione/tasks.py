@@ -1,11 +1,19 @@
-"""Tasks for Lezzione module."""
+"""Background tasks for Lezzione blueprint."""
 
-from datetime import date
+from datetime import date, timedelta
 from typing import List, Dict, Optional
+
+try:  # pragma: no cover - optional dependency
+    from apscheduler.schedulers.background import BackgroundScheduler
+except Exception:  # pragma: no cover - optional dependency
+    BackgroundScheduler = None  # type: ignore
 
 import config
 from app.utils import send_email
 from . import utils
+
+
+scheduler = BackgroundScheduler() if BackgroundScheduler else None  # type: ignore
 
 
 def notify_pending_feedback(
@@ -47,3 +55,18 @@ def notify_pending_feedback(
             notified.append(entry)
 
     return notified
+
+
+def start_scheduler() -> None:
+    """Start APScheduler job to send daily feedback reminders."""
+
+    if scheduler is None:
+        return
+
+    if not scheduler.get_jobs():
+        scheduler.add_job(
+            lambda: notify_pending_feedback(date.today() - timedelta(days=7)),
+            "cron",
+            hour=9,
+        )
+        scheduler.start()

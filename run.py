@@ -11,6 +11,7 @@ from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
 from app.resoconto.tasks import start_scheduler
 from app.intrattenimento.tasks import start_scheduler as start_intrattenimento_scheduler
+from app.lezzione.tasks import start_scheduler as start_lezzione_scheduler
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
 from app.lezzione import utils as lezzione_utils
@@ -997,6 +998,7 @@ def edit_calendario_rules() -> None:
 def main():
     start_scheduler()
     start_intrattenimento_scheduler()
+    start_lezzione_scheduler()
     username = input("ユーザー名: ")
     password = getpass.getpass("パスワード: ")
     user = utils.login(username, password)
