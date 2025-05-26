@@ -785,17 +785,21 @@ def add_lezzione_feedback_cli(user: Dict[str, str]) -> None:
 
 
 def show_bravissimo_posts(user: Dict[str, str]) -> None:
-    author = input("投稿者(空欄は全て): ").strip()
-    keyword = input("検索語(空欄は全て): ").strip()
-    posts = bravissimo_utils.filter_posts(author=author, keyword=keyword)
+    author = input('投稿者(空欄は全て): ').strip()
+    target = input('対象ユーザー(空欄は全て): ').strip()
+    keyword = input('検索語(空欄は全て): ').strip()
+    posts = bravissimo_utils.filter_posts(author=author, keyword=keyword, target=target)
     for p in posts:
-        fname = p.get("filename", "")
-        text = p.get("text", p.get("body", ""))
-        print(f"[{p['id']}] {p['timestamp']} {p['author']} {fname} {text}")
+        fname = p.get('filename', '')
+        text = p.get('text', p.get('body', ''))
+        tgt = p.get('target', '')
+        target_str = f' -> {tgt}' if tgt else ''
+        print(f"[{p['id']}] {p['timestamp']} {p['author']}{target_str} {fname} {text}")
 
 
 def add_bravissimo_post(user: Dict[str, str]) -> None:
     text = input("内容: ").strip()
+    target = input("対象ユーザー: ").strip()
     audio = input("音声ファイルパス(空欄はなし): ").strip()
     filename = None
     if audio:
@@ -808,7 +812,7 @@ def add_bravissimo_post(user: Dict[str, str]) -> None:
         except Exception as e:
             print("ファイルを保存できません", e)
             return
-    bravissimo_utils.add_post(user["username"], text, filename)
+    bravissimo_utils.add_post(user["username"], text, filename, target=target)
     print("投稿しました")
 
 

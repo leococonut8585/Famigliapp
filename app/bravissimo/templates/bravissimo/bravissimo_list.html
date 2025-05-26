@@ -4,12 +4,13 @@
 <h1>Bravissimo!</h1>
 <form method="get">
     {{ form.author.label }} {{ form.author(size=10) }}
+    {{ form.target.label }} {{ form.target(size=10) }}
     {{ form.keyword.label }} {{ form.keyword(size=10) }}
     {{ form.submit() }}
 </form>
 <ul>
 {% for p in posts %}
-    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.text }}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }}{% if p.target %} → {{ p.target }}{% endif %} {{ p.text }}
         {% if p.filename %}
             <audio controls src="{{ url_for('static', filename='uploads/' + p.filename) }}"></audio>
         {% endif %}

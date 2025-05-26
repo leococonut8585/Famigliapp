@@ -68,3 +68,16 @@ def test_add_with_audio(tmp_path):
         assert b"bravo" in res.data
         assert b"<audio" in res.data
     assert Path("static/uploads/test.wav").exists()
+
+
+def test_filter_by_target():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        client.post("/bravissimo/add", data={"text": "nice", "target": "user1"}, follow_redirects=True)
+        res = client.get("/bravissimo/?target=user1")
+        assert b"nice" in res.data
+        res = client.get("/bravissimo/?target=user2")
+        assert b"nice" not in res.data

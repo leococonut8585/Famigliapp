@@ -226,7 +226,13 @@ def save_posts(posts: List[Dict[str, str]]) -> None:
         json.dump(posts, f, ensure_ascii=False, indent=2)
 
 
-def add_post(author: str, category: str, text: str, filename: Optional[str] = None) -> None:
+def add_post(
+    author: str,
+    category: str,
+    text: str,
+    filename: Optional[str] = None,
+    extra: Optional[Dict[str, str]] = None,
+) -> None:
     if _use_db():
         assert Post is not None and User is not None
         user = User.query.filter_by(username=author).first()  # type: ignore[attr-defined]
@@ -254,6 +260,8 @@ def add_post(author: str, category: str, text: str, filename: Optional[str] = No
     }
     if filename:
         post["filename"] = filename
+    if extra:
+        post.update(extra)
     posts.append(post)
     save_posts(posts)
 
