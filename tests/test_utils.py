@@ -144,6 +144,13 @@ def test_filter_posts():
     assert future == []
 
 
+def test_filter_posts_case_insensitive():
+    utils.add_post("u1", "news", "Hello World")
+    res = utils.filter_posts(keyword="hello")
+    assert len(res) == 1
+    assert res[0]["author"] == "u1"
+
+
 def test_update_post():
     utils.add_post("u1", "news", "old")
     post_id = utils.load_posts()[0]["id"]
