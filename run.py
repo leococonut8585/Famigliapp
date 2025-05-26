@@ -86,6 +86,7 @@ def display_menu(user: Dict[str, str]):
             print("48. Scatola Capriccio アンケートを見る")
             print("49. Scatola Capriccio アンケートを投稿")
         print("50. 上昇率ランキングを見る")
+        print("51. 投稿にコメントする")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -239,6 +240,8 @@ def display_menu(user: Dict[str, str]):
                 print("権限がありません")
         elif choice == "50":
             show_growth_ranking()
+        elif choice == "51":
+            comment_post_cli(user)
         elif choice == "0":
             break
         else:
@@ -347,6 +350,22 @@ def edit_post_cli(user: Dict[str, str]):
         return
     utils.update_post(post_id, category, text)
     print("更新しました")
+
+
+def comment_post_cli(user: Dict[str, str]) -> None:
+    """Add a comment to a post."""
+
+    try:
+        post_id = int(input("コメントする投稿ID: "))
+    except ValueError:
+        print("数値を入力してください")
+        return
+    text = input("コメント: ").strip()
+    if not text:
+        print("コメントが空です")
+        return
+    utils.add_comment(post_id, user["username"], text)
+    print("投稿しました")
 
 
 def show_ranking():

@@ -16,10 +16,12 @@ def setup_module(module):
     config.POINTS_FILE = os.path.join(_tmpdir.name, "points.json")
     config.POSTS_FILE = os.path.join(_tmpdir.name, "posts.json")
     config.POINTS_HISTORY_FILE = os.path.join(_tmpdir.name, "points_history.json")
+    config.COMMENTS_FILE = os.path.join(_tmpdir.name, "comments.json")
 
     utils.POINTS_PATH = Path(config.POINTS_FILE)
     utils.POSTS_PATH = Path(config.POSTS_FILE)
     utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+    utils.COMMENTS_PATH = Path(config.COMMENTS_FILE)
 
     utils.save_points({"user1": {"A": 0, "O": 0}})
 
@@ -71,3 +73,21 @@ def test_edit_post_route():
         assert res.status_code == 200
         assert "更新しました".encode("utf-8") in res.data
         assert utils.load_posts()[0]["text"] == "updated"
+
+
+def test_add_comment_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        utils.add_post("user1", "cat", "body")
+        post_id = utils.load_posts()[0]["id"]
+        res = client.post(
+            f"/posts/comment/{post_id}",
+            data={"text": "c"},
+            follow_redirects=True,
+        )
+        assert res.status_code == 200
+        comments = utils.get_comments(post_id)
+        assert comments[0]["text"] == "c"

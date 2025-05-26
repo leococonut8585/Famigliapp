@@ -28,6 +28,7 @@ import config
 POINTS_PATH = Path(config.POINTS_FILE)
 POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
 POSTS_PATH = Path(config.POSTS_FILE)
+COMMENTS_PATH = Path(getattr(config, "COMMENTS_FILE", "comments.json"))
 
 
 def send_email(subject: str, body: str, to: str) -> None:
@@ -549,3 +550,36 @@ def get_growth_ranking(metric: str = "U", period: str = "weekly") -> List[Tuple[
 
     ranking.sort(key=lambda x: x[1], reverse=True)
     return ranking
+
+
+def load_comments() -> List[Dict[str, str]]:
+    """Load comments from storage."""
+    if COMMENTS_PATH.exists():
+        with open(COMMENTS_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_comments(comments: List[Dict[str, str]]) -> None:
+    """Save comments list."""
+    with open(COMMENTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(comments, f, ensure_ascii=False, indent=2)
+
+
+def add_comment(post_id: int, author: str, text: str) -> None:
+    """Add a comment to the specified post."""
+    comments = load_comments()
+    comments.append(
+        {
+            "post_id": post_id,
+            "author": author,
+            "text": text,
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+        }
+    )
+    save_comments(comments)
+
+
+def get_comments(post_id: int) -> List[Dict[str, str]]:
+    """Return comments for a given post."""
+    return [c for c in load_comments() if c.get("post_id") == post_id]
