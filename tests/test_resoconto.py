@@ -51,3 +51,18 @@ def test_delete_report_as_admin():
         res = client.get(f"/resoconto/delete/{report_id}", follow_redirects=True)
         assert res.status_code == 200
         assert utils.load_reports() == []
+
+
+def test_ranking_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.add_report("user1", date.fromisoformat("2025-03-01"), "a")
+    utils.add_report("user2", date.fromisoformat("2025-03-02"), "b")
+    utils.add_report("user1", date.fromisoformat("2025-03-03"), "c")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/resoconto/rankings")
+        assert res.status_code == 200
+        assert b"user1" in res.data
+        assert b"user2" in res.data

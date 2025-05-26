@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from datetime import date
 from .forms import ResocontoForm
 from . import utils
 
@@ -44,3 +45,27 @@ def delete(report_id: int):
     else:
         flash('該当IDがありません')
     return redirect(url_for('resoconto.index'))
+
+
+@bp.route('/rankings')
+def rankings():
+    """管理者向けの報告数ランキング表示。"""
+    user = session.get('user')
+    if user.get('role') != 'admin':
+        flash('権限がありません')
+        return redirect(url_for('resoconto.index'))
+
+    start_s = request.args.get('start', '')
+    end_s = request.args.get('end', '')
+    start = end = None
+    try:
+        if start_s:
+            start = date.fromisoformat(start_s)
+        if end_s:
+            end = date.fromisoformat(end_s)
+    except ValueError:
+        flash('日付の形式が正しくありません')
+        return redirect(url_for('resoconto.index'))
+
+    ranking = utils.get_ranking(start=start, end=end)
+    return render_template('resoconto/resoconto_ranking.html', ranking=ranking, user=user)
