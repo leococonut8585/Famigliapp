@@ -803,12 +803,8 @@ def add_bravissimo_post(user: Dict[str, str]) -> None:
     audio = input("音声ファイルパス(空欄はなし): ").strip()
     filename = None
     if audio:
-        os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
-        fname = os.path.basename(audio)
-        dest = os.path.join("static", "uploads", fname)
         try:
-            shutil.copy(audio, dest)
-            filename = fname
+            filename = utils.save_local_file(audio, os.path.join("static", "uploads"))
         except Exception as e:
             print("ファイルを保存できません", e)
             return
@@ -879,12 +875,8 @@ def add_monsignore_post(user: Dict[str, str]) -> None:
     img = input("画像ファイルパス(空欄はなし): ").strip()
     filename = None
     if img:
-        os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
-        fname = os.path.basename(img)
-        dest = os.path.join("static", "uploads", fname)
         try:
-            shutil.copy(img, dest)
-            filename = fname
+            filename = utils.save_local_file(img, os.path.join("static", "uploads"))
         except Exception as e:
             print("ファイルを保存できません", e)
             return

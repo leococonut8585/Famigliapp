@@ -2,6 +2,9 @@ import csv
 import json
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple
+import uuid
+import shutil
+import re
 from datetime import datetime, timedelta
 import smtplib
 from email.message import EmailMessage
@@ -63,6 +66,85 @@ def file_size(fs) -> int:
     size = fs.stream.tell()
     fs.stream.seek(pos)
     return size
+
+
+_filename_strip_re = re.compile(r"[^A-Za-z0-9_.-]")
+
+
+def secure_filename(name: str) -> str:
+    """A simplified version of Werkzeug's ``secure_filename``."""
+
+    name = os.path.basename(name)
+    name = name.replace(" ", "_")
+    name = _filename_strip_re.sub("", name)
+    return name[:100]
+
+
+def save_uploaded_file(fs, upload_folder: str) -> str:
+    """Validate and save an uploaded ``FileStorage`` object.
+
+    Parameters
+    ----------
+    fs : FileStorage
+        Uploaded file object.
+    upload_folder : str
+        Destination directory.
+
+    Returns
+    -------
+    str
+        Saved file name (without path).
+
+    Raises
+    ------
+    ValueError
+        If file type is not allowed or size exceeds the limit.
+    """
+
+    if not fs or not fs.filename:
+        raise ValueError("ファイルが指定されていません")
+    if not allowed_file(fs.filename):
+        raise ValueError("許可されていないファイル形式です")
+    if file_size(fs) > MAX_ATTACHMENT_SIZE:
+        raise ValueError("ファイルサイズが大きすぎます")
+
+    os.makedirs(upload_folder, exist_ok=True)
+    filename = secure_filename(fs.filename)
+    unique = uuid.uuid4().hex
+    filename = f"{unique}_{filename}"
+    fs.save(os.path.join(upload_folder, filename))
+    return filename
+
+
+def save_local_file(path: str, upload_folder: str) -> str:
+    """Validate and copy a local file into ``upload_folder``.
+
+    Parameters
+    ----------
+    path : str
+        Source file path.
+    upload_folder : str
+        Destination directory.
+
+    Returns
+    -------
+    str
+        Saved file name.
+    """
+
+    if not os.path.isfile(path):
+        raise FileNotFoundError(path)
+    if not allowed_file(path):
+        raise ValueError("許可されていないファイル形式です")
+    if os.path.getsize(path) > MAX_ATTACHMENT_SIZE:
+        raise ValueError("ファイルサイズが大きすぎます")
+
+    os.makedirs(upload_folder, exist_ok=True)
+    filename = secure_filename(os.path.basename(path))
+    unique = uuid.uuid4().hex
+    dest = os.path.join(upload_folder, f"{unique}_{filename}")
+    shutil.copy(path, dest)
+    return os.path.basename(dest)
 
 
 def send_email(subject: str, body: str, to: str) -> None:
