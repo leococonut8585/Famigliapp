@@ -1,7 +1,7 @@
 import csv
 import json
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Set
 import uuid
 import shutil
 import re
@@ -80,7 +80,12 @@ def secure_filename(name: str) -> str:
     return name[:100]
 
 
-def save_uploaded_file(fs, upload_folder: str) -> str:
+def save_uploaded_file(
+    fs,
+    upload_folder: str,
+    allowed_exts: Optional[Set[str]] = None,
+    max_size: int = MAX_ATTACHMENT_SIZE,
+) -> str:
     """Validate and save an uploaded ``FileStorage`` object.
 
     Parameters
@@ -103,9 +108,13 @@ def save_uploaded_file(fs, upload_folder: str) -> str:
 
     if not fs or not fs.filename:
         raise ValueError("ファイルが指定されていません")
-    if not allowed_file(fs.filename):
+    ext_ok = allowed_file(fs.filename) if allowed_exts is None else (
+        "." in fs.filename
+        and fs.filename.rsplit(".", 1)[1].lower() in allowed_exts
+    )
+    if not ext_ok:
         raise ValueError("許可されていないファイル形式です")
-    if file_size(fs) > MAX_ATTACHMENT_SIZE:
+    if file_size(fs) > max_size:
         raise ValueError("ファイルサイズが大きすぎます")
 
     os.makedirs(upload_folder, exist_ok=True)
@@ -116,7 +125,12 @@ def save_uploaded_file(fs, upload_folder: str) -> str:
     return filename
 
 
-def save_local_file(path: str, upload_folder: str) -> str:
+def save_local_file(
+    path: str,
+    upload_folder: str,
+    allowed_exts: Optional[Set[str]] = None,
+    max_size: int = MAX_ATTACHMENT_SIZE,
+) -> str:
     """Validate and copy a local file into ``upload_folder``.
 
     Parameters
@@ -134,9 +148,12 @@ def save_local_file(path: str, upload_folder: str) -> str:
 
     if not os.path.isfile(path):
         raise FileNotFoundError(path)
-    if not allowed_file(path):
+    ext_ok = allowed_file(path) if allowed_exts is None else (
+        "." in path and path.rsplit(".", 1)[1].lower() in allowed_exts
+    )
+    if not ext_ok:
         raise ValueError("許可されていないファイル形式です")
-    if os.path.getsize(path) > MAX_ATTACHMENT_SIZE:
+    if os.path.getsize(path) > max_size:
         raise ValueError("ファイルサイズが大きすぎます")
 
     os.makedirs(upload_folder, exist_ok=True)

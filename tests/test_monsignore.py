@@ -56,3 +56,32 @@ def test_filter_posts_case_insensitive():
     res = utils.filter_posts(keyword="hello")
     assert len(res) == 1
     assert res[0]["body"] == "Hello"
+
+
+def test_add_sends_notifications(monkeypatch, tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    img = tmp_path / "img.png"
+    img.write_bytes(b"dummy")
+    sent = []
+
+    from app.monsignore import routes as mon_routes
+
+    def dummy_send(subject, body, to):
+        sent.append(to)
+
+    monkeypatch.setattr(mon_routes, "send_email", dummy_send)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        with open(img, "rb") as f:
+            client.post(
+                "/monsignore/add",
+                data={"body": "hello", "image": (f, "img.png")},
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
+
+    expected = {u["email"] for u in config.USERS.values()}
+    assert set(sent) == expected

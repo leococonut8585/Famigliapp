@@ -6,6 +6,10 @@ from pathlib import Path
 
 import config
 
+# Images only for Monsignore board
+ALLOWED_EXTS = {"png", "jpg", "jpeg", "gif"}
+MAX_SIZE = 10 * 1024 * 1024
+
 MONSIGNORE_PATH = Path(getattr(config, "MONSIGNORE_FILE", "monsignore.json"))
 
 
