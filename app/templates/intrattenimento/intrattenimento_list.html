@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Intrattenimento</h1>
+<form method="get">
+    {{ form.author.label }} {{ form.author(size=10) }}
+    {{ form.keyword.label }} {{ form.keyword(size=10) }}
+    {{ form.start_date.label }} {{ form.start_date(size=10) }}
+    {{ form.end_date.label }} {{ form.end_date(size=10) }}
+    {{ form.submit() }}
+</form>
+<ul>
+{% for p in posts %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.title }}
+        {% if p.filename %}
+            <a href="{{ url_for('intrattenimento.download', filename=p.filename) }}">{{ p.filename }}</a>
+        {% endif %}
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('intrattenimento.delete', post_id=p.id) }}">削除</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('intrattenimento.add') }}">投稿する</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
