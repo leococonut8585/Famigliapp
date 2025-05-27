@@ -1,8 +1,18 @@
 """Routes for Corso blueprint."""
 
 import os
-from flask import render_template, session, redirect, url_for, flash, request
-from app.utils import save_uploaded_file
+from datetime import datetime
+from flask import (
+    render_template,
+    session,
+    redirect,
+    url_for,
+    flash,
+    request,
+    send_from_directory,
+)
+from app.utils import save_uploaded_file, send_email
+import config
 
 from . import bp
 from .forms import AddCorsoForm, CorsoFilterForm
@@ -42,7 +52,12 @@ def add():
         filename = None
         if form.attachment.data and form.attachment.data.filename:
             try:
-                filename = save_uploaded_file(form.attachment.data, UPLOAD_FOLDER)
+                filename = save_uploaded_file(
+                    form.attachment.data,
+                    UPLOAD_FOLDER,
+                    utils.ALLOWED_EXTS,
+                    utils.MAX_SIZE,
+                )
             except ValueError as e:
                 flash(str(e))
                 return render_template("corso/corso_post_form.html", form=form, user=user)
@@ -53,6 +68,9 @@ def add():
             form.end_date.data,
             filename,
         )
+        for u in config.USERS.values():
+            if u.get("email"):
+                send_email("New Corso post", form.title.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("corso.index"))
     return render_template("corso/corso_post_form.html", form=form, user=user)
@@ -83,5 +101,26 @@ def delete(post_id: int):
         flash("削除しました")
     else:
         flash("該当IDがありません")
+    return redirect(url_for("corso.index"))
+
+
+@bp.route("/download/<path:filename>")
+def download(filename: str):
+    """Download an attached file if within valid period."""
+
+    user = session.get("user")
+    posts = utils.load_posts()
+    for p in posts:
+        if p.get("filename") == filename:
+            end_date = p.get("end_date")
+            if user.get("role") != "admin" and end_date:
+                try:
+                    if datetime.fromisoformat(end_date) < datetime.now():
+                        flash("公開期間が終了しています")
+                        return redirect(url_for("corso.index"))
+                except ValueError:
+                    pass
+            return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+    flash("ファイルが見つかりません")
     return redirect(url_for("corso.index"))
 

@@ -2,7 +2,8 @@
 
 import os
 from flask import render_template, session, redirect, url_for, flash, request
-from app.utils import save_uploaded_file
+from app.utils import save_uploaded_file, send_email
+import config
 
 from . import bp
 from .forms import AddMonsignoreForm, MonsignoreFilterForm
@@ -38,11 +39,19 @@ def add():
         filename = None
         if form.image.data and form.image.data.filename:
             try:
-                filename = save_uploaded_file(form.image.data, UPLOAD_FOLDER)
+                filename = save_uploaded_file(
+                    form.image.data,
+                    UPLOAD_FOLDER,
+                    utils.ALLOWED_EXTS,
+                    utils.MAX_SIZE,
+                )
             except ValueError as e:
                 flash(str(e))
                 return render_template("monsignore/monsignore_form.html", form=form, user=user)
         utils.add_post(user["username"], form.body.data, filename)
+        for u in config.USERS.values():
+            if u.get("email"):
+                send_email("New Monsignore post", form.body.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("monsignore.index"))
     return render_template("monsignore/monsignore_form.html", form=form, user=user)

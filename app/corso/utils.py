@@ -6,6 +6,17 @@ from pathlib import Path
 
 import config
 
+# Allow only documents and images for attachments
+ALLOWED_EXTS = {
+    "txt",
+    "pdf",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+}
+MAX_SIZE = 10 * 1024 * 1024
+
 CORSO_PATH = Path(getattr(config, "CORSO_FILE", "corso.json"))
 
 

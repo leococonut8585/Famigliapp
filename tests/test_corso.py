@@ -102,3 +102,44 @@ def test_reject_large_file():
         assert "ファイルサイズが大きすぎます".encode("utf-8") in res.data
         assert utils.load_posts() == []
 
+
+def test_download_requires_valid_period(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
+    filepath = os.path.join("static", "uploads", "file.txt")
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write("x")
+    past = datetime.now() - timedelta(days=1)
+    utils.add_post("admin", "t", "b", past.date(), "file.txt")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get("/corso/download/file.txt")
+        assert res.status_code == 302
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/corso/download/file.txt")
+        assert res.status_code == 200
+
+
+def test_add_sends_notifications(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    sent = []
+
+    from app.corso import routes as corso_routes
+
+    def dummy_send(subject, body, to):
+        sent.append(to)
+
+    monkeypatch.setattr(corso_routes, "send_email", dummy_send)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        client.post("/corso/add", data={"title": "t", "body": "b", "end_date": ""}, follow_redirects=True)
+
+    expected = {u["email"] for u in config.USERS.values()}
+    assert set(sent) == expected
+
