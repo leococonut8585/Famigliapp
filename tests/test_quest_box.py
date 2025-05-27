@@ -43,7 +43,7 @@ def test_add_and_list_quest():
 def test_accept_and_complete():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "q", "b", None)
+    utils.add_quest("user1", "q", "b", "", 0, None, [])
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -59,7 +59,7 @@ def test_accept_and_complete():
 def test_delete_route():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "x", "y", None)
+    utils.add_quest("user1", "x", "y", "", 0, None, [])
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -72,7 +72,7 @@ def test_delete_route():
 def test_reward_route():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "r", "b", None)
+    utils.add_quest("user1", "r", "b", "", 0, None, [])
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -94,12 +94,12 @@ def test_add_with_assigned_to():
             sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
         res = client.post(
             "/quest_box/add",
-            data={"title": "t2", "body": "b2", "assigned_to": "user2"},
+            data={"title": "t2", "body": "b2", "assigned_to": ["user2"]},
             follow_redirects=True,
         )
         assert res.status_code == 200
         quests = utils.load_quests()
-        assert quests[0]["assigned_to"] == "user2"
+        assert quests[0]["assigned_to"] == ["user2"]
         res = client.get("/quest_box/")
         assert b"user2" in res.data
 
@@ -107,19 +107,19 @@ def test_add_with_assigned_to():
 def test_edit_route():
     app = create_app()
     app.config["TESTING"] = True
-    utils.add_quest("user1", "orig", "body", None)
+    utils.add_quest("user1", "orig", "body", "", 0, None, [])
     quest_id = utils.load_quests()[0]["id"]
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
         res = client.post(
             f"/quest_box/edit/{quest_id}",
-            data={"title": "new", "body": "b", "due_date": "2030-05-01", "assigned_to": "u2"},
+            data={"title": "new", "body": "b", "due_date": "2030-05-01", "assigned_to": ["u2"]},
             follow_redirects=True,
         )
         assert res.status_code == 200
         q = utils.load_quests()[0]
         assert q["title"] == "new"
         assert q["due_date"] == "2030-05-01"
-        assert q["assigned_to"] == "u2"
+        assert q["assigned_to"] == ["u2"]
 

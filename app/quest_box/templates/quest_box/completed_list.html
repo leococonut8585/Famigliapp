@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>終了した依頼</h1>
+<ul>
+{% for q in quests %}
+    <li>[{{ q.id }}] {{ q.title }}
+        {% if q.due_date %}(期限: {{ q.due_date }}){% endif %}
+        <a href="{{ url_for('quest_box.detail', quest_id=q.id) }}">詳細</a>
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('quest_box.index') }}">戻る</a></p>
+{% endblock %}

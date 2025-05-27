@@ -6,8 +6,11 @@
     {{ form.hidden_tag() }}
     <p>{{ form.title.label }}<br>{{ form.title(size=40) }}</p>
     <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>
+    <p>{{ form.conditions.label }}<br>{{ form.conditions(rows=3, cols=40) }}</p>
+    <p>{{ form.capacity.label }}<br>{{ form.capacity() }}</p>
     <p>{{ form.due_date.label }}<br>{{ form.due_date() }}</p>
-    <p>{{ form.assigned_to.label }}<br>{{ form.assigned_to(size=20) }}</p>
+    <p>{{ form.assigned_to.label }}<br>{{ form.assigned_to() }}</p>
+    <p>{{ form.reward.label }}<br>{{ form.reward(size=20) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
 {% endblock %}

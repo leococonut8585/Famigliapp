@@ -31,8 +31,8 @@ def teardown_module(module):
 
 def test_show_quests_cli(capsys):
     utils.save_quests([])
-    utils.add_quest("u1", "t1", "b1", date(2030, 2, 3))
-    utils.add_quest("u2", "t2", "b2", None)
+    utils.add_quest("u1", "t1", "b1", "", 0, date(2030, 2, 3), [])
+    utils.add_quest("u2", "t2", "b2", "", 0, None, [])
     run.show_quests()
     out = capsys.readouterr().out.strip().splitlines()
     assert "(期限: 2030-02-03)" in out[0]
@@ -41,10 +41,10 @@ def test_show_quests_cli(capsys):
 
 def test_edit_quest_cli(capsys):
     utils.save_quests([])
-    utils.add_quest("u1", "orig", "b", None)
+    utils.add_quest("u1", "orig", "b", "", 0, None, [])
     qid = utils.load_quests()[0]["id"]
 
-    inputs = iter([str(qid), "new", "bb", "2031-01-01", "u2"])
+    inputs = iter([str(qid), "new", "bb", "", "0", "2031-01-01", "u2", ""])
 
     def fake_input(prompt=""):
         return next(inputs)
@@ -58,7 +58,7 @@ def test_edit_quest_cli(capsys):
     q = utils.load_quests()[0]
     assert q["title"] == "new"
     assert q["due_date"] == "2031-01-01"
-    assert q["assigned_to"] == "u2"
+    assert q["assigned_to"] == ["u2"]
 
 
 def test_export_resoconto_csv(tmp_path, capsys):

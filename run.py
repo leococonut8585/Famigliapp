@@ -657,7 +657,11 @@ def show_quests() -> None:
     quests = quest_utils.load_quests()
     for q in quests:
         due = f" (期限: {q['due_date']})" if q.get("due_date") else ""
-        assignee = f" (対象: {q['assigned_to']})" if q.get('assigned_to') else ""
+        if q.get('assigned_to'):
+            assignees = ",".join(q['assigned_to']) if isinstance(q['assigned_to'], list) else str(q['assigned_to'])
+            assignee = f" (対象: {assignees})"
+        else:
+            assignee = ""
         print(
             f"[{q['id']}] {q['title']}{due}{assignee} {q['author']} {q['status']} {q.get('accepted_by','')} {q.get('reward','')}"
         )
@@ -666,8 +670,13 @@ def show_quests() -> None:
 def add_quest_cli(user: Dict[str, str]) -> None:
     title = input("タイトル: ").strip()
     body = input("内容: ").strip()
+    conditions = input("参加条件: ").strip()
+    cap_s = input("募集人数(空欄は0): ").strip()
+    capacity = int(cap_s) if cap_s.isdigit() else 0
     due_s = input("期限 YYYY-MM-DD(空欄はなし): ").strip()
-    assigned_to = input("対象ユーザー(空欄はなし): ").strip()
+    assigned_to_s = input("対象ユーザー(カンマ区切り、空欄はなし): ").strip()
+    assigned_to = [u.strip() for u in assigned_to_s.split(",") if u.strip()] if assigned_to_s else []
+    reward = input("報酬(空欄可): ").strip() if user.get("role") == "admin" else ""
     due_date = None
     if due_s:
         try:
@@ -675,7 +684,16 @@ def add_quest_cli(user: Dict[str, str]) -> None:
         except ValueError:
             print("日付の形式が正しくありません")
             return
-    quest_utils.add_quest(user["username"], title, body, due_date, assigned_to)
+    quest_utils.add_quest(
+        user["username"],
+        title,
+        body,
+        conditions,
+        capacity,
+        due_date,
+        assigned_to,
+        reward,
+    )
     print("投稿しました")
 
 
@@ -744,13 +762,15 @@ def edit_quest_cli() -> None:
 
     title = input(f"タイトル[{quest.get('title','')}] : ").strip() or quest.get("title", "")
     body = input(f"内容[{quest.get('body','')}] : ").strip() or quest.get("body", "")
+    conditions = input(f"参加条件[{quest.get('conditions','')}] : ").strip() or quest.get("conditions", "")
+    cap_s = input(f"募集人数[{quest.get('capacity',0)}] : ").strip()
+    capacity = int(cap_s) if cap_s.isdigit() else quest.get('capacity', 0)
     due_s = input(
         f"期限 YYYY-MM-DD[{quest.get('due_date','')}] : "
     ).strip() or quest.get("due_date", "")
-    assigned_to = (
-        input(f"対象ユーザー[{quest.get('assigned_to','')}] : ").strip()
-        or quest.get("assigned_to", "")
-    )
+    assigned_to_s = input(f"対象ユーザー[{','.join(quest.get('assigned_to', []))}] : ").strip()
+    assigned_to = [u.strip() for u in assigned_to_s.split(',') if u.strip()] if assigned_to_s else quest.get('assigned_to', [])
+    reward = input(f"報酬[{quest.get('reward','')}] : ").strip() or quest.get('reward', '')
 
     due_date = None
     if due_s:
@@ -760,7 +780,16 @@ def edit_quest_cli() -> None:
             print("日付の形式が正しくありません")
             return
 
-    if quest_utils.update_quest(quest_id, title, body, due_date, assigned_to):
+    if quest_utils.update_quest(
+        quest_id,
+        title,
+        body,
+        conditions,
+        capacity,
+        due_date,
+        assigned_to,
+        reward,
+    ):
         print("更新しました")
     else:
         print("該当IDがありません")

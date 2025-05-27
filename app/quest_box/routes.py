@@ -13,6 +13,7 @@ from datetime import date
 from . import bp
 from .forms import QuestForm, RewardForm
 from . import utils
+import config
 
 
 @bp.before_request
@@ -28,17 +29,30 @@ def index():
     return render_template("quest_list.html", quests=quests, user=user)
 
 
+@bp.route("/completed")
+def completed():
+    """List completed quests."""
+    user = session.get("user")
+    quests = [q for q in utils.load_quests() if q.get("status") == "completed"]
+    return render_template("completed_list.html", quests=quests, user=user)
+
+
 @bp.route("/add", methods=["GET", "POST"])
 def add():
     user = session.get("user")
     form = QuestForm()
+    valid_users = [u for u in config.USERS.keys() if u not in config.EXCLUDED_USERS]
+    form.assigned_to.choices = [(u, u) for u in valid_users]
     if form.validate_on_submit():
         utils.add_quest(
             user["username"],
             form.title.data,
             form.body.data,
+            form.conditions.data or "",
+            form.capacity.data or 0,
             form.due_date.data,
-            form.assigned_to.data or "",
+            form.assigned_to.data or [],
+            form.reward.data or "" if user.get("role") == "admin" else "",
         )
         flash("投稿しました")
         return redirect(url_for("quest_box.index"))
@@ -131,17 +145,25 @@ def edit(quest_id: int):
     form = QuestForm(
         title=quest.get("title"),
         body=quest.get("body"),
+        conditions=quest.get("conditions", ""),
+        capacity=quest.get("capacity", 0),
         due_date=date.fromisoformat(quest["due_date"]) if quest.get("due_date") else None,
-        assigned_to=quest.get("assigned_to", ""),
+        assigned_to=quest.get("assigned_to", []),
+        reward=quest.get("reward", ""),
     )
+    valid_users = [u for u in config.USERS.keys() if u not in config.EXCLUDED_USERS]
+    form.assigned_to.choices = [(u, u) for u in valid_users]
 
     if form.validate_on_submit():
         utils.update_quest(
             quest_id,
             form.title.data,
             form.body.data,
+            form.conditions.data or "",
+            form.capacity.data or 0,
             form.due_date.data,
-            form.assigned_to.data or "",
+            form.assigned_to.data or [],
+            form.reward.data or "",
         )
         flash("保存しました")
         return redirect(url_for("quest_box.detail", quest_id=quest_id))
