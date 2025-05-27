@@ -110,3 +110,27 @@ def download(filename: str):
             return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
     flash('ファイルが見つかりません')
     return redirect(url_for('intrattenimento.index'))
+
+
+@bp.route('/detail/<int:post_id>')
+def detail(post_id: int):
+    """個別投稿の詳細表示。公開期限切れはユーザーには非表示。"""
+    user = session.get('user')
+    posts = utils.load_posts()
+    for p in posts:
+        if p.get('id') == post_id:
+            end_date = p.get('end_date')
+            if user.get('role') != 'admin' and end_date:
+                try:
+                    if datetime.fromisoformat(end_date) < datetime.now():
+                        flash('公開期間が終了しています')
+                        return redirect(url_for('intrattenimento.index'))
+                except ValueError:
+                    pass
+            return render_template(
+                'intrattenimento/intrattenimento_detail.html',
+                post=p,
+                user=user,
+            )
+    flash('該当IDがありません')
+    return redirect(url_for('intrattenimento.index'))

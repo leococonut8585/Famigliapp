@@ -11,7 +11,7 @@
 </form>
 <ul>
 {% for p in posts %}
-    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.title }}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} <a href="{{ url_for('intrattenimento.detail', post_id=p.id) }}">{{ p.title }}</a>
         {% if p.filename %}
             <a href="{{ url_for('intrattenimento.download', filename=p.filename) }}">{{ p.filename }}</a>
         {% endif %}
