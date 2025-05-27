@@ -40,7 +40,7 @@
     <button type="submit" onclick="document.getElementById('action-field').value='notify'">告知</button>
 </form>
 <p><a href="{{ url_for('calendario.shift_rules') }}">シフト計算詳細設定</a></p>
-<p><a href="{{ url_for('calendario.index') }}">戻る</a></p>
+<p><a href="{{ url_for('calendario.index', month=month.strftime('%Y-%m')) }}">戻る</a></p>
 <script src="{{ url_for('static', filename='js/shift_manager.js') }}"></script>
 {% endblock %}
 

@@ -24,8 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     list.querySelectorAll('.assigned').forEach(addSpan);
 
-    cell.addEventListener('dragover', e => e.preventDefault());
-    cell.addEventListener('drop', e => {
+    function handleDrop(e) {
       e.preventDefault();
       const emp = e.dataTransfer.getData('text/plain');
       if (!emp) return;
@@ -39,7 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addSpan(span);
         list.appendChild(span);
       }
-    });
+    }
+
+    cell.addEventListener('dragover', e => e.preventDefault());
+    list.addEventListener('dragover', e => e.preventDefault());
+    cell.addEventListener('drop', handleDrop);
+    list.addEventListener('drop', handleDrop);
   });
 });
 

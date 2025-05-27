@@ -5,7 +5,7 @@
 <div>
     <a href="{{ url_for('calendario.index', month=prev_month.strftime('%Y-%m')) }}">&lt;</a>
     <a href="{{ url_for('calendario.index', month=next_month.strftime('%Y-%m')) }}">&gt;</a>
-    <a href="{{ url_for('calendario.index', view='week', week=month.isoformat()) }}">週表示</a>
+    <a href="{{ url_for('calendario.index', view='week', week=(month - timedelta(days=month.weekday())).isoformat()) }}">週表示</a>
 </div>
 <table class="calendar">
 <thead>

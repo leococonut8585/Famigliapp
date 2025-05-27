@@ -53,6 +53,9 @@ def index():
     else:
         week_start = today - timedelta(days=today.weekday())
 
+    # ensure week starts on Monday of the given date
+    week_start = week_start - timedelta(days=week_start.weekday())
+
     events = utils.load_events()
     events.sort(key=lambda e: e.get("date"))
     stats = {}
