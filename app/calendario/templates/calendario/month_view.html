@@ -3,8 +3,16 @@
 {% block content %}
 <h1>{{ month.strftime('%Y-%m') }}</h1>
 <div>
-    <a href="{{ url_for('calendario.index', month=prev_month.strftime('%Y-%m')) }}">&lt;</a>
-    <a href="{{ url_for('calendario.index', month=next_month.strftime('%Y-%m')) }}">&gt;</a>
+    {% if nav_prev_month %}
+        <a href="{{ url_for('calendario.index', month=nav_prev_month.strftime('%Y-%m')) }}">&lt;</a>
+    {% else %}
+        <span>&lt;</span>
+    {% endif %}
+    {% if nav_next_month %}
+        <a href="{{ url_for('calendario.index', month=nav_next_month.strftime('%Y-%m')) }}">&gt;</a>
+    {% else %}
+        <span>&gt;</span>
+    {% endif %}
     <a href="{{ url_for('calendario.index', view='week', week=(month - timedelta(days=month.weekday())).isoformat()) }}">週表示</a>
 </div>
 <table class="calendar">
@@ -21,7 +29,10 @@
         {{ d.day }}
         <ul>
         {% for ev in events_by_date.get(d.isoformat(), []) %}
-            <li>{{ ev.title }}</li>
+            <li>
+                {{ ev.title }}
+                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="edit-link" style="font-size: 0.8em; margin-left: 5px;">編集</a>
+            </li>
         {% endfor %}
         </ul>
     </td>

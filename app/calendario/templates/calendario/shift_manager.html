@@ -2,14 +2,38 @@
 {% block content %}
 <h1>{{ month.strftime('%Y-%m') }} シフト管理</h1>
 <div>
-    <a href="{{ url_for('calendario.shift', month=prev_month.strftime('%Y-%m')) }}">&lt;</a>
-    <a href="{{ url_for('calendario.shift', month=next_month.strftime('%Y-%m')) }}">&gt;</a>
+    {% if nav_prev_month %}
+        <a href="{{ url_for('calendario.shift', month=nav_prev_month.strftime('%Y-%m')) }}">&lt;</a>
+    {% else %}
+        <span>&lt;</span>
+    {% endif %}
+    {% if nav_next_month %}
+        <a href="{{ url_for('calendario.shift', month=nav_next_month.strftime('%Y-%m')) }}">&gt;</a>
+    {% else %}
+        <span>&gt;</span>
+    {% endif %}
 </div>
 <div class="shift-users">
 {% for emp in employees %}
     <div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>
 {% endfor %}
 </div>
+
+<div class="employee-stats-summary" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+    <h3 style="margin-top: 0;">今月の集計</h3>
+    {% if employees %}
+        {% for emp in employees %}
+            <p style="margin: 5px 0;">
+                {{ emp }}:
+                勤務日数 {{ counts.get(emp, 0) }}日,
+                休日数 {{ off_counts.get(emp, 0) }}日
+            </p>
+        {% endfor %}
+    {% else %}
+        <p>表示する従業員がいません。</p>
+    {% endif %}
+</div>
+
 <form method="post">
     <input type="hidden" name="action" value="complete" id="action-field">
     <table class="calendar">

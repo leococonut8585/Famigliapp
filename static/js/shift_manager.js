@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   Array.from(document.querySelectorAll('.employee-box')).forEach(box => {
     box.addEventListener('dragstart', e => {
+      console.log('dragstart employee-box:', box.dataset.emp);
       e.dataTransfer.setData('text/plain', box.dataset.emp);
       e.dataTransfer.setData('text/from-cell', '');
       e.dataTransfer.effectAllowed = 'move';
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addSpan(span) {
       span.draggable = true;
       span.addEventListener('dragstart', e => {
+        console.log('dragstart assigned span:', span.textContent, 'from cell:', cell.dataset.date);
         e.dataTransfer.setData('text/plain', span.textContent);
         e.dataTransfer.setData('text/from-cell', cell.dataset.date);
         e.dataTransfer.effectAllowed = 'move';
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDrop(e) {
       e.preventDefault();
+      console.log('drop on cell:', cell.dataset.date, 'data:', e.dataTransfer.getData('text/plain'));
       const emp = e.dataTransfer.getData('text/plain');
       if (!emp) return;
       let emps = input.value ? input.value.split(',') : [];
@@ -65,8 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    cell.addEventListener('dragover', e => e.preventDefault());
-    list.addEventListener('dragover', e => e.preventDefault());
+    cell.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
     cell.addEventListener('drop', handleDrop);
     list.addEventListener('drop', handleDrop);
   });
