@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>おねだり投稿</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>
+    <p>{{ form.targets.label }}<br>{{ form.targets(multiple=True) }}</p>
+    <p>{{ form.visibility.label }}<br>{{ form.visibility() }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+<p><a href="{{ url_for('nedari_box.index') }}">戻る</a></p>
+{% endblock %}

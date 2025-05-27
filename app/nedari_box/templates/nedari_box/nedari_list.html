@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>おねだり一覧</h1>
+<ul>
+{% for p in posts %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} -> {{ p.targets | join(', ') }} {{ p.body }} ({{ '全員閲覧可能' if p.visibility == 'all' else 'シニョーレとレディのみ' }})</li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('nedari_box.add') }}">おねだり投稿</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
