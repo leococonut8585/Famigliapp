@@ -76,6 +76,35 @@ table {
     margin-top: 1em;
 }
 
+.points-table tr:nth-child(even),
+.ranking-table tr:nth-child(even),
+.history-table tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.action-btn {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #4CAF50;
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.action-btn.neg {
+    background: #e91e63;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
 th, td {
     border: 1px solid #ddd;
     padding: 8px;
