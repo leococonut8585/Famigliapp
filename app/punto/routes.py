@@ -35,17 +35,24 @@ def dashboard():
 
     # ensure pre-registered users are present
     default_users = [
-        "leo",
-        "lady",
         "raito",
         "hitomi",
         "sara",
         "giun",
         "nanchan",
         "hachi",
+        "kie",
+        "gumi",
     ]
     for name in default_users:
         points.setdefault(name, {"A": 0, "O": 0})
+
+    # remove admin accounts from the display list
+    points = {
+        name: vals
+        for name, vals in points.items()
+        if config.USERS.get(name, {}).get("role") != "admin"
+    }
 
     form = HistoryFilterForm()
     start = end = None
