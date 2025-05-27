@@ -552,6 +552,12 @@ def login(username: str, password: str) -> Optional[Dict[str, str]]:
     return None
 
 
+def add_user(username: str, password: str, email: str, role: str = "user") -> None:
+    """Add a user to the in-memory user store."""
+
+    config.USERS[username] = {"password": password, "role": role, "email": email}
+
+
 def get_ranking(
     metric: str = "A",
     start: Optional[datetime] = None,

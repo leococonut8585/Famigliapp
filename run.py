@@ -21,6 +21,7 @@ from app.bravissimo import utils as bravissimo_utils
 from app.scatola_capriccio import utils as scatola_capriccio_utils
 from app.monsignore import utils as monsignore_utils
 from app.calendario import utils as calendario_utils
+from app.invites import utils as invite_utils
 
 
 def display_menu(user: Dict[str, str]):
@@ -90,6 +91,8 @@ def display_menu(user: Dict[str, str]):
         print("51. 投稿にコメントする")
         if user["role"] == "admin":
             print("52. Resoconto AI分析を見る")
+            print("53. 招待コード作成")
+            print("54. 招待コード一覧")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -248,6 +251,16 @@ def display_menu(user: Dict[str, str]):
         elif choice == "52":
             if user["role"] == "admin":
                 show_resoconto_analysis_cli()
+            else:
+                print("権限がありません")
+        elif choice == "53":
+            if user["role"] == "admin":
+                create_invite_cli()
+            else:
+                print("権限がありません")
+        elif choice == "54":
+            if user["role"] == "admin":
+                list_invites_cli()
             else:
                 print("権限がありません")
         elif choice == "0":
@@ -616,6 +629,21 @@ def show_resoconto_analysis_cli() -> None:
     for i, (user, cnt) in enumerate(ranking, 1):
         comment = analysis.get(user, "")
         print(f"{i}. {user}: {cnt} words - {comment}")
+
+
+def create_invite_cli() -> None:
+    """Create a new invite code and display it."""
+
+    code = invite_utils.create_invite()
+    print(code)
+
+
+def list_invites_cli() -> None:
+    """List existing invite codes."""
+
+    for inv in invite_utils.load_invites():
+        used = f" ({inv.get('used_by')})" if inv.get('used_by') else ""
+        print(f"{inv['code']}{used}")
 
 
 def export_resoconto_csv() -> None:

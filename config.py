@@ -19,6 +19,7 @@ RESOCONTO_FILE = "resoconto.json"
 LEZZIONE_FILE = "lezzione.json"
 PRINCIPESSINA_FILE = "principessina.json"
 MONSIGNORE_FILE = "monsignore.json"
+INVITES_FILE = "invites.json"
 SECRET_KEY = "replace-this-with-a-random-secret"
 SQLALCHEMY_DATABASE_URI = "sqlite:///famigliapp.db"
 SQLALCHEMY_TRACK_MODIFICATIONS = False
