@@ -7,7 +7,9 @@
     <p>{{ form.title.label }}<br>{{ form.title(size=40) }}</p>
     <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>
     <p>{{ form.end_date.label }}<br>{{ form.end_date() }}</p>
-    <p>{{ form.attachment.label }}<br>{{ form.attachment() }}</p>
+    <p>{{ form.attachment.label }}<br>{{ form.attachment() }}<br>
+    <span class="help-text">許可形式: {{ allowed_exts }} / 最大 {{ max_size // 1048576 }}MB</span>
+    </p>
     <p>{{ form.submit() }}</p>
 </form>
 {% endblock %}

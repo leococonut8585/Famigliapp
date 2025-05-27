@@ -63,10 +63,21 @@ def add():
         filename = None
         if form.attachment.data and form.attachment.data.filename:
             try:
-                filename = save_uploaded_file(form.attachment.data, UPLOAD_FOLDER)
+                filename = save_uploaded_file(
+                    form.attachment.data,
+                    UPLOAD_FOLDER,
+                    utils.ALLOWED_EXTS,
+                    utils.MAX_SIZE,
+                )
             except ValueError as e:
                 flash(str(e))
-                return render_template('intrattenimento/intrattenimento_post_form.html', form=form, user=user)
+                return render_template(
+                    'intrattenimento/intrattenimento_post_form.html',
+                    form=form,
+                    user=user,
+                    allowed_exts=', '.join(utils.ALLOWED_EXTS),
+                    max_size=utils.MAX_SIZE,
+                )
         utils.add_post(
             user['username'],
             form.title.data,
@@ -76,7 +87,13 @@ def add():
         )
         flash('投稿しました')
         return redirect(url_for('intrattenimento.index'))
-    return render_template('intrattenimento/intrattenimento_post_form.html', form=form, user=user)
+    return render_template(
+        'intrattenimento/intrattenimento_post_form.html',
+        form=form,
+        user=user,
+        allowed_exts=', '.join(utils.ALLOWED_EXTS),
+        max_size=utils.MAX_SIZE,
+    )
 
 
 @bp.route('/delete/<int:post_id>')
