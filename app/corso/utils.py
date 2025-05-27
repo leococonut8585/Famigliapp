@@ -1,7 +1,7 @@
 """Utility functions for Corso posts."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from pathlib import Path
 
 import config
@@ -41,6 +41,12 @@ def add_post(author, title, body, end_date=None, filename=None):
 
     posts = load_posts()
     next_id = max((p.get("id", 0) for p in posts), default=0) + 1
+    due = None
+    if end_date:
+        try:
+            due = (end_date + timedelta(days=3)).isoformat()
+        except Exception:
+            pass
     posts.append(
         {
             "id": next_id,
@@ -48,8 +54,12 @@ def add_post(author, title, body, end_date=None, filename=None):
             "title": title,
             "body": body,
             "end_date": end_date.isoformat() if hasattr(end_date, "isoformat") and end_date else end_date,
+            "due_date": due,
             "filename": filename,
             "timestamp": datetime.now().isoformat(timespec="seconds"),
+            "feedback": {},
+            "archived": False,
+            "admin_notified": False,
         }
     )
     save_posts(posts)
@@ -64,6 +74,54 @@ def delete_post(post_id):
         return False
     save_posts(new_posts)
     return True
+
+
+def add_feedback(post_id: int, username: str, body: str) -> bool:
+    """Add feedback text for a corso."""
+
+    posts = load_posts()
+    for p in posts:
+        if p.get("id") == post_id:
+            fb = p.setdefault("feedback", {})
+            fb[username] = {
+                "body": body,
+                "timestamp": datetime.now().isoformat(timespec="seconds"),
+            }
+            save_posts(posts)
+            return True
+    return False
+
+
+def finish_post(post_id: int) -> bool:
+    """Mark corso as archived."""
+
+    posts = load_posts()
+    for p in posts:
+        if p.get("id") == post_id:
+            p["archived"] = True
+            save_posts(posts)
+            return True
+    return False
+
+
+def active_posts(include_expired: bool = False):
+    posts = load_posts()
+    return [p for p in posts if not p.get("archived") and (include_expired or not _is_expired(p))]
+
+
+def archived_posts():
+    posts = load_posts()
+    return [p for p in posts if p.get("archived")]
+
+
+def _is_expired(post: dict) -> bool:
+    end_date = post.get("end_date")
+    if end_date:
+        try:
+            return datetime.fromisoformat(end_date) < datetime.now()
+        except ValueError:
+            pass
+    return False
 
 
 def filter_posts(author="", keyword="", include_expired=False):

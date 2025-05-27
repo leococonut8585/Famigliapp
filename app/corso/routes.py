@@ -15,7 +15,8 @@ from app.utils import save_uploaded_file, send_email
 import config
 
 from . import bp
-from .forms import AddCorsoForm, CorsoFilterForm
+from .forms import AddCorsoForm, FeedbackForm
+from app.calendario import utils as calendario_utils
 from . import utils
 
 UPLOAD_FOLDER = os.path.join("static", "uploads")
@@ -32,14 +33,9 @@ def index():
     """Display list of Corso posts."""
 
     user = session.get("user")
-    form = CorsoFilterForm(request.args)
     include_expired = user.get("role") == "admin"
-    posts = utils.filter_posts(
-        author=form.author.data or "",
-        keyword=form.keyword.data or "",
-        include_expired=include_expired,
-    )
-    return render_template("corso_list.html", posts=posts, form=form, user=user)
+    posts = utils.filter_posts(include_expired=include_expired)
+    return render_template("corso_list.html", posts=posts, user=user)
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -135,4 +131,52 @@ def download(filename: str):
             return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
     flash("ファイルが見つかりません")
     return redirect(url_for("corso.index"))
+
+
+@bp.route("/check")
+def check():
+    """Show schedule from Calendario."""
+
+    user = session.get("user")
+    events = calendario_utils.load_events()
+    events.sort(key=lambda e: e.get("date"))
+    return render_template("corso_check.html", events=events, user=user)
+
+
+@bp.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    user = session.get("user")
+    posts = utils.active_posts()
+    choices = [(p.get("id"), p.get("title")) for p in posts]
+    form = FeedbackForm()
+    form.corso_id.choices = choices
+    if form.validate_on_submit():
+        if len(form.body.data or "") < 300:
+            flash("短すぎるね、300文字以上になるようにもう少し集中したほうが良い")
+        else:
+            if utils.add_feedback(form.corso_id.data, user["username"], form.body.data):
+                flash("投稿しました")
+                return redirect(url_for("corso.feedback"))
+            flash("該当IDがありません")
+    return render_template("corso_feedback_form.html", form=form, user=user)
+
+
+@bp.route("/finish/<int:post_id>")
+def finish(post_id: int):
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("corso.detail", post_id=post_id))
+    if utils.finish_post(post_id):
+        flash("終了しました")
+    else:
+        flash("該当IDがありません")
+    return redirect(url_for("corso.detail", post_id=post_id))
+
+
+@bp.route("/archive")
+def archive():
+    user = session.get("user")
+    posts = utils.archived_posts()
+    return render_template("corso_archive.html", posts=posts, user=user)
 
