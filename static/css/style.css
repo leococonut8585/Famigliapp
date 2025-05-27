@@ -120,3 +120,22 @@ ul {
 
 
 .help-text { font-size: 0.9em; color: #666; }
+
+.user-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.tab-btn {
+    padding: 6px 12px;
+    border: 1px solid #2196F3;
+    background: #eee;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+}
+
+.tab-btn.active {
+    background: #2196F3;
+    color: #fff;
+}

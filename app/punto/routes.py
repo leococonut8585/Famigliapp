@@ -19,6 +19,18 @@ from .forms import EditPointsForm, HistoryFilterForm, ConsumptionAddForm
 from app import utils
 import config
 
+# Names of general (non-admin) users shown in the UI
+GENERAL_USERS = [
+    "raito",
+    "hitomi",
+    "sara",
+    "giun",
+    "nanchan",
+    "hachi",
+    "kie",
+    "gumi",
+]
+
 
 @bp.before_request
 def require_login():
@@ -34,17 +46,7 @@ def dashboard():
     points = utils.load_points()
 
     # ensure pre-registered users are present
-    default_users = [
-        "raito",
-        "hitomi",
-        "sara",
-        "giun",
-        "nanchan",
-        "hachi",
-        "kie",
-        "gumi",
-    ]
-    for name in default_users:
+    for name in GENERAL_USERS:
         points.setdefault(name, {"A": 0, "O": 0})
 
     # remove admin accounts from the display list
@@ -133,6 +135,9 @@ def history():
     form = ConsumptionAddForm()
     if user["role"] == "admin" and form.validate_on_submit():
         utils.add_points_consumption(form.username.data, form.reason.data)
+        email = config.USERS.get(form.username.data, {}).get("email")
+        if email:
+            utils.send_email("ポイント消費が追加されました", form.reason.data, email)
         flash("追加しました")
         return redirect(url_for("punto.history"))
 
@@ -143,6 +148,7 @@ def history():
         entries=entries,
         user=user,
         form=form,
+        general_users=GENERAL_USERS,
     )
 
 

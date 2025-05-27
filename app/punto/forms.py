@@ -1,7 +1,7 @@
 """Forms for Punto blueprint."""
 
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, SubmitField, StringField
+from wtforms import IntegerField, SubmitField, StringField, HiddenField
 from wtforms.validators import DataRequired, Optional
 
 
@@ -26,6 +26,6 @@ class HistoryFilterForm(FlaskForm):
 class ConsumptionAddForm(FlaskForm):
     """Form to add a points consumption entry."""
 
-    username = StringField("ユーザー名", validators=[DataRequired()])
+    username = HiddenField("ユーザー名", validators=[DataRequired()])
     reason = StringField("理由", validators=[DataRequired()])
     submit = SubmitField("追加")
