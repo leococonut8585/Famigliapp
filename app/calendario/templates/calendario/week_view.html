@@ -11,7 +11,7 @@
 <tr>
     <th>Time</th>
     {% for i in range(7) %}
-    <th>{{ (start + timedelta(days=i)).strftime('%a') }}</th>
+    <th>{{ (start + timedelta(days=i)).strftime('%a %m/%d') }}</th>
     {% endfor %}
 </tr>
 </thead>

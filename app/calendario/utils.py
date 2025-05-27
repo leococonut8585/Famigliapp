@@ -133,15 +133,20 @@ def parse_pairs(text: str) -> List[List[str]]:
     return pairs
 
 
-def parse_kv(text: str) -> Dict[str, str]:
-    result: Dict[str, str] = {}
+def parse_kv(text: str) -> Dict[str, object]:
+    """Parse key:value pairs. Values may contain '|' to represent lists."""
+    result: Dict[str, object] = {}
     for item in text.split(','):
         if ':' not in item:
             continue
         k, v = item.split(':', 1)
         k = k.strip()
         v = v.strip()
-        if k and v:
+        if not k or not v:
+            continue
+        if '|' in v:
+            result[k] = [p.strip() for p in v.split('|') if p.strip()]
+        else:
             result[k] = v
     return result
 
