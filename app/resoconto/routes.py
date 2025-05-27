@@ -1,5 +1,4 @@
 from flask import (
-    Blueprint,
     render_template,
     session,
     redirect,
@@ -15,7 +14,7 @@ from .forms import ResocontoForm
 from . import utils
 from . import tasks
 
-bp = Blueprint('resoconto', __name__, url_prefix='/resoconto')
+from . import bp
 
 
 @bp.before_request
