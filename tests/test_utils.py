@@ -11,6 +11,7 @@ _temp_dir = None
 _original_points_file = config.POINTS_FILE
 _original_posts_file = config.POSTS_FILE
 _original_history_file = config.POINTS_HISTORY_FILE
+_original_consumption_file = getattr(config, "POINTS_CONSUMPTION_FILE", "points_consumption.json")
 
 
 def setup_function():
@@ -21,10 +22,12 @@ def setup_function():
     config.POINTS_FILE = os.path.join(_temp_dir.name, "points.json")
     config.POSTS_FILE = os.path.join(_temp_dir.name, "posts.json")
     config.POINTS_HISTORY_FILE = os.path.join(_temp_dir.name, "points_history.json")
+    config.POINTS_CONSUMPTION_FILE = os.path.join(_temp_dir.name, "points_consumption.json")
 
     utils.POINTS_PATH = Path(config.POINTS_FILE)
     utils.POSTS_PATH = Path(config.POSTS_FILE)
     utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+    utils.POINTS_CONSUMPTION_PATH = Path(config.POINTS_CONSUMPTION_FILE)
 
     utils.save_points({"user1": {"A": 1, "O": 0}})
 
@@ -38,15 +41,18 @@ def teardown_function():
         assert not os.path.exists(config.POINTS_FILE)
         assert not os.path.exists(config.POSTS_FILE)
         assert not os.path.exists(config.POINTS_HISTORY_FILE)
+        assert not os.path.exists(config.POINTS_CONSUMPTION_FILE)
         _temp_dir = None
 
     config.POINTS_FILE = _original_points_file
     config.POSTS_FILE = _original_posts_file
     config.POINTS_HISTORY_FILE = _original_history_file
+    config.POINTS_CONSUMPTION_FILE = _original_consumption_file
 
     utils.POINTS_PATH = Path(config.POINTS_FILE)
     utils.POSTS_PATH = Path(config.POSTS_FILE)
     utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+    utils.POINTS_CONSUMPTION_PATH = Path(config.POINTS_CONSUMPTION_FILE)
 
 
 def test_login_success():
@@ -91,6 +97,17 @@ def test_post_id_increment_after_middle_delete():
     utils.add_post("u3", "bravissimo", "three")
     ids = [p["id"] for p in utils.load_posts()]
     assert ids == [second_id, second_id + 1]
+
+
+def test_add_points_consumption():
+    ts = datetime(2021, 2, 1, 12, 0, 0)
+    utils.add_points_consumption("u1", "used", ts)
+    history = utils.load_points_consumption()
+    assert history[-1] == {
+        "username": "u1",
+        "reason": "used",
+        "timestamp": ts.isoformat(timespec="seconds"),
+    }
 
 
 def test_get_ranking():
@@ -198,13 +215,13 @@ def test_filter_points_history():
 
 def test_export_history_csv(tmp_path):
     ts = datetime(2021, 5, 1, 8, 0, 0)
-    utils.log_points_change("u1", 1, 0, ts)
+    utils.add_points_consumption("u1", "test", ts)
     csv_path = tmp_path / "hist.csv"
-    utils.export_points_history_csv(str(csv_path))
+    utils.export_points_consumption_csv(str(csv_path))
     with open(csv_path, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f.readlines()]
-    assert lines[0] == "timestamp,username,A,O"
-    assert lines[1].startswith(ts.isoformat(timespec="seconds") + ",u1,1,0")
+    assert lines[0] == "timestamp,username,reason"
+    assert lines[1].startswith(ts.isoformat(timespec="seconds") + ",u1,test")
 
 
 def test_get_points_history_summary():

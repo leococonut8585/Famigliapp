@@ -16,10 +16,12 @@ def setup_module(module):
     config.POINTS_FILE = os.path.join(_tmpdir.name, "points.json")
     config.POINTS_HISTORY_FILE = os.path.join(_tmpdir.name, "points_history.json")
     config.POSTS_FILE = os.path.join(_tmpdir.name, "posts.json")
+    config.POINTS_CONSUMPTION_FILE = os.path.join(_tmpdir.name, "points_consumption.json")
 
     utils.POINTS_PATH = Path(config.POINTS_FILE)
     utils.POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
     utils.POSTS_PATH = Path(config.POSTS_FILE)
+    utils.POINTS_CONSUMPTION_PATH = Path(config.POINTS_CONSUMPTION_FILE)
 
     utils.save_points({"u1": {"A": 5, "O": 1}, "u2": {"A": 3, "O": 0}})
 
@@ -57,16 +59,16 @@ def test_history_route():
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "admin@example.com"}
-        utils.log_points_change("u1", 1, 0)
+        utils.add_points_consumption("u1", "aaa")
         res = client.get("/punto/history")
         assert res.status_code == 200
-        assert "ポイント履歴".encode("utf-8") in res.data
+        assert "ポイント消費履歴".encode("utf-8") in res.data
 
 
 def test_export_history_csv(tmp_path):
     app = create_app()
     app.config["TESTING"] = True
-    utils.log_points_change("u1", 2, 1)
+    utils.add_points_consumption("u1", "b")
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "u1", "role": "user", "email": "u1@example.com"}

@@ -15,7 +15,7 @@ import csv
 import io
 
 from . import bp
-from .forms import EditPointsForm, HistoryFilterForm
+from .forms import EditPointsForm, HistoryFilterForm, ConsumptionAddForm
 from app import utils
 import config
 
@@ -27,9 +27,9 @@ def require_login():
         return redirect(url_for("auth.login", next=request.url))
 
 
-@bp.route("/", methods=["GET", "POST"])
+@bp.route("/", methods=["GET"])
 def dashboard():
-    """Display points dashboard with rankings and history."""
+    """Display points dashboard with rankings."""
     user = session.get("user")
     points = utils.load_points()
 
@@ -54,24 +54,6 @@ def dashboard():
         if config.USERS.get(name, {}).get("role") != "admin"
     }
 
-    form = HistoryFilterForm()
-    start = end = None
-    username = ""
-    if form.validate_on_submit():
-        username = form.username.data or ""
-        if form.start.data:
-            try:
-                start = datetime.strptime(form.start.data, "%Y-%m-%d")
-            except ValueError:
-                flash("開始日の形式が正しくありません")
-        if form.end.data:
-            try:
-                end = datetime.strptime(form.end.data, "%Y-%m-%d")
-            except ValueError:
-                flash("終了日の形式が正しくありません")
-
-    entries = utils.filter_points_history(start=start, end=end, username=username)
-
     metric = request.args.get("metric", "U").upper()
     period = request.args.get("period", "all").lower()
     if metric not in {"A", "O", "U"}:
@@ -90,8 +72,6 @@ def dashboard():
         ranking=ranking,
         metric=metric,
         period=period,
-        form=form,
-        entries=entries,
     )
 
 
@@ -147,8 +127,23 @@ def rankings():
 
 @bp.route("/history", methods=["GET", "POST"])
 def history():
-    """Alias of dashboard showing history section."""
-    return dashboard()
+    """Display simple points consumption history."""
+
+    user = session.get("user")
+    form = ConsumptionAddForm()
+    if user["role"] == "admin" and form.validate_on_submit():
+        utils.add_points_consumption(form.username.data, form.reason.data)
+        flash("追加しました")
+        return redirect(url_for("punto.history"))
+
+    entries = utils.load_points_consumption()
+    entries.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
+    return render_template(
+        "punto_consumption_history.html",
+        entries=entries,
+        user=user,
+        form=form,
+    )
 
 
 @bp.route("/graph", methods=["GET", "POST"])
@@ -191,20 +186,19 @@ def export_history_csv():
         flash("権限がありません")
         return redirect(url_for("punto.history"))
 
-    entries = utils.load_points_history()
+    entries = utils.load_points_consumption()
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["timestamp", "username", "A", "O"])
+    writer.writerow(["timestamp", "username", "reason"])
     for e in entries:
         writer.writerow([
             e.get("timestamp", ""),
             e.get("username", ""),
-            e.get("A", 0),
-            e.get("O", 0),
+            e.get("reason", ""),
         ])
     response = make_response(buf.getvalue())
     response.headers["Content-Type"] = "text/csv; charset=utf-8"
     response.headers["Content-Disposition"] = (
-        "attachment; filename=points_history.csv"
+        "attachment; filename=points_consumption.csv"
     )
     return response
