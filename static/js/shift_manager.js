@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.employee-box').forEach(box => {
+  Array.from(document.querySelectorAll('.employee-box')).forEach(box => {
     box.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', box.dataset.emp);
       e.dataTransfer.setData('text/from-cell', '');
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.querySelectorAll('.shift-cell').forEach(cell => {
+  Array.from(document.querySelectorAll('.shift-cell')).forEach(cell => {
     const input = cell.querySelector('input');
     const list = cell.querySelector('.assignments');
 
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    list.querySelectorAll('.assigned').forEach(addSpan);
+    Array.from(list.querySelectorAll('.assigned')).forEach(addSpan);
 
     function handleDrop(e) {
       e.preventDefault();
