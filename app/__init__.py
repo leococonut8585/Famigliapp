@@ -1,6 +1,7 @@
 """Application factory for the Famigliapp web interface."""
 
 from typing import Optional
+import os
 
 try:
     from flask_sqlalchemy import SQLAlchemy
@@ -21,7 +22,9 @@ def create_app() -> "Flask":
 
     from flask import Flask, render_template, session
 
-    app = Flask(__name__)
+    # ``static`` directory lives at the repository root so point Flask there
+    static_folder = os.path.join(os.path.dirname(__file__), "..", "static")
+    app = Flask(__name__, static_folder=static_folder)
     app.config.from_object("config")
 
     if mail is not None:
