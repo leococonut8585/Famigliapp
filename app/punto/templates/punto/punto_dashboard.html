@@ -13,20 +13,36 @@
     {% for name, p in points.items() %}
     <tr>
         <td>{{ name }}</td>
-        <td>{{ p['A'] }}</td>
-        <td>{{ p['O'] }}</td>
+        <td>
+            {% if user.role == 'admin' %}
+            <input type="number" name="a" form="form-{{ loop.index }}" value="{{ p['A'] }}" class="points-input">
+            {% else %}
+            {{ p['A'] }}
+            {% endif %}
+        </td>
+        <td>
+            {% if user.role == 'admin' %}
+            <input type="number" name="o" form="form-{{ loop.index }}" value="{{ p['O'] }}" class="points-input">
+            {% else %}
+            {{ p['O'] }}
+            {% endif %}
+        </td>
         <td>{{ p['A'] - p['O'] }}</td>
         {% if user.role == 'admin' %}
         <td>
-            <div class="actions">
-                <span>A:</span>
-                <a class="action-btn" href="{{ url_for('punto.adjust', username=name, metric='A', delta=1) }}">+</a>
-                <a class="action-btn neg" href="{{ url_for('punto.adjust', username=name, metric='A', delta=-1) }}">-</a>
-                <span class="spacer"></span>
-                <span>O:</span>
-                <a class="action-btn" href="{{ url_for('punto.adjust', username=name, metric='O', delta=1) }}">+</a>
-                <a class="action-btn neg" href="{{ url_for('punto.adjust', username=name, metric='O', delta=-1) }}">-</a>
-            </div>
+            <form id="form-{{ loop.index }}" method="post" action="{{ url_for('punto.set_points', username=name) }}">
+                <div class="actions">
+                    <span>A:</span>
+                    <a class="action-btn" href="{{ url_for('punto.adjust', username=name, metric='A', delta=1) }}">+</a>
+                    <a class="action-btn neg" href="{{ url_for('punto.adjust', username=name, metric='A', delta=-1) }}">-</a>
+                    <span class="spacer"></span>
+                    <span>O:</span>
+                    <a class="action-btn" href="{{ url_for('punto.adjust', username=name, metric='O', delta=1) }}">+</a>
+                    <a class="action-btn neg" href="{{ url_for('punto.adjust', username=name, metric='O', delta=-1) }}">-</a>
+                    <span class="spacer"></span>
+                    <button type="submit">保存</button>
+                </div>
+            </form>
         </td>
         {% endif %}
     </tr>
