@@ -73,5 +73,5 @@
     {{ form.submit() }}
 </form>
 <p><a href="{{ url_for('calendario.shift') }}">戻る</a></p>
-<script src="{{ url_for('static', filename='js/shift_rules.js') }}"></script>
+<script src="{{ url_for('static', filename='js/shift_rules.js') }}" defer></script>
 {% endblock %}
