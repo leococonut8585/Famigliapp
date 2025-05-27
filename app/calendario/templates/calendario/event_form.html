@@ -12,5 +12,6 @@
     <p>{{ form.participants.label }}<br>{{ form.participants(size=10, multiple=True) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
+<p><a href="{{ request.referrer or url_for('calendario.index') }}">戻る</a></p>
 {% endblock %}
 

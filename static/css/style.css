@@ -141,3 +141,26 @@ ul {
 }
 
 .points-input { width: 4em; }
+
+.employee-box {
+    border: 1px solid #2196F3;
+    background: #e3f2fd;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+    border-radius: 4px;
+    cursor: move;
+}
+
+.shift-cell .assignments {
+    min-height: 1em;
+}
+
+.shift-cell .assigned {
+    display: block;
+    background: #bbdefb;
+    margin: 2px 0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}

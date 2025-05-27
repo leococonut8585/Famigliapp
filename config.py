@@ -1,7 +1,5 @@
 USERS = {
     "admin": {"password": "adminpass", "role": "admin", "email": "admin@example.com"},
-    "user1": {"password": "user1pass", "role": "user", "email": "user1@example.com"},
-    "user2": {"password": "user2pass", "role": "user", "email": "user2@example.com"},
     "leo": {"password": "leococonut85", "role": "admin", "email": "leo@example.com"},
     "lady": {"password": "shihopoteto850", "role": "admin", "email": "lady@example.com"},
     "raito": {"password": "raitocetriolo851", "role": "user", "email": "raito@example.com"},
@@ -15,7 +13,7 @@ USERS = {
 }
 
 # Users that should not appear in selection lists
-EXCLUDED_USERS = {"admin", "user1", "user2"}
+EXCLUDED_USERS = {"admin"}
 
 POINTS_FILE = "points.json"
 POINTS_HISTORY_FILE = "points_history.json"
