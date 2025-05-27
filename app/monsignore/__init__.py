@@ -1,3 +1,8 @@
 from flask import Blueprint
 
-bp = Blueprint('monsignore', __name__, url_prefix='/monsignore')
+bp = Blueprint(
+    'monsignore',
+    __name__,
+    url_prefix='/monsignore',
+    template_folder='templates/monsignore',
+)
