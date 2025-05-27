@@ -38,8 +38,10 @@ def create():
     form = PollForm()
     form.targets.choices = [(u, u) for u in config.USERS.keys()]
     if form.validate_on_submit():
-        options = [o.strip() for o in form.options.data.splitlines() if o.strip()]
-        utils.add_poll(user['username'], form.title.data, options, form.targets.data)
+        options = [o.strip() for o in form.options.data if o.strip()]
+        utils.add_poll(
+            user['username'], form.title.data, options, form.targets.data
+        )
         flash('投稿しました')
         return redirect(url_for('vote_box.open_list'))
     return render_template('vote_form.html', form=form, user=user)
