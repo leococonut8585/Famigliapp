@@ -6,7 +6,7 @@ UPLOAD_FOLDER = os.path.join("static", "uploads")
 
 from . import bp
 from .forms import AddBravissimoForm, BravissimoFilterForm
-from app import utils
+from . import utils as bravissimo_utils
 
 
 @bp.before_request
@@ -19,7 +19,7 @@ def require_login():
 def index():
     user = session.get("user")
     form = BravissimoFilterForm(request.args)
-    posts = utils.filter_posts(
+    posts = bravissimo_utils.filter_posts(
         author=form.author.data or "",
         keyword=form.keyword.data or "",
         target=form.target.data or "",
@@ -44,7 +44,7 @@ def add():
             except ValueError as e:
                 flash(str(e))
                 return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
-        utils.add_post(
+        bravissimo_utils.add_post(
             user["username"],
             form.text.data,
             filename,
@@ -61,7 +61,7 @@ def delete(post_id: int):
     if user["role"] != "admin":
         flash("権限がありません")
         return redirect(url_for("bravissimo.index"))
-    if utils.delete_post(post_id):
+    if bravissimo_utils.delete_post(post_id):
         flash("削除しました")
     else:
         flash("該当IDがありません")
