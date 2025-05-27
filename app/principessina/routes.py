@@ -47,17 +47,30 @@ def add():
         filename = None
         if form.attachment.data and form.attachment.data.filename:
             try:
-                filename = save_uploaded_file(form.attachment.data, UPLOAD_FOLDER)
+                filename = save_uploaded_file(
+                    form.attachment.data,
+                    UPLOAD_FOLDER,
+                    utils.ALLOWED_EXTS,
+                    utils.MAX_SIZE,
+                )
             except ValueError as e:
                 flash(str(e))
                 return render_template(
-                    "principessina_post_form.html", form=form, user=user
+                    "principessina_post_form.html",
+                    form=form,
+                    user=user,
+                    allowed_exts=", ".join(utils.ALLOWED_EXTS),
+                    max_size=utils.MAX_SIZE,
                 )
         utils.add_post(user["username"], form.body.data, filename)
         flash("投稿しました")
         return redirect(url_for("principessina.index"))
     return render_template(
-        "principessina_post_form.html", form=form, user=user
+        "principessina_post_form.html",
+        form=form,
+        user=user,
+        allowed_exts=", ".join(utils.ALLOWED_EXTS),
+        max_size=utils.MAX_SIZE,
     )
 
 

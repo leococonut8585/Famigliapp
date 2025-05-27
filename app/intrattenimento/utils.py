@@ -7,6 +7,21 @@ import config
 
 INTRATTENIMENTO_PATH = Path(getattr(config, "INTRATTENIMENTO_FILE", "intrattenimento.json"))
 
+# Allow images, documents and media files as attachments
+ALLOWED_EXTS = {
+    "txt",
+    "pdf",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "mp3",
+    "mp4",
+    "mov",
+    "wav",
+}
+MAX_SIZE = 10 * 1024 * 1024
+
 
 def load_posts():
     if INTRATTENIMENTO_PATH.exists():

@@ -60,7 +60,13 @@ def add():
                 )
             except ValueError as e:
                 flash(str(e))
-                return render_template("corso_post_form.html", form=form, user=user)
+                return render_template(
+                    "corso_post_form.html",
+                    form=form,
+                    user=user,
+                    allowed_exts=", ".join(utils.ALLOWED_EXTS),
+                    max_size=utils.MAX_SIZE,
+                )
         utils.add_post(
             user["username"],
             form.title.data,
@@ -73,7 +79,13 @@ def add():
                 send_email("New Corso post", form.title.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("corso.index"))
-    return render_template("corso_post_form.html", form=form, user=user)
+    return render_template(
+        "corso_post_form.html",
+        form=form,
+        user=user,
+        allowed_exts=", ".join(utils.ALLOWED_EXTS),
+        max_size=utils.MAX_SIZE,
+    )
 
 
 @bp.route("/detail/<int:post_id>")

@@ -6,6 +6,20 @@ from pathlib import Path
 
 import config
 
+# Allow text, images and media files as attachments
+ALLOWED_EXTS = {
+    "txt",
+    "pdf",
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "mp3",
+    "mp4",
+    "mov",
+    "wav",
+}
+MAX_SIZE = 10 * 1024 * 1024
 
 PRINCIPESSINA_PATH = Path(
     getattr(config, "PRINCIPESSINA_FILE", "principessina.json")
