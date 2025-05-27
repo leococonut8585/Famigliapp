@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List
 
 import config
 
@@ -22,7 +22,16 @@ def save_quests(quests):
         json.dump(quests, f, ensure_ascii=False, indent=2)
 
 
-def add_quest(author, title, body, due_date: Optional[date] = None, assigned_to: str = ""):
+def add_quest(
+    author: str,
+    title: str,
+    body: str,
+    conditions: str = "",
+    capacity: int = 0,
+    due_date: Optional[date] = None,
+    assigned_to: Optional[List[str]] = None,
+    reward: str = "",
+) -> None:
     """Add a quest entry."""
 
     quests = load_quests()
@@ -33,11 +42,13 @@ def add_quest(author, title, body, due_date: Optional[date] = None, assigned_to:
             "author": author,
             "title": title,
             "body": body,
+            "conditions": conditions,
+            "capacity": capacity,
             "due_date": due_date.isoformat() if hasattr(due_date, "isoformat") and due_date else None,
-            "assigned_to": assigned_to,
+            "assigned_to": assigned_to or [],
             "status": "open",
             "accepted_by": "",
-            "reward": "",
+            "reward": reward,
             "timestamp": datetime.now().isoformat(timespec="seconds"),
         }
     )
@@ -88,8 +99,11 @@ def update_quest(
     quest_id: int,
     title: str,
     body: str,
+    conditions: str = "",
+    capacity: int = 0,
     due_date: Optional[date] = None,
-    assigned_to: str = "",
+    assigned_to: Optional[List[str]] = None,
+    reward: str = "",
 ) -> bool:
     """Update an existing quest entry.
 
@@ -117,10 +131,13 @@ def update_quest(
         if q.get("id") == quest_id:
             q["title"] = title
             q["body"] = body
+            q["conditions"] = conditions
+            q["capacity"] = capacity
             q["due_date"] = (
                 due_date.isoformat() if hasattr(due_date, "isoformat") and due_date else None
             )
-            q["assigned_to"] = assigned_to
+            q["assigned_to"] = assigned_to or []
+            q["reward"] = reward
             save_quests(quests)
             return True
     return False

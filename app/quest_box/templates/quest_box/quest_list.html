@@ -6,7 +6,7 @@
 {% for q in quests %}
     <li>[{{ q.id }}] {{ q.title }} - {{ q.status }}
         {% if q.due_date %}(期限: {{ q.due_date }}){% endif %}
-        {% if q.assigned_to %}(対象: {{ q.assigned_to }}){% endif %}
+        {% if q.assigned_to %}(対象: {{ q.assigned_to|join(', ') }}){% endif %}
         <a href="{{ url_for('quest_box.detail', quest_id=q.id) }}">詳細</a>
         {% if user.role == 'admin' %}
             <a href="{{ url_for('quest_box.edit', quest_id=q.id) }}">編集</a>
@@ -16,5 +16,6 @@
 {% endfor %}
 </ul>
 <p><a href="{{ url_for('quest_box.add') }}">依頼を投稿</a></p>
+<p><a href="{{ url_for('quest_box.completed') }}">終了した依頼</a></p>
 <p><a href="{{ url_for('index') }}">戻る</a></p>
 {% endblock %}

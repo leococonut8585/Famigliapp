@@ -3,9 +3,11 @@
 {% block content %}
 <h1>{{ quest.title }}</h1>
 <p>{{ quest.body }}</p>
+{% if quest.conditions %}<p>参加条件: {{ quest.conditions }}</p>{% endif %}
+{% if quest.capacity %}<p>募集人数: {{ quest.capacity }}</p>{% endif %}
 <p>状態: {{ quest.status }}</p>
 {% if quest.due_date %}<p>期限: {{ quest.due_date }}</p>{% endif %}
-{% if quest.assigned_to %}<p>対象: {{ quest.assigned_to }}</p>{% endif %}
+{% if quest.assigned_to %}<p>対象: {{ quest.assigned_to|join(', ') }}</p>{% endif %}
 {% if quest.reward %}<p>報酬: {{ quest.reward }}</p>{% endif %}
 {% if quest.status == 'open' %}
     <a href="{{ url_for('quest_box.accept', quest_id=quest.id) }}">Accept</a>
