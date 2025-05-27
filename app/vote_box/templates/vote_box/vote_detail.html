@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ poll.title }}</h1>
+<ul>
+{% for idx, opt in enumerate(poll.options) %}
+    <li>{{ opt }} - {{ poll.votes.items()|selectattr('1','equalto',idx)|map(attribute=0)|list|join(', ') }}</li>
+{% endfor %}
+</ul>
+{% if not voted %}
+<form method="post">
+    {{ form.hidden_tag() }}
+    {% for val, label in form.choice.choices %}
+        <p><label>{{ form.choice(id=val, value=val) }} {{ label }}</label></p>
+    {% endfor %}
+    {{ form.submit() }}
+</form>
+{% else %}
+<p>あなたは {{ poll.options[voted] }} に投票済みです。</p>
+{% endif %}
+<p><a href="{{ url_for('vote_box.open_list') }}">戻る</a></p>
+{% endblock %}

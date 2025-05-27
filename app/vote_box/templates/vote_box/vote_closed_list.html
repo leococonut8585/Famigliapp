@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>完了したボックス</h1>
+<ul>
+{% for p in polls %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.title }}
+        <ul>
+        {% for idx, opt in enumerate(p.options) %}
+            <li>{{ opt }} - {{ p.votes.items()|selectattr('1','equalto',idx)|map(attribute=0)|list|join(', ') }}</li>
+        {% endfor %}
+        </ul>
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('vote_box.index') }}">戻る</a></p>
+{% endblock %}

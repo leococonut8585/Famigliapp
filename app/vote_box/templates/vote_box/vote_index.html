@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>投票ボックス</h1>
+<ul>
+    <li><a href="{{ url_for('vote_box.open_list') }}">募集中のボックス</a></li>
+    <li><a href="{{ url_for('vote_box.create') }}">ボックスを作る</a></li>
+    <li><a href="{{ url_for('vote_box.closed_list') }}">完了したボックス</a></li>
+</ul>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}
