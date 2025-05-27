@@ -123,6 +123,46 @@ def save_rules(rules: Dict[str, int]) -> None:
         json.dump(rules, f, ensure_ascii=False, indent=2)
 
 
+def parse_pairs(text: str) -> List[List[str]]:
+    """Parse pair text like 'a-b,c-d' into list of pairs."""
+    pairs: List[List[str]] = []
+    for item in text.split(','):
+        names = [p.strip() for p in item.split('-') if p.strip()]
+        if len(names) >= 2:
+            pairs.append(names[:2])
+    return pairs
+
+
+def parse_kv(text: str) -> Dict[str, str]:
+    result: Dict[str, str] = {}
+    for item in text.split(','):
+        if ':' not in item:
+            continue
+        k, v = item.split(':', 1)
+        k = k.strip()
+        v = v.strip()
+        if k and v:
+            result[k] = v
+    return result
+
+
+def parse_kv_int(text: str) -> Dict[str, int]:
+    result: Dict[str, int] = {}
+    for item in text.split(','):
+        if ':' not in item:
+            continue
+        k, v = item.split(':', 1)
+        k = k.strip()
+        v = v.strip()
+        if not k or not v:
+            continue
+        try:
+            result[k] = int(v)
+        except ValueError:
+            pass
+    return result
+
+
 def move_event(event_id: int, new_date: date) -> bool:
     events = load_events()
     updated = False
@@ -158,6 +198,40 @@ def assign_employee(event_id: int, employee: str) -> bool:
         if changed:
             _notify_event("assign", changed)
     return updated
+
+
+def set_shift_schedule(month: date, schedule: Dict[str, List[str]]) -> None:
+    """Replace shift events for the given month based on schedule."""
+    events = load_events()
+    events = [
+        e
+        for e in events
+        if not (
+            e.get("category") == "shift"
+            and e.get("date", "").startswith(month.strftime("%Y-%m"))
+        )
+    ]
+    next_id = max((e.get("id", 0) for e in events), default=0) + 1
+    new_events = []
+    for day_str, emps in schedule.items():
+        for emp in emps:
+            new_events.append(
+                {
+                    "id": next_id,
+                    "date": day_str,
+                    "title": emp,
+                    "description": "",
+                    "employee": emp,
+                    "category": "shift",
+                    "participants": [],
+                }
+            )
+            next_id += 1
+    events.extend(new_events)
+    save_events(events)
+    check_rules_and_notify()
+    for ev in new_events:
+        _notify_event("add", ev)
 
 
 def check_rules_and_notify() -> None:

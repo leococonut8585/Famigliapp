@@ -23,7 +23,9 @@
 {% endfor %}
 </ul>
 <p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
-<p><a href="{{ url_for('calendario.stats') }}">統計を見る</a></p>
+{% if user.role == 'admin' %}
+<p><a href="{{ url_for('calendario.shift') }}">シフト管理エリア</a></p>
+{% endif %}
 <p><a href="{{ url_for('index') }}">戻る</a></p>
 <script>
 const items = document.querySelectorAll('.event-item');

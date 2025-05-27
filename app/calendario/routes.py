@@ -16,6 +16,8 @@ from flask import (
 from . import bp
 from .forms import EventForm, StatsForm
 from . import utils
+import config
+from typing import Dict, List
 
 
 @bp.before_request
@@ -75,6 +77,7 @@ def index():
             user=user,
             stats=stats,
             start=start_d,
+            timedelta=timedelta,
         )
 
     else:
@@ -158,6 +161,155 @@ def assign(event_id: int):
     else:
         flash("該当IDがありません")
     return redirect(url_for("calendario.index"))
+
+
+@bp.route("/shift", methods=["GET", "POST"])
+def shift():
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("calendario.index"))
+
+    month_param = request.args.get("month")
+    today = date.today()
+    if month_param:
+        try:
+            year, mon = map(int, month_param.split("-"))
+            month = date(year, mon, 1)
+        except Exception:
+            month = date(today.year, today.month, 1)
+    else:
+        month = date(today.year, today.month, 1)
+
+    events = utils.load_events()
+    assignments: Dict[str, List[str]] = {}
+    for e in events:
+        if (
+            e.get("category") == "shift"
+            and e.get("date", "").startswith(month.strftime("%Y-%m"))
+        ):
+            assignments.setdefault(e["date"], []).append(e.get("employee", ""))
+
+    employees = [n for n, info in config.USERS.items() if info.get("role") != "admin"]
+    counts = {emp: sum(emp in v for v in assignments.values()) for emp in employees}
+    days_in_month = calendar.monthrange(month.year, month.month)[1]
+    off_counts = {emp: days_in_month - counts.get(emp, 0) for emp in employees}
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        schedule: Dict[str, List[str]] = {}
+        for key in request.form:
+            if key.startswith("d-"):
+                schedule[key[2:]] = request.form.getlist(key)
+        utils.set_shift_schedule(month, schedule)
+        if action == "notify":
+            utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
+            flash("通知を送信しました")
+        else:
+            flash("保存しました")
+        return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
+
+    cal = calendar.Calendar(firstweekday=0)
+    weeks = [w for w in cal.monthdatescalendar(month.year, month.month)]
+    prev_month = (month - timedelta(days=1)).replace(day=1)
+    next_month = (month + timedelta(days=31)).replace(day=1)
+
+    return render_template(
+        "shift_manager.html",
+        user=user,
+        month=month,
+        weeks=weeks,
+        employees=employees,
+        assignments=assignments,
+        counts=counts,
+        off_counts=off_counts,
+        prev_month=prev_month,
+        next_month=next_month,
+    )
+
+
+@bp.route("/shift_rules", methods=["GET", "POST"])
+def shift_rules():
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("calendario.index"))
+
+    rules = utils.load_rules()
+    employees = [n for n, info in config.USERS.items() if info.get("role") != "admin"]
+    attributes = ["Dog", "Lady", "Man", "Kaji", "Massage"]
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "set_max":
+            try:
+                rules["max_consecutive_days"] = int(request.form.get("value", "0"))
+            except ValueError:
+                pass
+        elif action == "delete_max":
+            rules.pop("max_consecutive_days", None)
+        elif action == "set_min":
+            try:
+                rules["min_staff_per_day"] = int(request.form.get("value", "0"))
+            except ValueError:
+                pass
+        elif action == "delete_min":
+            rules.pop("min_staff_per_day", None)
+        elif action == "add_forbidden":
+            a = request.form.get("a")
+            b = request.form.get("b")
+            if a and b:
+                pair = [a, b]
+                if pair not in rules.setdefault("forbidden_pairs", []):
+                    rules["forbidden_pairs"].append(pair)
+        elif action == "del_forbidden":
+            idx = int(request.form.get("idx", -1))
+            if 0 <= idx < len(rules.get("forbidden_pairs", [])):
+                rules["forbidden_pairs"].pop(idx)
+        elif action == "add_required":
+            a = request.form.get("a")
+            b = request.form.get("b")
+            if a and b:
+                pair = [a, b]
+                if pair not in rules.setdefault("required_pairs", []):
+                    rules["required_pairs"].append(pair)
+        elif action == "del_required":
+            idx = int(request.form.get("idx", -1))
+            if 0 <= idx < len(rules.get("required_pairs", [])):
+                rules["required_pairs"].pop(idx)
+        elif action == "add_emp_attr":
+            emp = request.form.get("emp")
+            attrs = request.form.getlist("attr")
+            if emp and attrs:
+                if len(attrs) == 1:
+                    rules.setdefault("employee_attributes", {})[emp] = attrs[0]
+                else:
+                    rules.setdefault("employee_attributes", {})[emp] = attrs
+        elif action == "del_emp_attr":
+            emp = request.form.get("emp")
+            rules.get("employee_attributes", {}).pop(emp, None)
+        elif action == "add_req_attr":
+            attr = request.form.get("attr")
+            try:
+                val = int(request.form.get("value", ""))
+            except ValueError:
+                val = None
+            if attr and val is not None:
+                rules.setdefault("required_attributes", {})[attr] = val
+        elif action == "del_req_attr":
+            attr = request.form.get("attr")
+            rules.get("required_attributes", {}).pop(attr, None)
+
+        utils.save_rules(rules)
+        return redirect(url_for("calendario.shift_rules"))
+
+    return render_template(
+        "shift_rules.html",
+        user=user,
+        rules=rules,
+        employees=employees,
+        attributes=attributes,
+    )
 
 
 @bp.route("/stats", methods=["GET", "POST"])

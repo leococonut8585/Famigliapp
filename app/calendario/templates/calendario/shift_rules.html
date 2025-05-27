@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>シフト計算詳細設定</h1>
+
+<h2>連勤最大日数</h2>
+<form method="post">
+    <input type="hidden" name="action" value="set_max">
+    <input type="number" name="value" min="1">
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% if rules.max_consecutive_days %}
+    <li>{{ rules.max_consecutive_days }}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="delete_max">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endif %}
+</ul>
+
+<h2>最低人数</h2>
+<form method="post">
+    <input type="hidden" name="action" value="set_min">
+    <input type="number" name="value" min="1">
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% if rules.min_staff_per_day %}
+    <li>{{ rules.min_staff_per_day }}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="delete_min">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endif %}
+</ul>
+
+<h2>禁止組み合わせ</h2>
+<form method="post">
+    <input type="hidden" name="action" value="add_forbidden">
+    <select name="a">
+    {% for emp in employees %}
+        <option value="{{ emp }}">{{ emp }}</option>
+    {% endfor %}
+    </select>
+    <select name="b">
+    {% for emp in employees %}
+        <option value="{{ emp }}">{{ emp }}</option>
+    {% endfor %}
+    </select>
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% for pair in rules.forbidden_pairs %}
+    <li>{{ pair[0] }} - {{ pair[1] }}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="del_forbidden">
+            <input type="hidden" name="idx" value="{{ loop.index0 }}">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+
+<h2>必須組み合わせ</h2>
+<form method="post">
+    <input type="hidden" name="action" value="add_required">
+    <select name="a">
+    {% for emp in employees %}
+        <option value="{{ emp }}">{{ emp }}</option>
+    {% endfor %}
+    </select>
+    <select name="b">
+    {% for emp in employees %}
+        <option value="{{ emp }}">{{ emp }}</option>
+    {% endfor %}
+    </select>
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% for pair in rules.required_pairs %}
+    <li>{{ pair[0] }} - {{ pair[1] }}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="del_required">
+            <input type="hidden" name="idx" value="{{ loop.index0 }}">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+
+<h2>従業員属性</h2>
+<form method="post">
+    <input type="hidden" name="action" value="add_emp_attr">
+    <select name="emp">
+    {% for emp in employees %}
+        <option value="{{ emp }}">{{ emp }}</option>
+    {% endfor %}
+    </select>
+    {% for attr in attributes %}
+        <label><input type="checkbox" name="attr" value="{{ attr }}">{{ attr }}</label>
+    {% endfor %}
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% for emp, attrs in rules.employee_attributes.items() %}
+    <li>{{ emp }}: {% if attrs is iterable and attrs is not string %}{{ attrs|join(',') }}{% else %}{{ attrs }}{% endif %}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="del_emp_attr">
+            <input type="hidden" name="emp" value="{{ emp }}">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+
+<h2>属性ごとの１日当たりの必要人数</h2>
+<form method="post">
+    <input type="hidden" name="action" value="add_req_attr">
+    <select name="attr">
+    {% for attr in attributes %}
+        <option value="{{ attr }}">{{ attr }}</option>
+    {% endfor %}
+    </select>
+    <input type="number" name="value" min="1">
+    <button type="submit">確定</button>
+</form>
+<ul>
+{% for attr, cnt in rules.required_attributes.items() %}
+    <li>{{ attr }}: {{ cnt }}
+        <form method="post" style="display:inline">
+            <input type="hidden" name="action" value="del_req_attr">
+            <input type="hidden" name="attr" value="{{ attr }}">
+            <button type="submit">削除</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+
+<p><a href="{{ url_for('calendario.shift') }}">戻る</a></p>
+{% endblock %}

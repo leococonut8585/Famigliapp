@@ -45,3 +45,15 @@ class StatsForm(FlaskForm):
     end = DateField("終了日", validators=[Optional()])
     submit = SubmitField("表示")
 
+
+class ShiftRulesForm(FlaskForm):
+    """Form to edit shift calculation rules."""
+
+    max_consecutive_days = StringField("連勤最大日数", validators=[Optional()])
+    min_staff_per_day = StringField("最低人数", validators=[Optional()])
+    forbidden_pairs = StringField("禁止組み合わせ", validators=[Optional()])
+    required_pairs = StringField("必須組み合わせ", validators=[Optional()])
+    employee_attributes = StringField("従業員属性", validators=[Optional()])
+    required_attributes = StringField("属性ごとの必要人数", validators=[Optional()])
+    submit = SubmitField("保存")
+
