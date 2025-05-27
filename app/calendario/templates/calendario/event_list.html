@@ -2,6 +2,14 @@
 
 {% block content %}
 <h1>予定一覧</h1>
+{% if stats %}
+<h2>勤務状況</h2>
+<ul>
+{% for emp, data in stats.items() %}
+    <li>{{ emp }}: {{ data.work_days }} 勤務{% if data.off_days is defined %} / {{ data.off_days }} 休日{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
 <ul id="event-list">
 {% for ev in events %}
     <li class="event-item" data-id="{{ ev.id }}" data-date="{{ ev.date }}">
