@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Resoconto AI分析結果</h1>
+<table>
+<tr><th>ユーザー</th><th>単語数</th><th>コメント</th></tr>
+{% for user, count in ranking %}
+<tr><td>{{ user }}</td><td>{{ count }}</td><td>{{ analysis[user] }}</td></tr>
+{% endfor %}
+</table>
+<p><a href="{{ url_for('resoconto.index') }}">戻る</a></p>
+{% endblock %}
