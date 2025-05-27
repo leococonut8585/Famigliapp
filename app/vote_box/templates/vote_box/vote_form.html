@@ -1,12 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>ボックスを作る</h1>
-<form method="post">
+<form method="post" id="poll-form">
     {{ form.hidden_tag() }}
     <p>{{ form.title.label }}<br>{{ form.title(size=40) }}</p>
-    <p>{{ form.options.label }}<br>{{ form.options(rows=4, cols=40) }}</p>
+    <div id="options">
+    {% for opt in form.options %}
+        <p>{{ opt.label }}<br>{{ opt(size=40) }}</p>
+    {% endfor %}
+    </div>
+    <p><button type="button" id="add-option">＋</button></p>
     <p>{{ form.targets.label }}<br>{{ form.targets(multiple=True) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
+<script>
+document.getElementById('add-option').addEventListener('click', function () {
+    const optionsDiv = document.getElementById('options');
+    const index = optionsDiv.querySelectorAll('input').length;
+    const p = document.createElement('p');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = 'options-' + index;
+    input.size = 40;
+    p.appendChild(input);
+    optionsDiv.appendChild(p);
+});
+</script>
 <p><a href="{{ url_for('vote_box.index') }}">戻る</a></p>
 {% endblock %}
