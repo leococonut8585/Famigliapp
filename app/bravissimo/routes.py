@@ -5,8 +5,19 @@ from app.utils import save_uploaded_file
 UPLOAD_FOLDER = os.path.join("static", "uploads")
 
 from . import bp
-from .forms import AddBravissimoForm, BravissimoFilterForm
+from .forms import AddBravissimoForm
 from . import utils as bravissimo_utils
+
+GENERAL_USERS = [
+    "raito",
+    "hitomi",
+    "sara",
+    "giun",
+    "nanchan",
+    "hachi",
+    "kie",
+    "gumi",
+]
 
 
 @bp.before_request
@@ -18,14 +29,28 @@ def require_login():
 @bp.route("/")
 def index():
     user = session.get("user")
-    form = BravissimoFilterForm(request.args)
-    posts = bravissimo_utils.filter_posts(
-        author=form.author.data or "",
-        keyword=form.keyword.data or "",
-        target=form.target.data or "",
-    )
+    posts = bravissimo_utils.filter_posts()
+    posts.sort(key=lambda p: p.get("timestamp", ""), reverse=True)
     return render_template(
-        "bravissimo_list.html", posts=posts, form=form, user=user
+        "bravissimo_list.html",
+        posts=posts,
+        user=user,
+        general_users=GENERAL_USERS,
+        target=None,
+    )
+
+
+@bp.route("/user/<target>")
+def by_user(target: str):
+    user = session.get("user")
+    posts = bravissimo_utils.filter_posts(target=target)
+    posts.sort(key=lambda p: p.get("timestamp", ""), reverse=True)
+    return render_template(
+        "bravissimo_list.html",
+        posts=posts,
+        user=user,
+        general_users=GENERAL_USERS,
+        target=target,
     )
 
 
@@ -36,19 +61,24 @@ def add():
         flash("権限がありません")
         return redirect(url_for("bravissimo.index"))
     form = AddBravissimoForm()
+    form.target.choices = [(u, u) for u in GENERAL_USERS]
     if form.validate_on_submit():
         filename = None
         if form.audio.data and form.audio.data.filename:
             try:
-                filename = save_uploaded_file(form.audio.data, UPLOAD_FOLDER)
+                bravissimo_utils.validate_audio(form.audio.data)
+                filename = save_uploaded_file(
+                    form.audio.data,
+                    UPLOAD_FOLDER,
+                    allowed_exts={"mp3", "wav"},
+                )
             except ValueError as e:
                 flash(str(e))
                 return render_template("bravissimo_form.html", form=form, user=user)
         bravissimo_utils.add_post(
             user["username"],
-            form.text.data,
             filename,
-            target=form.target.data or "",
+            target=form.target.data,
         )
         flash("投稿しました")
         return redirect(url_for("bravissimo.index"))

@@ -2,17 +2,17 @@
 
 {% block content %}
 <h1>Bravissimo!</h1>
-<form method="get">
-    {{ form.author.label }} {{ form.author(size=10) }}
-    {{ form.target.label }} {{ form.target(size=10) }}
-    {{ form.keyword.label }} {{ form.keyword(size=10) }}
-    {{ form.submit() }}
-</form>
+<ul>
+{% for u in general_users %}
+    <li><a href="{{ url_for('bravissimo.by_user', target=u) }}">{{ u }}</a></li>
+{% endfor %}
+</ul>
 <ul>
 {% for p in posts %}
-    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }}{% if p.target %} → {{ p.target }}{% endif %} {{ p.text }}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }}{% if p.target %} → {{ p.target }}{% endif %}
         {% if p.filename %}
             <audio controls src="{{ url_for('static', filename='uploads/' + p.filename) }}"></audio>
+            <a href="{{ url_for('static', filename='uploads/' + p.filename) }}" download>ダウンロード</a>
         {% endif %}
         {% if user.role == 'admin' %}
             <a href="{{ url_for('bravissimo.delete', post_id=p.id) }}">削除</a>
