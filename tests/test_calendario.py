@@ -185,6 +185,21 @@ def test_stats_route():
         assert "休日数".encode("utf-8") in res.data
 
 
+def test_event_list_displays_stats():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_events([])
+    utils.add_event(date(2030, 1, 1), "s", "", "taro")
+    utils.add_event(date(2030, 1, 2), "s", "", "taro")
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/calendario/")
+        assert res.status_code == 200
+        assert "勤務状況".encode("utf-8") in res.data
+        assert b"taro" in res.data
+
+
 def test_move_event_api():
     app = create_app()
     app.config["TESTING"] = True

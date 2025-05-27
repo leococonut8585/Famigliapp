@@ -28,7 +28,16 @@ def index():
     user = session.get("user")
     events = utils.load_events()
     events.sort(key=lambda e: e.get("date"))
-    return render_template("calendario/event_list.html", events=events, user=user)
+    stats = {}
+    if events:
+        try:
+            start = date.fromisoformat(events[0].get("date"))
+        except Exception:
+            start = None
+        stats = utils.compute_employee_stats(start=start, end=date.today())
+    return render_template(
+        "calendario/event_list.html", events=events, user=user, stats=stats
+    )
 
 
 @bp.route("/add", methods=["GET", "POST"])
