@@ -3,12 +3,34 @@
 {% block content %}
 <h1>ポイント消費履歴</h1>
 {% if user.role == 'admin' %}
-<form method="post">
+<form method="post" id="consumption-form">
     {{ form.hidden_tag() }}
-    <p>{{ form.username.label }} {{ form.username(size=20) }}</p>
+    {{ form.username() }}
+    <div class="user-tabs">
+        {% for name in general_users %}
+        <button type="button" class="tab-btn{% if loop.first %} active{% endif %}" data-user="{{ name }}">{{ name }}</button>
+        {% endfor %}
+    </div>
     <p>{{ form.reason.label }} {{ form.reason(size=40) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('consumption-form');
+    const usernameField = document.getElementById('{{ form.username.id }}');
+    const tabs = form.querySelectorAll('.tab-btn');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabs.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            usernameField.value = btn.dataset.user;
+        });
+    });
+    if (tabs.length > 0) {
+        usernameField.value = tabs[0].dataset.user;
+    }
+});
+</script>
 {% endif %}
 <table class="history-table">
     <tr>
