@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>招待コード一覧</h1>
+<form method="post">
+    <button type="submit">新規作成</button>
+</form>
+<ul>
+{% for i in invites %}
+    <li>{{ i.code }} {% if i.used_by %}(使用済: {{ i.used_by }}){% endif %} <a href="{{ url_for('invites.delete', code=i.code) }}">削除</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

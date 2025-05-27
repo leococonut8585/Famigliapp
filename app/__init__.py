@@ -42,6 +42,7 @@ def create_app() -> "Flask":
     from .scatola_capriccio import bp as scatola_capriccio_bp
     from .monsignore import bp as monsignore_bp
     from .quest_box import bp as quest_box_bp
+    from .invites import bp as invites_bp
     from .calendario import bp as calendario_bp
     from .resoconto import bp as resoconto_bp
     from .lezzione import bp as lezzione_bp
@@ -56,6 +57,7 @@ def create_app() -> "Flask":
     app.register_blueprint(scatola_capriccio_bp)
     app.register_blueprint(monsignore_bp)
     app.register_blueprint(quest_box_bp)
+    app.register_blueprint(invites_bp)
     app.register_blueprint(calendario_bp)
     app.register_blueprint(resoconto_bp)
     app.register_blueprint(lezzione_bp)
