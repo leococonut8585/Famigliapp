@@ -3,7 +3,7 @@
 import json
 from datetime import date, timedelta
 from pathlib import Path
-from typing import List, Dict, Set, Optional
+from typing import List, Dict, Set, Optional, Iterable
 
 from app.utils import send_email
 
@@ -61,7 +61,14 @@ def save_events(events: List[Dict[str, str]]) -> None:
         json.dump(events, f, ensure_ascii=False, indent=2)
 
 
-def add_event(event_date: date, title: str, description: str, employee: str) -> None:
+def add_event(
+    event_date: date,
+    title: str,
+    description: str,
+    employee: str,
+    category: str = "other",
+    participants: Optional[Iterable[str]] = None,
+) -> None:
     events = load_events()
     next_id = max((e.get("id", 0) for e in events), default=0) + 1
     events.append(
@@ -71,11 +78,24 @@ def add_event(event_date: date, title: str, description: str, employee: str) -> 
             "title": title,
             "description": description,
             "employee": employee,
+            "category": category,
+            "participants": list(participants or []),
         }
     )
     save_events(events)
     check_rules_and_notify()
     _notify_event("add", events[-1])
+
+    if category == "lesson":
+        from app.corso import utils as corso_utils
+
+        corso_utils.add_post(
+            "system",
+            title,
+            description or "lesson scheduled",
+            None,
+            None,
+        )
 
 
 def delete_event(event_id: int) -> bool:

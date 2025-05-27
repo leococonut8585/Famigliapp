@@ -1,6 +1,7 @@
 """Routes for Calendario."""
 
-from datetime import datetime
+from datetime import datetime, date, timedelta
+import calendar
 
 from flask import (
     render_template,
@@ -25,7 +26,31 @@ def require_login():
 
 @bp.route("/")
 def index():
+    """Show calendar in month or week view."""
+
     user = session.get("user")
+    view = request.args.get("view", "month")
+    today = date.today()
+    month_param = request.args.get("month")
+    week_param = request.args.get("week")
+
+    try:
+        if month_param:
+            year, mon = map(int, month_param.split("-"))
+            month = date(year, mon, 1)
+        else:
+            month = date(today.year, today.month, 1)
+    except Exception:
+        month = date(today.year, today.month, 1)
+
+    if week_param:
+        try:
+            week_start = datetime.fromisoformat(week_param).date()
+        except Exception:
+            week_start = today - timedelta(days=today.weekday())
+    else:
+        week_start = today - timedelta(days=today.weekday())
+
     events = utils.load_events()
     events.sort(key=lambda e: e.get("date"))
     stats = {}
@@ -35,9 +60,47 @@ def index():
         except Exception:
             start = None
         stats = utils.compute_employee_stats(start=start, end=date.today())
-    return render_template(
-        "event_list.html", events=events, user=user, stats=stats
-    )
+
+    if view == "week":
+        start_d = week_start
+        end_d = week_start + timedelta(days=6)
+        week_events = [
+            e
+            for e in events
+            if start_d <= date.fromisoformat(e.get("date")) <= end_d
+        ]
+        return render_template(
+            "week_view.html",
+            events=week_events,
+            user=user,
+            stats=stats,
+            start=start_d,
+        )
+
+    else:
+        # month view
+        events_month = [
+            e for e in events if e.get("date", "").startswith(month.strftime("%Y-%m"))
+        ]
+        prev_month = (month - timedelta(days=1)).replace(day=1)
+        next_month = (month + timedelta(days=31)).replace(day=1)
+        events_by_date = {}
+        for e in events_month:
+            events_by_date.setdefault(e["date"], []).append(e)
+        cal = calendar.Calendar(firstweekday=0)
+        weeks = []
+        for w in cal.monthdatescalendar(month.year, month.month):
+            weeks.append([d for d in w])
+        return render_template(
+            "month_view.html",
+            events_by_date=events_by_date,
+            user=user,
+            stats=stats,
+            month=month,
+            prev_month=prev_month,
+            next_month=next_month,
+            weeks=weeks,
+        )
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -50,6 +113,8 @@ def add():
             form.title.data,
             form.description.data or "",
             form.employee.data or "",
+            form.category.data,
+            form.participants.data,
         )
         flash("追加しました")
         return redirect(url_for("calendario.index"))
