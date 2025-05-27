@@ -14,6 +14,9 @@ USERS = {
     "gumi": {"password": "kumigumi858", "role": "user", "email": "gumi@example.com"},
 }
 
+# Users that should not appear in selection lists
+EXCLUDED_USERS = {"admin", "user1", "user2"}
+
 POINTS_FILE = "points.json"
 POINTS_HISTORY_FILE = "points_history.json"
 POINTS_CONSUMPTION_FILE = "points_consumption.json"

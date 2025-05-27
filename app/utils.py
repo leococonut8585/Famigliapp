@@ -238,6 +238,15 @@ def send_pushbullet_notify(title: str, body: str) -> None:
         pass
 
 
+def get_admin_email() -> Optional[str]:
+    """Return the email address of the first admin user if available."""
+
+    for info in config.USERS.values():
+        if info.get("role") == "admin" and info.get("email"):
+            return info["email"]
+    return None
+
+
 def _use_db() -> bool:
     """Return True if a database connection is available."""
 

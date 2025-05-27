@@ -10,7 +10,7 @@
     {% endfor %}
     </div>
     <p><button type="button" id="add-option">＋</button></p>
-    <p>{{ form.targets.label }}<br>{{ form.targets(multiple=True) }}</p>
+    <p>{{ form.targets.label }}<br>{{ form.targets() }}</p>
     <p>{{ form.submit() }}</p>
 </form>
 <script>

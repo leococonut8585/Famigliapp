@@ -28,7 +28,8 @@ def index():
 def add():
     user = session.get('user')
     form = NedariForm()
-    form.targets.choices = [(u, u) for u in config.USERS.keys()]
+    valid_users = [u for u in config.USERS.keys() if u not in config.EXCLUDED_USERS]
+    form.targets.choices = [(u, u) for u in valid_users]
     if form.validate_on_submit():
         utils.add_post(
             user['username'],

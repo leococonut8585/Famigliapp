@@ -58,7 +58,7 @@ def daily_post_job() -> Dict[str, object]:
     lines.append(f"Total posts: {summary['total_posts']}")
     body = "\n".join(lines)
 
-    admin_email = config.USERS.get("admin", {}).get("email")
+    admin_email = utils.get_admin_email()
     if admin_email:
         send_email("Daily post summary", body, admin_email)
 
@@ -95,7 +95,7 @@ def daily_report_job() -> Dict[str, object]:
         lines.append(f"{user}: {cnt} words - {comment}")
     body = "\n".join(lines)
 
-    admin_email = config.USERS.get("admin", {}).get("email")
+    admin_email = utils.get_admin_email()
     if admin_email:
         send_email("Daily resoconto analysis", body, admin_email)
 
