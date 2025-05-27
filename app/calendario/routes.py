@@ -106,6 +106,7 @@ def index():
             prev_month=prev_month,
             next_month=next_month,
             weeks=weeks,
+            timedelta=timedelta,
         )
 
 
