@@ -151,3 +151,36 @@ def test_reject_large_file():
         assert "ファイルサイズが大きすぎます".encode("utf-8") in res.data
         assert utils.load_posts() == []
 
+
+def test_detail_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_posts([])
+    utils.add_post("admin", "title", "body")
+    post_id = utils.load_posts()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get(f"/intrattenimento/detail/{post_id}")
+        assert res.status_code == 200
+        assert b"title" in res.data
+
+
+def test_detail_respects_end_date():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_posts([])
+    past = datetime.now() - timedelta(days=1)
+    utils.add_post("admin", "old", "body", past.date())
+    post_id = utils.load_posts()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        res = client.get(f"/intrattenimento/detail/{post_id}", follow_redirects=True)
+        assert "公開期間が終了しています".encode("utf-8") in res.data
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get(f"/intrattenimento/detail/{post_id}")
+        assert res.status_code == 200
+        assert b"old" in res.data
+

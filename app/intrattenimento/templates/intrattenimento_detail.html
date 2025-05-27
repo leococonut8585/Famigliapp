@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ post.title }}</h1>
+<p>{{ post.timestamp }} {{ post.author }}</p>
+<p>{{ post.body | replace('\n', '<br>') | safe }}</p>
+{% if post.filename %}
+<p><a href="{{ url_for('intrattenimento.download', filename=post.filename) }}">{{ post.filename }}</a></p>
+{% endif %}
+{% if user.role == 'admin' %}
+<p><a href="{{ url_for('intrattenimento.delete', post_id=post.id) }}">削除</a></p>
+{% endif %}
+<p><a href="{{ url_for('intrattenimento.index') }}">一覧へ戻る</a></p>
+{% endblock %}
