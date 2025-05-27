@@ -25,7 +25,7 @@ def index():
         target=form.target.data or "",
     )
     return render_template(
-        "bravissimo/bravissimo_list.html", posts=posts, form=form, user=user
+        "bravissimo_list.html", posts=posts, form=form, user=user
     )
 
 
@@ -43,7 +43,7 @@ def add():
                 filename = save_uploaded_file(form.audio.data, UPLOAD_FOLDER)
             except ValueError as e:
                 flash(str(e))
-                return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
+                return render_template("bravissimo_form.html", form=form, user=user)
         bravissimo_utils.add_post(
             user["username"],
             form.text.data,
@@ -52,7 +52,7 @@ def add():
         )
         flash("投稿しました")
         return redirect(url_for("bravissimo.index"))
-    return render_template("bravissimo/bravissimo_form.html", form=form, user=user)
+    return render_template("bravissimo_form.html", form=form, user=user)
 
 
 @bp.route("/delete/<int:post_id>")

@@ -27,7 +27,7 @@ def index():
         keyword=form.keyword.data or "",
     )
     return render_template(
-        "monsignore/monsignore_list.html", posts=posts, form=form, user=user
+        "monsignore_list.html", posts=posts, form=form, user=user
     )
 
 
@@ -47,14 +47,14 @@ def add():
                 )
             except ValueError as e:
                 flash(str(e))
-                return render_template("monsignore/monsignore_form.html", form=form, user=user)
+                return render_template("monsignore_form.html", form=form, user=user)
         utils.add_post(user["username"], form.body.data, filename)
         for u in config.USERS.values():
             if u.get("email"):
                 send_email("New Monsignore post", form.body.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("monsignore.index"))
-    return render_template("monsignore/monsignore_form.html", form=form, user=user)
+    return render_template("monsignore_form.html", form=form, user=user)
 
 
 @bp.route("/delete/<int:post_id>")

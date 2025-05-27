@@ -18,7 +18,7 @@ def index():
         return redirect(url_for('index'))
     posts = utils.load_posts()
     return render_template(
-        'scatola_capriccio/feedback_list_admin.html', posts=posts, user=user
+        'feedback_list_admin.html', posts=posts, user=user
     )
 
 
@@ -30,7 +30,7 @@ def add():
         utils.add_post(user['username'], form.body.data)
         flash('投稿しました')
         return redirect(url_for('index'))
-    return render_template('scatola_capriccio/feedback_form.html', form=form, user=user)
+    return render_template('feedback_form.html', form=form, user=user)
 
 
 @bp.route('/survey')
@@ -40,7 +40,7 @@ def survey_list():
         flash('権限がありません')
         return redirect(url_for('index'))
     surveys = utils.load_surveys()
-    return render_template('scatola_capriccio/survey_view.html', surveys=surveys, user=user)
+    return render_template('survey_view.html', surveys=surveys, user=user)
 
 
 @bp.route('/survey/add', methods=['GET', 'POST'])
@@ -55,4 +55,4 @@ def survey_add():
         utils.add_survey(user['username'], form.question.data, targets)
         flash('投稿しました')
         return redirect(url_for('scatola_capriccio.survey_list'))
-    return render_template('scatola_capriccio/survey_form_admin.html', form=form, user=user)
+    return render_template('survey_form_admin.html', form=form, user=user)

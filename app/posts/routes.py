@@ -42,7 +42,7 @@ def index():
     for p in posts:
         p["comments"] = utils.get_comments(p.get("id"))
     return render_template(
-        "posts/posts_list.html", posts=posts, form=form, comment_form=comment_form, user=user
+        "posts_list.html", posts=posts, form=form, comment_form=comment_form, user=user
     )
 
 
@@ -58,7 +58,7 @@ def add():
             send_email("New post", form.text.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("posts.index"))
-    return render_template("posts/post_form.html", form=form, user=user)
+    return render_template("post_form.html", form=form, user=user)
 
 
 @bp.route("/edit/<int:post_id>", methods=["GET", "POST"])
@@ -81,7 +81,7 @@ def edit(post_id: int):
         flash("更新しました")
         return redirect(url_for("posts.index"))
 
-    return render_template("posts/post_form.html", form=form, user=user, edit=True)
+    return render_template("post_form.html", form=form, user=user, edit=True)
 
 
 @bp.route("/delete/<int:post_id>")
@@ -133,4 +133,4 @@ def edit_comment(comment_id: int):
         flash("コメントを更新しました")
         return redirect(url_for("posts.index"))
 
-    return render_template("posts/comment_form.html", form=form, user=user, edit=True)
+    return render_template("comment_form.html", form=form, user=user, edit=True)

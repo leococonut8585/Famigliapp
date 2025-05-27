@@ -18,7 +18,7 @@ def index():
     user = session.get("user")
     entries = utils.load_entries()
     entries.sort(key=lambda e: e.get("lesson_date"))
-    return render_template("lezzione/lezzione_list.html", entries=entries, user=user)
+    return render_template("lezzione_list.html", entries=entries, user=user)
 
 
 @bp.route("/schedule", methods=["GET", "POST"])
@@ -29,7 +29,7 @@ def schedule():
         utils.add_schedule(user["username"], form.date.data, form.title.data)
         flash("登録しました")
         return redirect(url_for("lezzione.index"))
-    return render_template("lezzione/lezzione_schedule_form.html", form=form, user=user)
+    return render_template("lezzione_schedule_form.html", form=form, user=user)
 
 
 @bp.route("/feedback/<int:entry_id>", methods=["GET", "POST"])
@@ -43,6 +43,6 @@ def feedback(entry_id: int):
             flash("該当IDがありません")
         return redirect(url_for("lezzione.index"))
     return render_template(
-        "lezzione/lezzione_feedback_form.html", form=form, user=user, entry_id=entry_id
+        "lezzione_feedback_form.html", form=form, user=user, entry_id=entry_id
     )
 

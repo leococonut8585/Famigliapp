@@ -34,7 +34,7 @@ def dashboard():
     if user["role"] != "admin":
         p = points.get(user["username"], {"A": 0, "O": 0})
         points = {user["username"]: p}
-    return render_template("punto/punto_dashboard.html", points=points, user=user)
+    return render_template("punto_dashboard.html", points=points, user=user)
 
 
 @bp.route("/edit/<username>", methods=["GET", "POST"])
@@ -57,7 +57,7 @@ def edit(username: str):
         return redirect(url_for("punto.dashboard"))
 
     form.u.data = form.a.data - form.o.data
-    return render_template("punto/punto_edit_form.html", form=form, username=username)
+    return render_template("punto_edit_form.html", form=form, username=username)
 
 
 @bp.route("/rankings")
@@ -78,7 +78,7 @@ def rankings():
 
     ranking = utils.get_ranking(metric, period=None if period == "all" else period)
     return render_template(
-        "punto/punto_rankings.html",
+        "punto_rankings.html",
         ranking=ranking,
         metric=metric,
         period=period,
@@ -111,7 +111,7 @@ def history():
 
     entries = utils.filter_points_history(start=start, end=end, username=username)
     return render_template(
-        "punto/punto_history.html",
+        "punto_history.html",
         form=form,
         entries=entries,
         user=user,
@@ -140,7 +140,7 @@ def graph():
     data = utils.get_points_history_summary(start=start, end=end)
 
     return render_template(
-        "punto/punto_graph.html",
+        "punto_graph.html",
         form=form,
         labels=data["labels"],
         a_data=data["A"],

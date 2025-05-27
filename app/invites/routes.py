@@ -23,7 +23,7 @@ def index():
         return redirect(url_for("invites.index"))
     invites = utils.load_invites()
     user = session.get("user")
-    return render_template("invites/invite_list.html", invites=invites, user=user)
+    return render_template("invite_list.html", invites=invites, user=user)
 
 
 @bp.route("/delete/<code>")

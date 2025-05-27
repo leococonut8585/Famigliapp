@@ -39,7 +39,7 @@ def index():
         keyword=form.keyword.data or "",
         include_expired=include_expired,
     )
-    return render_template("corso/corso_list.html", posts=posts, form=form, user=user)
+    return render_template("corso_list.html", posts=posts, form=form, user=user)
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -60,7 +60,7 @@ def add():
                 )
             except ValueError as e:
                 flash(str(e))
-                return render_template("corso/corso_post_form.html", form=form, user=user)
+                return render_template("corso_post_form.html", form=form, user=user)
         utils.add_post(
             user["username"],
             form.title.data,
@@ -73,7 +73,7 @@ def add():
                 send_email("New Corso post", form.title.data, u["email"])
         flash("投稿しました")
         return redirect(url_for("corso.index"))
-    return render_template("corso/corso_post_form.html", form=form, user=user)
+    return render_template("corso_post_form.html", form=form, user=user)
 
 
 @bp.route("/detail/<int:post_id>")
@@ -86,7 +86,7 @@ def detail(post_id: int):
     if not post:
         flash("該当IDがありません")
         return redirect(url_for("corso.index"))
-    return render_template("corso/corso_detail.html", post=post, user=user)
+    return render_template("corso_detail.html", post=post, user=user)
 
 
 @bp.route("/delete/<int:post_id>")
