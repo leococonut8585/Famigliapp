@@ -4,6 +4,7 @@ import pytest
 import tempfile
 from pathlib import Path
 import io
+import wave
 
 flask = pytest.importorskip("flask")
 
@@ -26,27 +27,50 @@ def teardown_module(module):
     _tmpdir.cleanup()
 
 
-def test_add_and_list_bravissimo():
+def _create_wav(path: Path, seconds: int = 1):
+    with wave.open(str(path), "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(1)
+        wf.setframerate(1)
+        wf.writeframes(b"\0" * seconds)
+
+
+def test_add_and_list_bravissimo(tmp_path):
     app = create_app()
     app.config["TESTING"] = True
+    audio_path = tmp_path / "t.wav"
+    _create_wav(audio_path, 5)
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
-        res = client.post("/bravissimo/add", data={"text": "good"}, follow_redirects=True)
+        with open(audio_path, "rb") as f:
+            res = client.post(
+                "/bravissimo/add",
+                data={"target": "raito", "audio": (f, "t.wav")},
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
         assert res.status_code == 200
-        assert b"good" in res.data
-        # ensure list page shows the post
+        assert b"<audio" in res.data
         res = client.get("/bravissimo/")
-        assert b"good" in res.data
+        assert b"<audio" in res.data
 
 
-def test_add_requires_admin():
+def test_add_requires_admin(tmp_path):
     app = create_app()
     app.config["TESTING"] = True
+    audio_path = tmp_path / "a.wav"
+    _create_wav(audio_path)
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
-        res = client.post("/bravissimo/add", data={"text": "hello"}, follow_redirects=True)
+        with open(audio_path, "rb") as f:
+            res = client.post(
+                "/bravissimo/add",
+                data={"target": "raito", "audio": (f, "a.wav")},
+                content_type="multipart/form-data",
+                follow_redirects=True,
+            )
         assert "権限がありません".encode("utf-8") in res.data
 
 
@@ -54,19 +78,18 @@ def test_add_with_audio(tmp_path):
     app = create_app()
     app.config["TESTING"] = True
     audio_path = tmp_path / "test.wav"
-    audio_path.write_bytes(b"dummy")
+    _create_wav(audio_path)
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
         with open(audio_path, "rb") as f:
             res = client.post(
                 "/bravissimo/add",
-                data={"text": "bravo", "audio": (f, "test.wav")},
+                data={"target": "raito", "audio": (f, "test.wav")},
                 content_type="multipart/form-data",
                 follow_redirects=True,
             )
         assert res.status_code == 200
-        assert b"bravo" in res.data
         assert b"<audio" in res.data
     assert Path("static/uploads/test.wav").exists()
 
@@ -77,11 +100,17 @@ def test_filter_by_target():
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
-        client.post("/bravissimo/add", data={"text": "nice", "target": "user1"}, follow_redirects=True)
-        res = client.get("/bravissimo/?target=user1")
-        assert b"nice" in res.data
-        res = client.get("/bravissimo/?target=user2")
-        assert b"nice" not in res.data
+        audio = io.BytesIO(b"a" * 4)
+        client.post(
+            "/bravissimo/add",
+            data={"target": "raito", "audio": (audio, "n.wav")},
+            content_type="multipart/form-data",
+            follow_redirects=True,
+        )
+        res = client.get("/bravissimo/user/raito")
+        assert b"<audio" in res.data
+        res = client.get("/bravissimo/user/hitomi")
+        assert b"<audio" not in res.data
 
 
 def test_reject_invalid_extension():
@@ -90,7 +119,7 @@ def test_reject_invalid_extension():
     with app.test_client() as client:
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
-        data = {"text": "x", "audio": (io.BytesIO(b"x"), "bad.exe")}
+        data = {"target": "raito", "audio": (io.BytesIO(b"x"), "bad.exe")}
         res = client.post("/bravissimo/add", data=data, follow_redirects=True)
         assert "許可されていないファイル形式です".encode("utf-8") in res.data
         assert utils.load_posts() == []
@@ -103,7 +132,22 @@ def test_reject_large_file():
         with client.session_transaction() as sess:
             sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
         big = io.BytesIO(b"x" * (10 * 1024 * 1024 + 1))
-        data = {"text": "x", "audio": (big, "big.wav")}
+        data = {"target": "raito", "audio": (big, "big.wav")}
         res = client.post("/bravissimo/add", data=data, follow_redirects=True)
         assert "ファイルサイズが大きすぎます".encode("utf-8") in res.data
+        assert utils.load_posts() == []
+
+
+def test_reject_long_audio(tmp_path):
+    app = create_app()
+    app.config["TESTING"] = True
+    long_audio = tmp_path / "long.wav"
+    _create_wav(long_audio, 1201)
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        with open(long_audio, "rb") as f:
+            data = {"target": "raito", "audio": (f, "long.wav")}
+            res = client.post("/bravissimo/add", data=data, content_type="multipart/form-data", follow_redirects=True)
+        assert "20分を超える音声はアップロードできません".encode("utf-8") in res.data
         assert utils.load_posts() == []
