@@ -151,7 +151,7 @@ def check_rules_and_notify() -> None:
             continue
         events_by_employee.setdefault(emp, []).append(date.fromisoformat(e.get("date")))
 
-    admin_email = config.USERS.get("admin", {}).get("email")
+    admin_email = utils.get_admin_email()
 
     for emp, dates in events_by_employee.items():
         dates.sort()

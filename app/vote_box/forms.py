@@ -6,16 +6,22 @@ from wtforms import (
     SubmitField,
     SelectMultipleField,
     FieldList,
+    widgets,
 )
 from wtforms.validators import DataRequired
 import config
+
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 
 class PollForm(FlaskForm):
     title = StringField("タイトル", validators=[DataRequired()])
     # FieldList で動的に選択肢を追加できるようにする
     options = FieldList(StringField("選択肢", validators=[DataRequired()]), min_entries=2)
-    targets = SelectMultipleField(
+    targets = MultiCheckboxField(
         "対象ユーザー", choices=[(u, u) for u in config.USERS.keys()]
     )
     submit = SubmitField("公開する")

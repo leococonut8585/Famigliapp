@@ -36,7 +36,8 @@ def closed_list():
 def create():
     user = session.get('user')
     form = PollForm()
-    form.targets.choices = [(u, u) for u in config.USERS.keys()]
+    valid_users = [u for u in config.USERS.keys() if u not in config.EXCLUDED_USERS]
+    form.targets.choices = [(u, u) for u in valid_users]
     if form.validate_on_submit():
         options = [o.strip() for o in form.options.data if o.strip()]
         utils.add_poll(
