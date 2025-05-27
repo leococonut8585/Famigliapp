@@ -44,6 +44,7 @@ def create_app() -> "Flask":
     from .principessina import bp as principessina_bp
     from .scatola_capriccio import bp as scatola_capriccio_bp
     from .monsignore import bp as monsignore_bp
+    from .quest_box import bp as quest_box_bp
     
     from .vote_box import bp as vote_box_bp
     from .nedari_box import bp as nedari_box_bp
@@ -61,6 +62,7 @@ def create_app() -> "Flask":
     app.register_blueprint(principessina_bp)
     app.register_blueprint(scatola_capriccio_bp)
     app.register_blueprint(monsignore_bp)
+    app.register_blueprint(quest_box_bp)
     
     app.register_blueprint(vote_box_bp)
     app.register_blueprint(nedari_box_bp)
