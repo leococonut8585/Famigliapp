@@ -237,6 +237,8 @@ def shift_rules():
 
     rules = utils.load_rules()
     form = ShiftRulesForm()
+    employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS]
+    attributes = ["Dog", "Lady", "Man", "Kaji", "Massage"]
     if request.method == "GET":
         form.max_consecutive_days.data = str(rules.get("max_consecutive_days", ""))
         form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
@@ -255,7 +257,13 @@ def shift_rules():
         flash("保存しました")
         return redirect(url_for("calendario.shift_rules"))
 
-    return render_template("shift_rules.html", form=form, user=user)
+    return render_template(
+        "shift_rules.html",
+        form=form,
+        user=user,
+        employees=employees,
+        attributes=attributes,
+    )
 
 
 @bp.route("/stats", methods=["GET", "POST"])
