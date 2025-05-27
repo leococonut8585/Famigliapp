@@ -202,9 +202,10 @@ def shift():
     if request.method == "POST":
         action = request.form.get("action")
         schedule: Dict[str, List[str]] = {}
-        for key in request.form:
+        for key, val in request.form.items():
             if key.startswith("d-"):
-                schedule[key[2:]] = request.form.getlist(key)
+                emps = [e for e in val.split(',') if e]
+                schedule[key[2:]] = emps
         utils.set_shift_schedule(month, schedule)
         if action == "notify":
             utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")

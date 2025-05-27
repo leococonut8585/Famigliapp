@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.employee-box').forEach(box => {
     box.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', box.dataset.emp);
+      e.dataTransfer.setData('text/from-cell', '');
+      e.dataTransfer.effectAllowed = 'move';
     });
   });
 
@@ -10,6 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = cell.querySelector('.assignments');
 
     function addSpan(span) {
+      span.draggable = true;
+      span.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', span.textContent);
+        e.dataTransfer.setData('text/from-cell', cell.dataset.date);
+        e.dataTransfer.effectAllowed = 'move';
+      });
       span.addEventListener('click', () => {
         const emp = span.textContent;
         let emps = input.value ? input.value.split(',') : [];
@@ -37,6 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
         span.textContent = emp;
         addSpan(span);
         list.appendChild(span);
+      }
+      const originDate = e.dataTransfer.getData('text/from-cell');
+      if (originDate && originDate !== cell.dataset.date) {
+        const origin = document.querySelector(`.shift-cell[data-date="${originDate}"]`);
+        if (origin) {
+          const oInput = origin.querySelector('input');
+          const oList = origin.querySelector('.assignments');
+          let oEmps = oInput.value ? oInput.value.split(',') : [];
+          const idx = oEmps.indexOf(emp);
+          if (idx >= 0) {
+            oEmps.splice(idx, 1);
+            oInput.value = oEmps.join(',');
+            oList.querySelectorAll('.assigned').forEach(s => {
+              if (s.textContent === emp) s.remove();
+            });
+          }
+        }
       }
     }
 
