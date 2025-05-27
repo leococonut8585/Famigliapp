@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>終了したCorso</h1>
+<ul>
+{% for p in posts %}
+    <li>[{{ p.id }}] {{ p.title }} ({{ p.end_date }})</li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('corso.index') }}">戻る</a></p>
+{% endblock %}

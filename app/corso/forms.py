@@ -2,7 +2,14 @@
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import StringField, TextAreaField, SubmitField, DateField, FileField
+from wtforms import (
+    StringField,
+    TextAreaField,
+    SubmitField,
+    DateField,
+    FileField,
+    SelectField,
+)
 from wtforms.validators import DataRequired, Optional
 
 from app.validators import FileSize
@@ -26,10 +33,10 @@ class AddCorsoForm(FlaskForm):
     submit = SubmitField("投稿")
 
 
-class CorsoFilterForm(FlaskForm):
-    """Form to filter Corso posts."""
+class FeedbackForm(FlaskForm):
+    """Form to submit feedback for a Corso."""
 
-    author = StringField("投稿者", validators=[Optional()])
-    keyword = StringField("キーワード", validators=[Optional()])
-    submit = SubmitField("絞り込み")
+    corso_id = SelectField("Corso", coerce=int)
+    body = TextAreaField("感想", validators=[DataRequired()])
+    submit = SubmitField("投稿")
 

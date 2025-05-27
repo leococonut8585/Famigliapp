@@ -2,11 +2,11 @@
 
 {% block content %}
 <h1>Corso</h1>
-<form method="get">
-    {{ form.author.label }} {{ form.author(size=10) }}
-    {{ form.keyword.label }} {{ form.keyword(size=10) }}
-    {{ form.submit() }}
-</form>
+<p>
+    <a href="{{ url_for('corso.check') }}">Corsoを確認</a> |
+    <a href="{{ url_for('corso.feedback') }}">Corso感想投稿ページ</a> |
+    <a href="{{ url_for('corso.archive') }}">終了したCorso</a>
+</p>
 <ul>
 {% for p in posts %}
     <li>[{{ p.id }}] {{ p.timestamp }} <a href="{{ url_for('corso.detail', post_id=p.id) }}">{{ p.title }}</a>
@@ -15,6 +15,7 @@
         {% endif %}
         {% if user.role == 'admin' %}
             <a href="{{ url_for('corso.delete', post_id=p.id) }}">削除</a>
+            <a href="{{ url_for('corso.finish', post_id=p.id) }}">終了</a>
         {% endif %}
     </li>
 {% endfor %}

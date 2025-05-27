@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Corsoを確認</h1>
+<ul>
+{% for e in events %}
+    <li>{{ e.date }} {{ e.title }} {% if e.employee %}({{ e.employee }}){% endif %}</li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('corso.index') }}">戻る</a></p>
+{% endblock %}
