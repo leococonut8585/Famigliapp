@@ -130,6 +130,17 @@ def test_show_resoconto_cli_filtered(capsys):
     assert "u2" in lines[0]
 
 
+def test_show_resoconto_analysis_cli(capsys):
+    resoconto_utils.save_reports([])
+    resoconto_utils.add_report("u1", date(2031, 1, 1), "short")
+    resoconto_utils.add_report("u2", date(2031, 1, 2), "word " * 25)
+
+    run.show_resoconto_analysis_cli()
+    out = capsys.readouterr().out
+    assert "u1" in out
+    assert "u2" in out
+
+
 def test_show_intrattenimento_cli_date_filter(capsys):
     config.INTRATTENIMENTO_FILE = os.path.join(_tmpdir.name, "intra.json")
     intra_utils.INTRATTENIMENTO_PATH = Path(config.INTRATTENIMENTO_FILE)

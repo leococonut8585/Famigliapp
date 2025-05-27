@@ -68,6 +68,20 @@ def test_ranking_route():
         assert b"user2" in res.data
 
 
+def test_analysis_route():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.add_report("user1", date.fromisoformat("2025-05-01"), "hello world")
+    utils.add_report("user2", date.fromisoformat("2025-05-02"), "word " * 30)
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "admin", "role": "admin", "email": "a@example.com"}
+        res = client.get("/resoconto/analysis")
+        assert res.status_code == 200
+        assert b"user1" in res.data
+        assert b"user2" in res.data
+
+
 def test_export_route():
     app = create_app()
     app.config["TESTING"] = True

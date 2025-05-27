@@ -13,6 +13,7 @@ import csv
 from datetime import date
 from .forms import ResocontoForm
 from . import utils
+from . import tasks
 
 bp = Blueprint('resoconto', __name__, url_prefix='/resoconto')
 
@@ -80,6 +81,23 @@ def rankings():
 
     ranking = utils.get_ranking(start=start, end=end)
     return render_template('resoconto/resoconto_ranking.html', ranking=ranking, user=user)
+
+
+@bp.route('/analysis')
+def analysis():
+    """管理者向けのAI分析結果表示。"""
+    user = session.get('user')
+    if user.get('role') != 'admin':
+        flash('権限がありません')
+        return redirect(url_for('resoconto.index'))
+
+    ranking, analysis = tasks.analyze_reports()
+    return render_template(
+        'resoconto/resoconto_analysis.html',
+        ranking=ranking,
+        analysis=analysis,
+        user=user,
+    )
 
 
 @bp.route('/export')

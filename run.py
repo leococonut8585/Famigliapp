@@ -9,6 +9,7 @@ from app import utils
 from app.intrattenimento import utils as intrattenimento_utils
 from app.corso import utils as corso_utils
 from app.resoconto import utils as resoconto_utils
+from app.resoconto import tasks as resoconto_tasks
 from app.resoconto.tasks import start_scheduler
 from app.intrattenimento.tasks import start_scheduler as start_intrattenimento_scheduler
 from app.lezzione.tasks import start_scheduler as start_lezzione_scheduler
@@ -87,6 +88,8 @@ def display_menu(user: Dict[str, str]):
             print("49. Scatola Capriccio アンケートを投稿")
         print("50. 上昇率ランキングを見る")
         print("51. 投稿にコメントする")
+        if user["role"] == "admin":
+            print("52. Resoconto AI分析を見る")
         print("0. 終了")
         choice = input("選択してください: ")
         if choice == "1":
@@ -242,6 +245,11 @@ def display_menu(user: Dict[str, str]):
             show_growth_ranking()
         elif choice == "51":
             comment_post_cli(user)
+        elif choice == "52":
+            if user["role"] == "admin":
+                show_resoconto_analysis_cli()
+            else:
+                print("権限がありません")
         elif choice == "0":
             break
         else:
@@ -599,6 +607,15 @@ def show_resoconto_ranking() -> None:
     ranking = resoconto_utils.get_ranking(start=start, end=end)
     for i, (user, count) in enumerate(ranking, 1):
         print(f"{i}. {user}: {count}")
+
+
+def show_resoconto_analysis_cli() -> None:
+    """Resoconto の AI 解析結果を表示する。"""
+
+    ranking, analysis = resoconto_tasks.analyze_reports()
+    for i, (user, cnt) in enumerate(ranking, 1):
+        comment = analysis.get(user, "")
+        print(f"{i}. {user}: {cnt} words - {comment}")
 
 
 def export_resoconto_csv() -> None:
