@@ -4,6 +4,11 @@ from wtforms.validators import DataRequired
 
 
 class ResocontoForm(FlaskForm):
-    date = DateField('日付', validators=[DataRequired()])
-    body = TextAreaField('内容', validators=[DataRequired()])
-    submit = SubmitField('投稿')
+    """Form for submitting a work report."""
+
+    date = DateField("日付", validators=[DataRequired()])
+    work = TextAreaField("業務内容", validators=[DataRequired()])
+    issue = TextAreaField("感じた課題", validators=[DataRequired()])
+    success = TextAreaField("うまくいったこと", validators=[DataRequired()])
+    failure = TextAreaField("失敗したこと", validators=[DataRequired()])
+    submit = SubmitField("報告する")
