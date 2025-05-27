@@ -25,7 +25,7 @@ def require_login():
 def index():
     user = session.get("user")
     quests = utils.load_quests()
-    return render_template("quest_box/quest_list.html", quests=quests, user=user)
+    return render_template("quest_list.html", quests=quests, user=user)
 
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -42,7 +42,7 @@ def add():
         )
         flash("投稿しました")
         return redirect(url_for("quest_box.index"))
-    return render_template("quest_box/quest_create_form.html", form=form, user=user)
+    return render_template("quest_create_form.html", form=form, user=user)
 
 
 @bp.route("/detail/<int:quest_id>")
@@ -53,7 +53,7 @@ def detail(quest_id: int):
     if not quest:
         flash("該当IDがありません")
         return redirect(url_for("quest_box.index"))
-    return render_template("quest_box/quest_detail.html", quest=quest, user=user)
+    return render_template("quest_detail.html", quest=quest, user=user)
 
 
 @bp.route("/accept/<int:quest_id>")
@@ -111,7 +111,7 @@ def reward(quest_id: int):
         utils.set_reward(quest_id, form.reward.data or "")
         flash("保存しました")
         return redirect(url_for("quest_box.detail", quest_id=quest_id))
-    return render_template("quest_box/order_create_form.html", form=form, user=user)
+    return render_template("order_create_form.html", form=form, user=user)
 
 
 @bp.route("/edit/<int:quest_id>", methods=["GET", "POST"])
@@ -146,4 +146,4 @@ def edit(quest_id: int):
         flash("保存しました")
         return redirect(url_for("quest_box.detail", quest_id=quest_id))
 
-    return render_template("quest_box/quest_create_form.html", form=form, user=user)
+    return render_template("quest_create_form.html", form=form, user=user)

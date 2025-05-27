@@ -35,7 +35,7 @@ def index():
         keyword=form.keyword.data or "",
     )
     return render_template(
-        "principessina/principessina_feed.html", posts=posts, form=form, user=user
+        "principessina_feed.html", posts=posts, form=form, user=user
     )
 
 
@@ -51,13 +51,13 @@ def add():
             except ValueError as e:
                 flash(str(e))
                 return render_template(
-                    "principessina/principessina_post_form.html", form=form, user=user
+                    "principessina_post_form.html", form=form, user=user
                 )
         utils.add_post(user["username"], form.body.data, filename)
         flash("投稿しました")
         return redirect(url_for("principessina.index"))
     return render_template(
-        "principessina/principessina_post_form.html", form=form, user=user
+        "principessina_post_form.html", form=form, user=user
     )
 
 

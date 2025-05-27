@@ -31,7 +31,7 @@ def index():
         view_reports = reports
     else:
         view_reports = [r for r in reports if r.get('author') == user.get('username')]
-    return render_template('resoconto/resoconto_admin_dashboard.html' if user.get('role') == 'admin' else 'resoconto/resoconto_my_history.html', reports=view_reports, user=user)
+    return render_template('resoconto_admin_dashboard.html' if user.get('role') == 'admin' else 'resoconto_my_history.html', reports=view_reports, user=user)
 
 
 @bp.route('/add', methods=['GET', 'POST'])
@@ -42,7 +42,7 @@ def add():
         utils.add_report(user['username'], form.date.data, form.body.data)
         flash('投稿しました')
         return redirect(url_for('resoconto.index'))
-    return render_template('resoconto/resoconto_submit_form.html', form=form, user=user)
+    return render_template('resoconto_submit_form.html', form=form, user=user)
 
 
 @bp.route('/delete/<int:report_id>')
@@ -79,7 +79,7 @@ def rankings():
         return redirect(url_for('resoconto.index'))
 
     ranking = utils.get_ranking(start=start, end=end)
-    return render_template('resoconto/resoconto_ranking.html', ranking=ranking, user=user)
+    return render_template('resoconto_ranking.html', ranking=ranking, user=user)
 
 
 @bp.route('/analysis')
@@ -92,7 +92,7 @@ def analysis():
 
     ranking, analysis = tasks.analyze_reports()
     return render_template(
-        'resoconto/resoconto_analysis.html',
+        'resoconto_analysis.html',
         ranking=ranking,
         analysis=analysis,
         user=user,

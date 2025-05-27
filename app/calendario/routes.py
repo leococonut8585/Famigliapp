@@ -36,7 +36,7 @@ def index():
             start = None
         stats = utils.compute_employee_stats(start=start, end=date.today())
     return render_template(
-        "calendario/event_list.html", events=events, user=user, stats=stats
+        "event_list.html", events=events, user=user, stats=stats
     )
 
 
@@ -53,7 +53,7 @@ def add():
         )
         flash("追加しました")
         return redirect(url_for("calendario.index"))
-    return render_template("calendario/event_form.html", form=form, user=user)
+    return render_template("event_form.html", form=form, user=user)
 
 
 @bp.route("/delete/<int:event_id>")
@@ -105,7 +105,7 @@ def stats():
     end = form.end.data
     stats = utils.compute_employee_stats(start=start, end=end)
     return render_template(
-        "calendario/stats.html",
+        "stats.html",
         form=form,
         stats=stats,
         user=user,
