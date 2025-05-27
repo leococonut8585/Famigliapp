@@ -1,0 +1,91 @@
+body {
+    font-family: "Helvetica", "Arial", sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background: #f2f2f2;
+}
+
+.nav {
+    background: #333;
+    color: #fff;
+    padding: 10px;
+}
+
+.nav-item {
+    color: #fff;
+    margin-right: 10px;
+    text-decoration: none;
+}
+
+.nav-item:hover {
+    text-decoration: underline;
+}
+
+.container {
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1em;
+}
+
+.flashes li {
+    background: #ffeb3b;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+form p {
+    margin: 0.5em 0;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+textarea {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+input[type="submit"], button {
+    background: #2196F3;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+input[type="submit"]:hover, button:hover {
+    background: #1976D2;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background: #f9f9f9;
+}
+
+ul {
+    padding-left: 1em;
+}
+

@@ -2,21 +2,23 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Famigliapp</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav>
-        <a href="{{ url_for('index') }}">Home</a> |
-        <a href="{{ url_for('punto.dashboard') }}">Punto</a> |
-        <a href="{{ url_for('posts.index') }}">掲示板</a> |
-        <a href="{{ url_for('bravissimo.index') }}">Bravissimo</a> |
-        <a href="{{ url_for('scatola_capriccio.index') }}">Scatola di Capriccio</a> |
-        <a href="{{ url_for('intrattenimento.index') }}">intrattenimento</a> |
-        <a href="{{ url_for('corso.index') }}">Corso</a> |
-        <a href="{{ url_for('calendario.index') }}">Calendario</a> |
-        <a href="{{ url_for('resoconto.index') }}">Resoconto</a>
+    <nav class="nav">
+        <a href="{{ url_for('index') }}" class="nav-item">Home</a>
+        <a href="{{ url_for('punto.dashboard') }}" class="nav-item">Punto</a>
+        <a href="{{ url_for('posts.index') }}" class="nav-item">掲示板</a>
+        <a href="{{ url_for('bravissimo.index') }}" class="nav-item">Bravissimo</a>
+        <a href="{{ url_for('scatola_capriccio.index') }}" class="nav-item">Scatola di Capriccio</a>
+        <a href="{{ url_for('intrattenimento.index') }}" class="nav-item">intrattenimento</a>
+        <a href="{{ url_for('corso.index') }}" class="nav-item">Corso</a>
+        <a href="{{ url_for('calendario.index') }}" class="nav-item">Calendario</a>
+        <a href="{{ url_for('resoconto.index') }}" class="nav-item">Resoconto</a>
     </nav>
+    <div class="container">
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <ul class="flashes">
@@ -27,6 +29,7 @@
         {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
+    </div>
 </body>
 </html>
 
