@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 import csv
@@ -7,6 +7,7 @@ import csv
 import config
 
 REPORTS_PATH = Path(getattr(config, "RESOCONTO_FILE", "resoconto.json"))
+CLAUDE_REPORTS_PATH = Path(getattr(config, "CLAUDE_REPORTS_FILE", "claude_reports.json"))
 
 
 def load_reports():
@@ -21,7 +22,37 @@ def save_reports(reports):
         json.dump(reports, f, ensure_ascii=False, indent=2)
 
 
-def add_report(author: str, report_date: date, body: str) -> None:
+def load_claude_reports() -> List[Dict[str, object]]:
+    if CLAUDE_REPORTS_PATH.exists():
+        with open(CLAUDE_REPORTS_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_claude_reports(entries: List[Dict[str, object]]) -> None:
+    with open(CLAUDE_REPORTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(entries, f, ensure_ascii=False, indent=2)
+
+
+def add_claude_entry(entry: Dict[str, object]) -> None:
+    data = load_claude_reports()
+    data.append(entry)
+    save_claude_reports(data)
+
+
+def add_report(
+    author: str,
+    report_date: date,
+    body: str = "",
+    *,
+    work: str = "",
+    issue: str = "",
+    success: str = "",
+    failure: str = "",
+    claude_summary: str = "",
+) -> int:
+    """Add a work report and return its ID."""
+
     reports = load_reports()
     next_id = max((r.get("id", 0) for r in reports), default=0) + 1
     reports.append(
@@ -30,10 +61,16 @@ def add_report(author: str, report_date: date, body: str) -> None:
             "author": author,
             "date": report_date.isoformat(),
             "body": body,
+            "work": work,
+            "issue": issue,
+            "success": success,
+            "failure": failure,
+            "claude_summary": claude_summary,
             "timestamp": datetime.now().isoformat(timespec="seconds"),
         }
     )
     save_reports(reports)
+    return next_id
 
 
 def delete_report(report_id: int) -> bool:
@@ -98,13 +135,30 @@ def export_reports_csv(path: str) -> None:
     reports = load_reports()
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["id", "date", "author", "body", "timestamp"])
+        writer.writerow([
+            "id",
+            "date",
+            "author",
+            "body",
+            "work",
+            "issue",
+            "success",
+            "failure",
+            "claude_summary",
+            "timestamp",
+        ])
         for r in reports:
             writer.writerow([
                 r.get("id"),
                 r.get("date", ""),
                 r.get("author", ""),
                 r.get("body", ""),
+                r.get("work", ""),
+                r.get("issue", ""),
+                r.get("success", ""),
+                r.get("failure", ""),
+                r.get("claude_summary", ""),
                 r.get("timestamp", ""),
             ])
+
 

@@ -31,13 +31,19 @@ def test_add_and_list_report():
             sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
         res = client.post(
             "/resoconto/add",
-            data={"date": "2025-01-01", "body": "work"},
+            data={
+                "date": "2025-01-01",
+                "work": "doing",
+                "issue": "none",
+                "success": "ok",
+                "failure": "none",
+            },
             follow_redirects=True,
         )
         assert res.status_code == 200
         assert "投稿しました".encode("utf-8") in res.data
         res = client.get("/resoconto/")
-        assert "work".encode("utf-8") in res.data
+        assert "doing".encode("utf-8") in res.data
 
 
 def test_delete_report_as_admin():

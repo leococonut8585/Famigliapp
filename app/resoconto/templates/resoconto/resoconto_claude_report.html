@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Claude報告</h1>
+<ul>
+{% for r in reports %}
+  <li>
+  {% if r.date %}
+    {{ r.date }} - 最優秀者: {{ ', '.join(r.best) }} / 良くない人: {{ ', '.join(r.worst) }}
+  {% else %}
+    {{ r.month }} - 最優秀者: {{ ', '.join(r.best) }} / 良くない人: {{ ', '.join(r.worst) }}
+  {% endif %}
+  </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('resoconto.index') }}">戻る</a></p>
+{% endblock %}
+
