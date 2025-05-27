@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{{ month.strftime('%Y-%m') }}</h1>
+<div>
+    <a href="{{ url_for('calendario.index', month=prev_month.strftime('%Y-%m')) }}">&lt;</a>
+    <a href="{{ url_for('calendario.index', month=next_month.strftime('%Y-%m')) }}">&gt;</a>
+    <a href="{{ url_for('calendario.index', view='week', week=month.isoformat()) }}">週表示</a>
+</div>
+<table class="calendar">
+<thead>
+<tr>
+    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+</tr>
+</thead>
+<tbody>
+{% for week in weeks %}
+<tr>
+    {% for d in week %}
+    <td class="{% if d.month != month.month %}other-month{% endif %}">
+        {{ d.day }}
+        <ul>
+        {% for ev in events_by_date.get(d.isoformat(), []) %}
+            <li>{{ ev.title }}</li>
+        {% endfor %}
+        </ul>
+    </td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
+<p><a href="{{ url_for('calendario.stats') }}">統計を見る</a></p>
+<p><a href="{{ url_for('index') }}">戻る</a></p>
+{% endblock %}

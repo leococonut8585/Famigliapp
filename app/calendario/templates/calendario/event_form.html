@@ -8,6 +8,8 @@
     <p>{{ form.title.label }}<br>{{ form.title(size=30) }}</p>
     <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=40) }}</p>
     <p>{{ form.employee.label }}<br>{{ form.employee(size=20) }}</p>
+    <p>{{ form.category.label }}<br>{{ form.category() }}</p>
+    <p>{{ form.participants.label }}<br>{{ form.participants(size=10, multiple=True) }}</p>
     <p>{{ form.submit() }}</p>
 </form>
 {% endblock %}
