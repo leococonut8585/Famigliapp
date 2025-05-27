@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>終了した課題</h1>
+<ul>
+{% for t in tasks %}
+    <li>[{{ t.id }}] {{ t.title }} {% if t.due_date %}(期限: {{ t.due_date }}){% endif %}
+        {% if t.filename %}
+            <a href="{{ url_for('intrattenimento.task_download', filename=t.filename) }}">ダウンロード</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('intrattenimento.tasks') }}">戻る</a></p>
+{% endblock %}

@@ -6,6 +6,7 @@ from typing import List, Dict, Optional
 import config
 
 INTRATTENIMENTO_PATH = Path(getattr(config, "INTRATTENIMENTO_FILE", "intrattenimento.json"))
+TASKS_PATH = Path(getattr(config, "INTRATTENIMENTO_TASK_FILE", "intrattenimento_tasks.json"))
 
 # Allow images, documents and media files as attachments
 ALLOWED_EXTS = {
@@ -21,6 +22,7 @@ ALLOWED_EXTS = {
     "wav",
 }
 MAX_SIZE = 10 * 1024 * 1024
+MAX_VIDEO_SIZE = 3 * 1024 * 1024 * 1024
 
 
 def load_posts():
@@ -59,36 +61,17 @@ def delete_post(post_id):
     return True
 
 
-def filter_posts(
-    author: str = "",
-    keyword: str = "",
-    include_expired: bool = False,
-    start: Optional[datetime] = None,
-    end: Optional[datetime] = None,
-) -> List[Dict[str, str]]:
-    """Filter intrattenimento posts by various criteria."""
+def filter_posts(include_expired: bool = False, **_unused) -> List[Dict[str, str]]:
+    """Return intrattenimento posts.
+
+    Parameters other than ``include_expired`` are ignored and kept for
+    backward compatibility.
+    """
 
     posts = load_posts()
     results: List[Dict[str, str]] = []
     now = datetime.now()
     for p in posts:
-        if author and p.get("author") != author:
-            continue
-        if keyword:
-            title = p.get("title", "")
-            body = p.get("body", "")
-            if keyword.lower() not in (title + body).lower():
-                continue
-        ts_str = p.get("timestamp")
-        if start or end:
-            try:
-                ts = datetime.fromisoformat(ts_str) if ts_str else None
-            except Exception:
-                ts = None
-            if start and ts and ts < start:
-                continue
-            if end and ts and ts > end:
-                continue
         end_date = p.get("end_date")
         if not include_expired and end_date:
             try:
@@ -98,3 +81,72 @@ def filter_posts(
                 pass
         results.append(p)
     return results
+
+
+def load_tasks() -> List[Dict[str, str]]:
+    if TASKS_PATH.exists():
+        with open(TASKS_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_tasks(tasks: List[Dict[str, str]]) -> None:
+    with open(TASKS_PATH, "w", encoding="utf-8") as f:
+        json.dump(tasks, f, ensure_ascii=False, indent=2)
+
+
+def add_task(title: str, body: str, due_date=None, filename=None) -> int:
+    tasks = load_tasks()
+    next_id = max((t.get("id", 0) for t in tasks), default=0) + 1
+    tasks.append(
+        {
+            "id": next_id,
+            "title": title,
+            "body": body,
+            "due_date": due_date.isoformat() if hasattr(due_date, "isoformat") and due_date else None,
+            "filename": filename,
+            "status": "open",
+            "feedback": {},
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+        }
+    )
+    save_tasks(tasks)
+    return next_id
+
+
+def finish_task(task_id: int) -> bool:
+    tasks = load_tasks()
+    for t in tasks:
+        if t.get("id") == task_id:
+            t["status"] = "finished"
+            save_tasks(tasks)
+            return True
+    return False
+
+
+def add_feedback(task_id: int, username: str, body: str) -> bool:
+    tasks = load_tasks()
+    for t in tasks:
+        if t.get("id") == task_id and t.get("status") == "open":
+            feedback = t.setdefault("feedback", {})
+            feedback[username] = body
+            save_tasks(tasks)
+            return True
+    return False
+
+
+def get_active_tasks() -> List[Dict[str, str]]:
+    return [t for t in load_tasks() if t.get("status") != "finished"]
+
+
+def get_finished_tasks() -> List[Dict[str, str]]:
+    return [t for t in load_tasks() if t.get("status") == "finished"]
+
+
+def get_feedback(task_id: int, username: str) -> Optional[str]:
+    tasks = load_tasks()
+    for t in tasks:
+        if t.get("id") == task_id:
+            feedback = t.get("feedback", {})
+            return feedback.get(username)
+    return None
