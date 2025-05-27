@@ -2,6 +2,11 @@
 
 from flask import Blueprint
 
-bp = Blueprint("quest_box", __name__, url_prefix="/quest_box")
+bp = Blueprint(
+    "quest_box",
+    __name__,
+    url_prefix="/quest_box",
+    template_folder="templates/quest_box",
+)
 
 from . import routes  # noqa: E402
