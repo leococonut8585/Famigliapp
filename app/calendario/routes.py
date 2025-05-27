@@ -9,6 +9,7 @@ from flask import (
     url_for,
     flash,
     request,
+    jsonify,
 )
 
 from . import bp
@@ -100,4 +101,28 @@ def stats():
         stats=stats,
         user=user,
     )
+
+
+@bp.route("/api/move", methods=["POST"])
+def api_move() -> "flask.Response":
+    """Move event via JSON request."""
+    data = request.get_json(silent=True) or {}
+    event_id = int(data.get("event_id", 0))
+    date_str = data.get("date", "")
+    try:
+        new_date = datetime.fromisoformat(date_str).date()
+    except Exception:
+        return jsonify({"success": False, "error": "invalid date"}), 400
+    ok = utils.move_event(event_id, new_date)
+    return jsonify({"success": ok})
+
+
+@bp.route("/api/assign", methods=["POST"])
+def api_assign() -> "flask.Response":
+    """Assign employee via JSON request."""
+    data = request.get_json(silent=True) or {}
+    event_id = int(data.get("event_id", 0))
+    employee = data.get("employee", "")
+    ok = utils.assign_employee(event_id, employee)
+    return jsonify({"success": ok})
 
