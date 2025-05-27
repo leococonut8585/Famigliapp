@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>エンタメ課題一覧</h1>
+<ul>
+{% for t in tasks %}
+    <li>[{{ t.id }}] {{ t.title }} {% if t.due_date %}(期限: {{ t.due_date }}){% endif %}
+        {% if t.filename %}
+            <a href="{{ url_for('intrattenimento.task_download', filename=t.filename) }}">ダウンロード</a>
+        {% endif %}
+        {% if user.role == 'admin' %}
+            <a href="{{ url_for('intrattenimento.task_finish', task_id=t.id) }}">終了</a>
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('intrattenimento.task_add') }}">課題を追加</a></p>
+<p><a href="{{ url_for('intrattenimento.task_feedback') }}">感想を投稿</a></p>
+<p><a href="{{ url_for('intrattenimento.task_completed') }}">終了した課題</a></p>
+<p><a href="{{ url_for('intrattenimento.index') }}">戻る</a></p>
+{% endblock %}

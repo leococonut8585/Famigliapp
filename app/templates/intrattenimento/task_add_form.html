@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>課題を追加</h1>
+<form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>{{ form.title.label }} {{ form.title(size=30) }}</p>
+    <p>{{ form.body.label }} {{ form.body(rows=4, cols=40) }}</p>
+    <p>{{ form.due_date.label }} {{ form.due_date() }}</p>
+    <p>{{ form.video.label }} {{ form.video() }}</p>
+    <p>{{ form.submit() }}</p>
+</form>
+<p><a href="{{ url_for('intrattenimento.tasks') }}">戻る</a></p>
+{% endblock %}

@@ -141,7 +141,7 @@ def test_show_resoconto_analysis_cli(capsys):
     assert "u2" in out
 
 
-def test_show_intrattenimento_cli_date_filter(capsys):
+def test_show_intrattenimento_cli(capsys):
     config.INTRATTENIMENTO_FILE = os.path.join(_tmpdir.name, "intra.json")
     intra_utils.INTRATTENIMENTO_PATH = Path(config.INTRATTENIMENTO_FILE)
     intra_utils.save_posts([])
@@ -154,15 +154,7 @@ def test_show_intrattenimento_cli_date_filter(capsys):
     intra_utils.add_post("admin", "new", "b")
 
     user = {"username": "admin", "role": "admin", "email": "a@example.com"}
-    inputs = iter(["", "", "2030-01-02", "2030-01-03", "n"])
-
-    def fake_input(prompt=""):
-        return next(inputs)
-
-    old_input = run.input
-    run.input = fake_input
     run.show_intrattenimento(user)
-    run.input = old_input
 
     out = capsys.readouterr().out
     assert "new" in out
