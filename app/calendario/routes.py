@@ -3,6 +3,7 @@
 from datetime import datetime, date, timedelta
 import calendar
 
+import json # Add for parsing defined_attributes_json_str
 from flask import (
     render_template,
     session,
@@ -18,6 +19,8 @@ from .forms import EventForm, StatsForm, ShiftRulesForm
 from . import utils
 import config
 from typing import Dict, List
+import re # Moved from inside index()
+from collections import defaultdict # Moved from inside index()
 
 
 @bp.before_request
@@ -32,9 +35,13 @@ def index():
 
     user = session.get("user")
     view = request.args.get("view", "month")
-    today = date.today()
+    today = date.today() # Already present, good.
     month_param = request.args.get("month")
     week_param = request.args.get("week")
+
+    # Navigation limits
+    limit_past_date = today.replace(year=today.year - 2)
+    limit_future_date = today.replace(year=today.year + 2)
 
     try:
         if month_param:
@@ -69,27 +76,96 @@ def index():
     if view == "week":
         start_d = week_start
         end_d = week_start + timedelta(days=6)
-        week_events = [
+        
+        week_days = [start_d + timedelta(days=i) for i in range(7)]
+        
+        time_slots = []
+        for hour in range(24):
+            time_slots.append(f"{hour:02d}:00")
+            time_slots.append(f"{hour:02d}:30")
+
+        raw_week_events = [
             e
             for e in events
             if start_d <= date.fromisoformat(e.get("date")) <= end_d
         ]
+
+        structured_events = defaultdict(lambda: defaultdict(list))
+        time_regex = re.compile(r"(\d{1,2}):(\d{2})")
+
+        for event in raw_week_events:
+            event_date_iso = event.get("date")
+            event_title = event.get("title", "")
+            
+            match = time_regex.search(event_title)
+            if match:
+                hour = int(match.group(1))
+                minute = int(match.group(2))
+                if 0 <= hour <= 23 and 0 <= minute <= 59:
+                    if minute < 30:
+                        slot_time = f"{hour:02d}:00"
+                    else:
+                        slot_time = f"{hour:02d}:30"
+                    structured_events[event_date_iso][slot_time].append(event)
+                else: # Invalid time parsed
+                    structured_events[event_date_iso]['all_day'].append(event)
+            else:
+                structured_events[event_date_iso]['all_day'].append(event)
+        
+        # For navigation and display consistency
+        display_month = start_d.replace(day=1) # Month of the current week's start
+        
+        nav_prev_week = start_d - timedelta(days=7)
+        if nav_prev_week < limit_past_date:
+            nav_prev_week = None
+        
+        nav_next_week = start_d + timedelta(days=7)
+        if (nav_next_week + timedelta(days=6)) > limit_future_date:
+            nav_next_week = None
+
+        header_nav_prev_month = (display_month - timedelta(days=1)).replace(day=1)
+        if header_nav_prev_month.replace(day=calendar.monthrange(header_nav_prev_month.year, header_nav_prev_month.month)[1]) < limit_past_date:
+            header_nav_prev_month = None
+        
+        header_nav_next_month = (display_month + timedelta(days=31)).replace(day=1)
+        if header_nav_next_month > limit_future_date: # Compare with first day of nav_next_month
+            header_nav_next_month = None
+
         return render_template(
             "week_view.html",
-            events=week_events,
             user=user,
             stats=stats,
-            start=start_d,
+            start=start_d, 
+            week_days=week_days, 
+            time_slots=time_slots, 
+            structured_events=structured_events, 
             timedelta=timedelta,
+            view=view, 
+            month=display_month, 
+            today_date=today.isoformat(), # Added today_date for highlighting
+            nav_prev_week=nav_prev_week, # Date object or None
+            nav_next_week=nav_next_week, # Date object or None
+            header_nav_prev_month=header_nav_prev_month, # Date object or None
+            header_nav_next_month=header_nav_next_month, # Date object or None
         )
 
     else:
         # month view
+        # 'month' is the current month being viewed
         events_month = [
             e for e in events if e.get("date", "").startswith(month.strftime("%Y-%m"))
         ]
-        prev_month = (month - timedelta(days=1)).replace(day=1)
-        next_month = (month + timedelta(days=31)).replace(day=1)
+        
+        nav_prev_month = (month - timedelta(days=1)).replace(day=1)
+        # If the last day of the previous month is before the limit_past_date
+        if nav_prev_month.replace(day=calendar.monthrange(nav_prev_month.year, nav_prev_month.month)[1]) < limit_past_date:
+            nav_prev_month = None
+            
+        nav_next_month = (month + timedelta(days=31)).replace(day=1)
+        # If the first day of the next month is after the limit_future_date
+        if nav_next_month > limit_future_date:
+            nav_next_month = None
+            
         events_by_date = {}
         for e in events_month:
             events_by_date.setdefault(e["date"], []).append(e)
@@ -102,9 +178,9 @@ def index():
             events_by_date=events_by_date,
             user=user,
             stats=stats,
-            month=month,
-            prev_month=prev_month,
-            next_month=next_month,
+            month=month, # current month being viewed
+            nav_prev_month=nav_prev_month, # Date object or None
+            nav_next_month=nav_next_month, # Date object or None
             weeks=weeks,
             timedelta=timedelta,
         )
@@ -125,7 +201,49 @@ def add():
         )
         flash("追加しました")
         return redirect(url_for("calendario.index"))
-    return render_template("event_form.html", form=form, user=user)
+    return render_template("event_form.html", form=form, user=user, is_edit=False, event_id=None)
+
+
+@bp.route("/edit/<int:event_id>", methods=["GET", "POST"])
+def edit_event(event_id: int):
+    user = session.get("user") # Ensure user is available for template context if needed
+    event = utils.get_event_by_id(event_id)
+
+    if not event:
+        flash("指定されたイベントが見つかりません。", "error")
+        return redirect(url_for("calendario.index"))
+
+    form = EventForm()
+
+    if request.method == "POST":
+        if form.validate_on_submit():
+            new_event_data = {
+                "date": form.date.data.isoformat(),
+                "title": form.title.data,
+                "description": form.description.data or "",
+                "employee": form.employee.data or "",
+                "category": form.category.data,
+                "participants": form.participants.data or [],
+            }
+            if utils.update_event(event_id, new_event_data):
+                flash("イベントが更新されました。", "success")
+            else:
+                flash("イベントの更新に失敗しました。", "error")
+            return redirect(url_for("calendario.index"))
+        else: # Form not valid on POST
+            # Errors will be displayed by the form fields in the template
+            flash("フォームの入力内容に誤りがあります。確認してください。", "warning")
+            return render_template("event_form.html", form=form, user=user, is_edit=True, event_id=event_id)
+
+    # GET request: Populate form with existing event data
+    form.date.data = date.fromisoformat(event["date"])
+    form.title.data = event["title"]
+    form.description.data = event.get("description", "")
+    form.employee.data = event.get("employee", "")
+    form.category.data = event.get("category", "other") # Default if not present
+    form.participants.data = event.get("participants", [])
+    
+    return render_template("event_form.html", form=form, user=user, is_edit=True, event_id=event_id)
 
 
 @bp.route("/delete/<int:event_id>")
@@ -175,7 +293,12 @@ def shift():
         return redirect(url_for("calendario.index"))
 
     month_param = request.args.get("month")
-    today = date.today()
+    today = date.today() # Already present
+    
+    # Navigation limits for shift view
+    limit_past_date = today.replace(year=today.year - 2)
+    limit_future_date = today.replace(year=today.year + 2)
+
     if month_param:
         try:
             year, mon = map(int, month_param.split("-"))
@@ -216,20 +339,26 @@ def shift():
 
     cal = calendar.Calendar(firstweekday=0)
     weeks = [w for w in cal.monthdatescalendar(month.year, month.month)]
-    prev_month = (month - timedelta(days=1)).replace(day=1)
-    next_month = (month + timedelta(days=31)).replace(day=1)
+
+    nav_prev_month = (month - timedelta(days=1)).replace(day=1)
+    if nav_prev_month.replace(day=calendar.monthrange(nav_prev_month.year, nav_prev_month.month)[1]) < limit_past_date:
+        nav_prev_month = None
+        
+    nav_next_month = (month + timedelta(days=31)).replace(day=1)
+    if nav_next_month > limit_future_date:
+        nav_next_month = None
 
     return render_template(
         "shift_manager.html",
         user=user,
-        month=month,
+        month=month, # current month being viewed
         weeks=weeks,
         employees=employees,
         assignments=assignments,
         counts=counts,
         off_counts=off_counts,
-        prev_month=prev_month,
-        next_month=next_month,
+        nav_prev_month=nav_prev_month, # Date object or None
+        nav_next_month=nav_next_month, # Date object or None
     )
 
 
@@ -240,25 +369,58 @@ def shift_rules():
         flash("権限がありません")
         return redirect(url_for("calendario.index"))
 
-    rules = utils.load_rules()
+    rules, defined_attributes = utils.load_rules() # Updated call
     form = ShiftRulesForm()
     employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS]
-    attributes = ["Dog", "Lady", "Man", "Kaji", "Massage"]
+    
+    # 'attributes' passed to template will now be 'defined_attributes'
+    # The old hardcoded list 'attributes = ["Dog", ...]' is removed.
+
     if request.method == "GET":
         form.max_consecutive_days.data = str(rules.get("max_consecutive_days", ""))
         form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
         form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", []))
         form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
-        form.employee_attributes.data = ",".join(f"{k}:{v}" for k, v in rules.get("employee_attributes", {}).items())
-        form.required_attributes.data = ",".join(f"{k}:{v}" for k, v in rules.get("required_attributes", {}).items())
+        # employee_attributes are strings like "emp:attr1|attr2"
+        # Ensure that data fetched from rules for employee_attributes is correctly formatted if it's not already a string
+        emp_attrs_items = []
+        for k, v_list in rules.get("employee_attributes", {}).items():
+            if isinstance(v_list, list):
+                emp_attrs_items.append(f"{k}:{ '|'.join(v_list) }")
+            else: # if it's already a string (though unlikely if parsed correctly)
+                emp_attrs_items.append(f"{k}:{v_list}")
+        form.employee_attributes.data = ",".join(emp_attrs_items)
+        
+        req_attrs_items = []
+        for k, v_int in rules.get("required_attributes", {}).items():
+             req_attrs_items.append(f"{k}:{v_int}")
+        form.required_attributes.data = ",".join(req_attrs_items)
+
     if form.validate_on_submit():
-        rules["max_consecutive_days"] = int(form.max_consecutive_days.data or 0)
-        rules["min_staff_per_day"] = int(form.min_staff_per_day.data or 0)
-        rules["forbidden_pairs"] = utils.parse_pairs(form.forbidden_pairs.data or "")
-        rules["required_pairs"] = utils.parse_pairs(form.required_pairs.data or "")
-        rules["employee_attributes"] = utils.parse_kv(form.employee_attributes.data or "")
-        rules["required_attributes"] = utils.parse_kv_int(form.required_attributes.data or "")
-        utils.save_rules(rules)
+        rules_to_save = {} # Rebuild rules from form to ensure clean data
+        rules_to_save["max_consecutive_days"] = int(form.max_consecutive_days.data or 0)
+        rules_to_save["min_staff_per_day"] = int(form.min_staff_per_day.data or 0)
+        rules_to_save["forbidden_pairs"] = utils.parse_pairs(form.forbidden_pairs.data or "")
+        rules_to_save["required_pairs"] = utils.parse_pairs(form.required_pairs.data or "")
+        rules_to_save["employee_attributes"] = utils.parse_kv(form.employee_attributes.data or "")
+        rules_to_save["required_attributes"] = utils.parse_kv_int(form.required_attributes.data or "")
+        
+        # Retrieve and parse defined_attributes from the hidden form field
+        defined_attributes_json_str = request.form.get("defined_attributes_json_str", "[]")
+        try:
+            submitted_defined_attributes = json.loads(defined_attributes_json_str)
+            if not isinstance(submitted_defined_attributes, list) or \
+               not all(isinstance(attr, str) for attr in submitted_defined_attributes):
+                flash("属性リストの形式が不正です。", "error")
+                submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
+            elif not submitted_defined_attributes: # Ensure not empty if user deletes all
+                 flash("属性リストは空にできません。デフォルトに戻します。", "warning")
+                 submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
+        except json.JSONDecodeError:
+            flash("属性リストのJSON解析に失敗しました。", "error")
+            submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
+            
+        utils.save_rules(rules_to_save, submitted_defined_attributes)
         flash("保存しました")
         return redirect(url_for("calendario.shift_rules"))
 
@@ -267,7 +429,7 @@ def shift_rules():
         form=form,
         user=user,
         employees=employees,
-        attributes=attributes,
+        attributes=defined_attributes, # Pass the dynamic list
     )
 
 

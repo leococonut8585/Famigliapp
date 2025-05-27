@@ -1,38 +1,148 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>{{ start.strftime('%Y-%m-%d') }} 週</h1>
+<h1>{{ start.strftime('%Y-%m-%d') }} - {{ (start + timedelta(days=6)).strftime('%Y-%m-%d') }} 週</h1>
 <div>
-    <a href="{{ url_for('calendario.index', view='week', week=(start - timedelta(days=7)).isoformat()) }}">&lt;</a>
-    <a href="{{ url_for('calendario.index', view='week', week=(start + timedelta(days=7)).isoformat()) }}">&gt;</a>
-    <a href="{{ url_for('calendario.index', month=start.strftime('%Y-%m')) }}">月表示</a>
+    {% if nav_prev_week %}
+        <a href="{{ url_for('calendario.index', view='week', week=nav_prev_week.isoformat()) }}">&lt; 前の週</a>
+    {% else %}
+        <span>&lt; 前の週</span>
+    {% endif %}
+    {% if nav_next_week %}
+        <a href="{{ url_for('calendario.index', view='week', week=nav_next_week.isoformat()) }}">次の週 &gt;</a>
+    {% else %}
+        <span>次の週 &gt;</span>
+    {% endif %}
+    {# This link uses 'month' which is display_month from route, already limited by week's position #}
+    <a href="{{ url_for('calendario.index', view='month', month=month.strftime('%Y-%m')) }}">月表示</a>
 </div>
-<table class="week">
-<thead>
-<tr>
-    <th>Time</th>
-    {% for i in range(7) %}
-    <th>{{ (start + timedelta(days=i)).strftime('%a %m/%d') }}</th>
-    {% endfor %}
-</tr>
-</thead>
-<tbody>
-{% for h in range(0, 24) %}
-<tr>
-    <td>{{ "%02d:00" % h }}</td>
-    {% for i in range(7) %}
-    <td>
-        {% for ev in events if ev.date == (start + timedelta(days=i)).isoformat() %}
-            {{ ev.title }}<br>
+
+<table class="calendar-grid">
+    <thead>
+        <tr>
+            <th class="time-col">時間</th> {# Empty cell for time column header #}
+            {% for day in week_days %}
+            <th class="day-col {% if day.isoformat() == today_date %}today{% endif %}">
+                {{ day.strftime('%a') }}<br>{{ day.strftime('%m/%d') }}
+            </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {# Row for All-Day Events #}
+        <tr>
+            <td class="time-slot-label">終日</td>
+            {% for day in week_days %}
+            <td class="calendar-cell all-day-cell {% if day.isoformat() == today_date %}today{% endif %}">
+                {% set events_for_slot = structured_events.get(day.isoformat(), {}).get('all_day', []) %}
+                {% if events_for_slot %}
+                    {% for event in events_for_slot %}
+                    <div class="event">
+                        <strong>{{ event.title }}</strong><br>
+                        {% if event.description %}
+                            <p class="event-description">{{ event.description }}</p>
+                        {% endif %}
+                        {% if event.employee %}
+                            <p class="event-employee">担当: {{ event.employee }}</p>
+                        {% endif %}
+                        {% if event.participants and event.participants|length > 0 %}
+                            <p class="event-participants">参加: {{ event.participants|join(', ') }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="edit-link" style="font-size: 0.8em; margin-left: 0px; margin-top: 3px; display: inline-block;">編集</a>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+
+        {# Rows for each time slot #}
+        {% for slot in time_slots %}
+        <tr>
+            <td class="time-slot-label">{{ slot }}</td>
+            {% for day in week_days %}
+            <td class="calendar-cell {% if day.isoformat() == today_date %}today{% endif %}">
+                {% set events_for_slot = structured_events.get(day.isoformat(), {}).get(slot, []) %}
+                {% if events_for_slot %}
+                    {% for event in events_for_slot %}
+                    <div class="event">
+                        <strong>{{ event.title }}</strong><br>
+                        {% if event.description %}
+                            <p class="event-description">{{ event.description }}</p>
+                        {% endif %}
+                        {% if event.employee %}
+                            <p class="event-employee">担当: {{ event.employee }}</p>
+                        {% endif %}
+                        {% if event.participants and event.participants|length > 0 %}
+                            <p class="event-participants">参加: {{ event.participants|join(', ') }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
         {% endfor %}
-    </td>
-    {% endfor %}
-</tr>
-{% endfor %}
-</tbody>
+    </tbody>
 </table>
+
 <p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
 {% if user.role == 'admin' %}
 <p><a href="{{ url_for('calendario.shift') }}">シフト管理エリア</a></p>
 {% endif %}
-<p><a href="{{ url_for('index') }}">戻る</a></p>
+<p><a href="{{ url_for('calendario.index') }}">戻る</a></p>
+
+{# Basic CSS for demonstration; ideally this would be in a separate .css file #}
+<style>
+    .calendar-grid {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; /* Ensures columns are evenly spaced */
+    }
+    .calendar-grid th, .calendar-grid td {
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.9em;
+        overflow: hidden; /* Prevent content from breaking layout */
+        word-wrap: break-word; /* Wrap long words */
+    }
+    .calendar-grid th.time-col {
+        width: 80px; /* Fixed width for the time column */
+    }
+    .calendar-grid th.day-col {
+        text-align: center;
+    }
+    .calendar-grid td.time-slot-label {
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.8em;
+    }
+    .calendar-cell {
+        height: 60px; /* Minimum height for cells */
+    }
+    .all-day-cell {
+        min-height: 40px; /* Different height for all-day cells */
+        background-color: #f9f9f9;
+    }
+    .event {
+        background-color: #e6f7ff;
+        border: 1px solid #b3e0ff;
+        border-radius: 3px;
+        padding: 3px;
+        margin-bottom: 3px;
+        font-size: 0.85em;
+    }
+    .event strong {
+        font-weight: bold;
+    }
+    .event-description, .event-employee, .event-participants {
+        font-size: 0.9em;
+        margin-top: 2px;
+        color: #333;
+    }
+    .today {
+        background-color: #fffacd; /* Highlight today's column */
+    }
+</style>
 {% endblock %}

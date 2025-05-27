@@ -1,37 +1,6 @@
 // JavaScript helpers for shift_rules page
 
 document.addEventListener('DOMContentLoaded', () => {
-  function setupSingle(name) {
-    const hidden = document.getElementById(name + '_hidden');
-    const input = document.getElementById(name + '_input');
-    const addBtn = document.getElementById(name + '_add');
-    const list = document.getElementById(name + '_list');
-    function render() {
-      list.innerHTML = '';
-      if (hidden.value) {
-        const li = document.createElement('li');
-        li.textContent = hidden.value;
-        const del = document.createElement('button');
-        del.type = 'button';
-        del.textContent = '削除';
-        del.addEventListener('click', () => {
-          hidden.value = '';
-          render();
-        });
-        li.appendChild(del);
-        list.appendChild(li);
-      }
-    }
-    addBtn.addEventListener('click', () => {
-      if (input.value) {
-        hidden.value = input.value;
-        input.value = '';
-        render();
-      }
-    });
-    render();
-  }
-
   function setupPairList(name, selectA, selectB) {
     const hidden = document.getElementById(name + '_hidden');
     const listEl = document.getElementById(name + '_list');
@@ -168,10 +137,98 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   }
 
-  setupSingle('max_consecutive_days');
-  setupSingle('min_staff_per_day');
+  // Initialize currentDefinedAttributes from a global variable set by the template
+  // The template should include: <script>window.initialShiftAttributes = {{ attributes|tojson|safe }};</script>
+  let currentDefinedAttributes = Array.isArray(window.initialShiftAttributes) ? window.initialShiftAttributes : ["Dog", "Lady", "Man", "Kaji", "Massage"]; // Fallback
+
+  const definedAttributesInputEl = document.getElementById('new_defined_attribute_input');
+  const definedAttributesAddBtnEl = document.getElementById('add_defined_attribute_button');
+  const definedAttributesListDisplayEl = document.getElementById('defined_attributes_list_display');
+  const definedAttributesJsonHiddenEl = document.getElementById('defined_attributes_json_str');
+
+  const employeeAttributesCheckboxGroupEl = document.getElementById('employee_attributes_checkbox_group');
+  const reqAttrAttrSelectEl = document.getElementById('req_attr_attr');
+
+  function updateHiddenDefinedAttributes() {
+    if (definedAttributesJsonHiddenEl) {
+      definedAttributesJsonHiddenEl.value = JSON.stringify(currentDefinedAttributes);
+    }
+  }
+
+  function renderAttributeDependentUI() {
+    // Update checkboxes for Employee Attributes
+    if (employeeAttributesCheckboxGroupEl) {
+      employeeAttributesCheckboxGroupEl.innerHTML = ''; // Clear existing
+      currentDefinedAttributes.forEach(attr => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'attr_cb';
+        checkbox.value = attr;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + attr));
+        employeeAttributesCheckboxGroupEl.appendChild(label);
+        employeeAttributesCheckboxGroupEl.appendChild(document.createTextNode(' ')); // For spacing
+      });
+    }
+
+    // Update select options for Required Attributes per Day
+    if (reqAttrAttrSelectEl) {
+      reqAttrAttrSelectEl.innerHTML = ''; // Clear existing
+      currentDefinedAttributes.forEach(attr => {
+        const option = document.createElement('option');
+        option.value = attr;
+        option.textContent = attr;
+        reqAttrAttrSelectEl.appendChild(option);
+      });
+    }
+  }
+  
+  function renderDefinedAttributesList() {
+    if (definedAttributesListDisplayEl) {
+      definedAttributesListDisplayEl.innerHTML = '';
+      currentDefinedAttributes.forEach((attr, index) => {
+        const li = document.createElement('li');
+        li.textContent = attr + ' ';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '削除';
+        deleteBtn.addEventListener('click', () => {
+          currentDefinedAttributes.splice(index, 1);
+          renderDefinedAttributesList(); // Re-render this list
+          updateAttributeDependentUI(); // Re-render dependent UI
+          updateHiddenDefinedAttributes(); // Update hidden field for form submission
+        });
+        li.appendChild(deleteBtn);
+        definedAttributesListDisplayEl.appendChild(li);
+      });
+    }
+  }
+
+  if (definedAttributesAddBtnEl) {
+    definedAttributesAddBtnEl.addEventListener('click', () => {
+      const newAttr = definedAttributesInputEl.value.trim();
+      if (newAttr && !currentDefinedAttributes.includes(newAttr)) {
+        currentDefinedAttributes.push(newAttr);
+        definedAttributesInputEl.value = '';
+        renderDefinedAttributesList();
+        updateAttributeDependentUI();
+        updateHiddenDefinedAttributes();
+      } else if (!newAttr) {
+        alert('属性名を入力してください。');
+      } else {
+        alert('その属性名は既に追加されています。');
+      }
+    });
+  }
+
+  // Initial setup
+  renderDefinedAttributesList();
+  updateAttributeDependentUI();
+  updateHiddenDefinedAttributes(); // Ensure hidden field is populated on load
+
   setupPairList('forbidden_pairs', '#forbidden_a', '#forbidden_b');
   setupPairList('required_pairs', '#required_a', '#required_b');
-  setupAttrList();
-  setupReqAttrList();
+  setupAttrList(); // Should now use dynamically generated checkboxes
+  setupReqAttrList(); // Should now use dynamically generated select options
 });
