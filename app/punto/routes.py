@@ -121,6 +121,31 @@ def adjust(username: str, metric: str, delta: int):
     return redirect(url_for("punto.dashboard"))
 
 
+@bp.route("/set/<username>", methods=["POST"])
+def set_points(username: str):
+    """Set points directly for a user (admin only)."""
+    user = session.get("user")
+    if user["role"] != "admin":
+        flash("権限がありません")
+        return redirect(url_for("punto.dashboard"))
+
+    try:
+        a = int(request.form.get("a", ""))
+        o = int(request.form.get("o", ""))
+    except ValueError:
+        flash("数値を入力してください")
+        return redirect(url_for("punto.dashboard"))
+
+    points = utils.load_points()
+    old_a = points.get(username, {}).get("A", 0)
+    old_o = points.get(username, {}).get("O", 0)
+    points[username] = {"A": a, "O": o}
+    utils.save_points(points)
+    utils.log_points_change(username, a - old_a, o - old_o)
+    flash("保存しました")
+    return redirect(url_for("punto.dashboard"))
+
+
 @bp.route("/rankings")
 def rankings():
     """Alias of dashboard showing ranking parameters."""
