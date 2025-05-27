@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ month.strftime('%Y-%m') }} シフト管理</h1>
+<div>
+    <a href="{{ url_for('calendario.shift', month=prev_month.strftime('%Y-%m')) }}">&lt;</a>
+    <a href="{{ url_for('calendario.shift', month=next_month.strftime('%Y-%m')) }}">&gt;</a>
+</div>
+<div class="shift-users">
+{% for emp in employees %}
+    <span class="shift-user">{{ emp }} ({{ counts.get(emp,0) }}勤務/{{ off_counts.get(emp,0) }}休)</span>
+{% endfor %}
+</div>
+<form method="post">
+    <input type="hidden" name="action" value="complete" id="action-field">
+    <table class="calendar">
+        <thead>
+            <tr>
+                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for week in weeks %}
+            <tr>
+            {% for d in week %}
+                <td class="{% if d.month != month.month %}other-month{% endif %}">
+                    {{ d.day }}<br>
+                    {% set key = 'd-' + d.isoformat() %}
+                    <select name="{{ key }}" multiple size="4">
+                    {% for emp in employees %}
+                        <option value="{{ emp }}" {% if emp in assignments.get(d.isoformat(), []) %}selected{% endif %}>{{ emp }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+            {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" onclick="document.getElementById('action-field').value='complete'">完成</button>
+    <button type="submit" onclick="document.getElementById('action-field').value='notify'">告知</button>
+</form>
+<p><a href="{{ url_for('calendario.shift_rules') }}">シフト計算詳細設定</a></p>
+<p><a href="{{ url_for('calendario.index') }}">戻る</a></p>
+{% endblock %}
+

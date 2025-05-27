@@ -14,8 +14,10 @@ from flask import (
 )
 
 from . import bp
-from .forms import EventForm, StatsForm
+from .forms import EventForm, StatsForm, ShiftRulesForm
 from . import utils
+import config
+from typing import Dict, List
 
 
 @bp.before_request
@@ -75,6 +77,7 @@ def index():
             user=user,
             stats=stats,
             start=start_d,
+            timedelta=timedelta,
         )
 
     else:
@@ -158,6 +161,101 @@ def assign(event_id: int):
     else:
         flash("該当IDがありません")
     return redirect(url_for("calendario.index"))
+
+
+@bp.route("/shift", methods=["GET", "POST"])
+def shift():
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("calendario.index"))
+
+    month_param = request.args.get("month")
+    today = date.today()
+    if month_param:
+        try:
+            year, mon = map(int, month_param.split("-"))
+            month = date(year, mon, 1)
+        except Exception:
+            month = date(today.year, today.month, 1)
+    else:
+        month = date(today.year, today.month, 1)
+
+    events = utils.load_events()
+    assignments: Dict[str, List[str]] = {}
+    for e in events:
+        if (
+            e.get("category") == "shift"
+            and e.get("date", "").startswith(month.strftime("%Y-%m"))
+        ):
+            assignments.setdefault(e["date"], []).append(e.get("employee", ""))
+
+    employees = [n for n, info in config.USERS.items() if info.get("role") != "admin"]
+    counts = {emp: sum(emp in v for v in assignments.values()) for emp in employees}
+    days_in_month = calendar.monthrange(month.year, month.month)[1]
+    off_counts = {emp: days_in_month - counts.get(emp, 0) for emp in employees}
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        schedule: Dict[str, List[str]] = {}
+        for key in request.form:
+            if key.startswith("d-"):
+                schedule[key[2:]] = request.form.getlist(key)
+        utils.set_shift_schedule(month, schedule)
+        if action == "notify":
+            utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
+            flash("通知を送信しました")
+        else:
+            flash("保存しました")
+        return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
+
+    cal = calendar.Calendar(firstweekday=0)
+    weeks = [w for w in cal.monthdatescalendar(month.year, month.month)]
+    prev_month = (month - timedelta(days=1)).replace(day=1)
+    next_month = (month + timedelta(days=31)).replace(day=1)
+
+    return render_template(
+        "shift_manager.html",
+        user=user,
+        month=month,
+        weeks=weeks,
+        employees=employees,
+        assignments=assignments,
+        counts=counts,
+        off_counts=off_counts,
+        prev_month=prev_month,
+        next_month=next_month,
+    )
+
+
+@bp.route("/shift_rules", methods=["GET", "POST"])
+def shift_rules():
+    user = session.get("user")
+    if user.get("role") != "admin":
+        flash("権限がありません")
+        return redirect(url_for("calendario.index"))
+
+    rules = utils.load_rules()
+    form = ShiftRulesForm()
+    if request.method == "GET":
+        form.max_consecutive_days.data = str(rules.get("max_consecutive_days", ""))
+        form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
+        form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", []))
+        form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
+        form.employee_attributes.data = ",".join(f"{k}:{v}" for k, v in rules.get("employee_attributes", {}).items())
+        form.required_attributes.data = ",".join(f"{k}:{v}" for k, v in rules.get("required_attributes", {}).items())
+    if form.validate_on_submit():
+        rules["max_consecutive_days"] = int(form.max_consecutive_days.data or 0)
+        rules["min_staff_per_day"] = int(form.min_staff_per_day.data or 0)
+        rules["forbidden_pairs"] = utils.parse_pairs(form.forbidden_pairs.data or "")
+        rules["required_pairs"] = utils.parse_pairs(form.required_pairs.data or "")
+        rules["employee_attributes"] = utils.parse_kv(form.employee_attributes.data or "")
+        rules["required_attributes"] = utils.parse_kv_int(form.required_attributes.data or "")
+        utils.save_rules(rules)
+        flash("保存しました")
+        return redirect(url_for("calendario.shift_rules"))
+
+    return render_template("shift_rules.html", form=form, user=user)
 
 
 @bp.route("/stats", methods=["GET", "POST"])
