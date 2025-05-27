@@ -33,6 +33,9 @@ import config
 
 POINTS_PATH = Path(config.POINTS_FILE)
 POINTS_HISTORY_PATH = Path(config.POINTS_HISTORY_FILE)
+POINTS_CONSUMPTION_PATH = Path(
+    getattr(config, "POINTS_CONSUMPTION_FILE", "points_consumption.json")
+)
 POSTS_PATH = Path(config.POSTS_FILE)
 COMMENTS_PATH = Path(getattr(config, "COMMENTS_FILE", "comments.json"))
 
@@ -665,6 +668,50 @@ def export_points_history_csv(path: str) -> None:
                     entry.get("username", ""),
                     entry.get("A", 0),
                     entry.get("O", 0),
+                ]
+            )
+
+
+def load_points_consumption() -> List[Dict[str, str]]:
+    """Load simple points consumption history."""
+
+    if POINTS_CONSUMPTION_PATH.exists():
+        with open(POINTS_CONSUMPTION_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def add_points_consumption(
+    username: str, reason: str, timestamp: Optional[datetime] = None
+) -> None:
+    """Add a points consumption entry."""
+
+    ts = timestamp or datetime.now()
+    history = load_points_consumption()
+    history.append(
+        {
+            "username": username,
+            "reason": reason,
+            "timestamp": ts.isoformat(timespec="seconds"),
+        }
+    )
+    with open(POINTS_CONSUMPTION_PATH, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+
+def export_points_consumption_csv(path: str) -> None:
+    """Export points consumption history to CSV."""
+
+    history = load_points_consumption()
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "username", "reason"])
+        for entry in history:
+            writer.writerow(
+                [
+                    entry.get("timestamp", ""),
+                    entry.get("username", ""),
+                    entry.get("reason", ""),
                 ]
             )
 

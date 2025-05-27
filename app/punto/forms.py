@@ -21,3 +21,11 @@ class HistoryFilterForm(FlaskForm):
     start = StringField("開始日(YYYY-MM-DD)", validators=[Optional()])
     end = StringField("終了日(YYYY-MM-DD)", validators=[Optional()])
     submit = SubmitField("表示")
+
+
+class ConsumptionAddForm(FlaskForm):
+    """Form to add a points consumption entry."""
+
+    username = StringField("ユーザー名", validators=[DataRequired()])
+    reason = StringField("理由", validators=[DataRequired()])
+    submit = SubmitField("追加")
