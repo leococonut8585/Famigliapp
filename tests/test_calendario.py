@@ -184,3 +184,40 @@ def test_stats_route():
         assert b"2" in res.data
         assert "休日数".encode("utf-8") in res.data
 
+
+def test_move_event_api():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_events([])
+    utils.add_event(date.fromisoformat("2031-01-01"), "e", "", "")
+    eid = utils.load_events()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "u", "role": "user", "email": "u@example.com"}
+        res = client.post(
+            "/calendario/api/move",
+            json={"event_id": eid, "date": "2031-01-02"},
+        )
+        assert res.status_code == 200
+        assert res.get_json()["success"] is True
+        assert utils.load_events()[0]["date"] == "2031-01-02"
+
+
+def test_assign_employee_api():
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_events([])
+    utils.add_event(date.fromisoformat("2031-02-01"), "e", "", "")
+    eid = utils.load_events()[0]["id"]
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "u", "role": "user", "email": "u@example.com"}
+        res = client.post(
+            "/calendario/api/assign",
+            json={"event_id": eid, "employee": "taro"},
+        )
+        assert res.status_code == 200
+        assert res.get_json()["success"] is True
+        assert utils.load_events()[0]["employee"] == "taro"
+
+

@@ -2,9 +2,11 @@
 
 {% block content %}
 <h1>予定一覧</h1>
-<ul>
+<ul id="event-list">
 {% for ev in events %}
-    <li>[{{ ev.id }}] {{ ev.date }} {{ ev.title }} {{ ev.employee }}
+    <li class="event-item" data-id="{{ ev.id }}" data-date="{{ ev.date }}">
+        [{{ ev.id }}] {{ ev.date }} {{ ev.title }}
+        <span class="employee" data-employee="{{ ev.employee }}">{{ ev.employee }}</span>
         {% if ev.description %}- {{ ev.description }}{% endif %}
         {% if user.role == 'admin' %}
             <a href="{{ url_for('calendario.delete', event_id=ev.id) }}">削除</a>
@@ -15,5 +17,38 @@
 <p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
 <p><a href="{{ url_for('calendario.stats') }}">統計を見る</a></p>
 <p><a href="{{ url_for('index') }}">戻る</a></p>
+<script>
+const items = document.querySelectorAll('.event-item');
+items.forEach(li => {
+    li.draggable = true;
+    li.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', li.dataset.id);
+    });
+    li.addEventListener('dragover', e => e.preventDefault());
+    li.addEventListener('drop', e => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const targetDate = li.dataset.date;
+        fetch('{{ url_for('calendario.api_move') }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({event_id: draggedId, date: targetDate})
+        }).then(() => location.reload());
+    });
+    const emp = li.querySelector('.employee');
+    if (emp) {
+        emp.addEventListener('dragover', e => e.preventDefault());
+        emp.addEventListener('drop', e => {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const employee = emp.dataset.employee;
+            fetch('{{ url_for('calendario.api_assign') }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({event_id: draggedId, employee: employee})
+            }).then(() => location.reload());
+        });
+    }
+});
+</script>
 {% endblock %}
-
