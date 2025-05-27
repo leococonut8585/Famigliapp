@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>募集中のボックス</h1>
+<ul>
+{% for p in polls %}
+    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.title }}
+        <ul>
+        {% for idx, opt in enumerate(p.options) %}
+            <li>{{ opt }} - {{ p.votes.items()|selectattr('1','equalto',idx)|map(attribute=0)|list|join(', ') }}</li>
+        {% endfor %}
+        </ul>
+        <p><a href="{{ url_for('vote_box.vote', poll_id=p.id) }}">投票する</a>
+        {% if user.role == 'admin' or user.username == p.author %}
+            | <a href="{{ url_for('vote_box.close', poll_id=p.id) }}">締め切る</a>
+        {% endif %}</p>
+    </li>
+{% endfor %}
+</ul>
+<p><a href="{{ url_for('vote_box.index') }}">戻る</a></p>
+{% endblock %}
