@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>シフト計算詳細設定</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>{{ form.max_consecutive_days.label }} {{ form.max_consecutive_days() }}</p>
+    <p>{{ form.min_staff_per_day.label }} {{ form.min_staff_per_day() }}</p>
+    <p>{{ form.forbidden_pairs.label }} {{ form.forbidden_pairs(size=50) }}</p>
+    <p>{{ form.required_pairs.label }} {{ form.required_pairs(size=50) }}</p>
+    <p>{{ form.employee_attributes.label }} {{ form.employee_attributes(size=50) }}</p>
+    <p>{{ form.required_attributes.label }} {{ form.required_attributes(size=50) }}</p>
+    {{ form.submit() }}
+</form>
+<p><a href="{{ url_for('calendario.shift') }}">戻る</a></p>
+{% endblock %}
+
