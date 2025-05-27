@@ -167,23 +167,32 @@ def save_local_file(
 def send_email(subject: str, body: str, to: str) -> None:
     """Send an email using Flask-Mail if available, otherwise smtplib."""
 
-    if current_app is not None and Message is not None and "mail" in current_app.extensions:
-        msg = Message(
-            subject=subject,
-            recipients=[to],
-            body=body,
-            sender=getattr(current_app.config, "MAIL_SENDER", "famigliapp@example.com"),
-        )
-        current_app.extensions["mail"].send(msg)
-        return
+    try:
+        if current_app is not None and Message is not None and "mail" in current_app.extensions:
+            msg = Message(
+                subject=subject,
+                recipients=[to],
+                body=body,
+                sender=getattr(current_app.config, "MAIL_SENDER", "famigliapp@example.com"),
+            )
+            current_app.extensions["mail"].send(msg)
+        else:
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = getattr(config, "MAIL_SENDER", "famigliapp@example.com")
+            msg["To"] = to
+            msg.set_content(body)
+            with smtplib.SMTP(
+                getattr(config, "MAIL_SERVER", "localhost"),
+                getattr(config, "MAIL_PORT", 25),
+            ) as smtp:
+                smtp.send_message(msg)
+    except Exception as exc:  # pragma: no cover - log and continue
+        if current_app:
+            current_app.logger.warning(f"Failed to send email: {exc}")
+        else:
+            print(f"Failed to send email: {exc}")
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = getattr(config, "MAIL_SENDER", "famigliapp@example.com")
-    msg["To"] = to
-    msg.set_content(body)
-    with smtplib.SMTP(getattr(config, "MAIL_SERVER", "localhost"), getattr(config, "MAIL_PORT", 25)) as smtp:
-        smtp.send_message(msg)
     send_line_notify(f"{subject}\n{body}")
     send_pushbullet_notify(subject, body)
 
@@ -626,6 +635,7 @@ def get_ranking(
                     value = delta_o
                 ranking_dict[username] = ranking_dict.get(username, 0) + value
         ranking = sorted(ranking_dict.items(), key=lambda x: x[1], reverse=True)
+        ranking = [r for r in ranking if config.USERS.get(r[0], {}).get("role") != "admin"]
         return ranking
     else:
         points = load_points()
@@ -637,6 +647,7 @@ def get_ranking(
                 value = p.get(metric, 0)
             ranking.append((user, value))
         ranking.sort(key=lambda x: x[1], reverse=True)
+        ranking = [r for r in ranking if config.USERS.get(r[0], {}).get("role") != "admin"]
         return ranking
 
 

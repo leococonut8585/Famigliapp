@@ -85,3 +85,17 @@ def test_pushbullet_notification(monkeypatch):
     utils.log_points_change("user1", 3, 0)
     assert pushes and "Points updated" in pushes[0][0]
     config.PUSHBULLET_TOKEN = ""
+
+
+def test_send_email_handles_failure(monkeypatch):
+    class FailSMTP:
+        def __init__(self, *a, **k):
+            pass
+        def __enter__(self):
+            raise ConnectionRefusedError()
+        def __exit__(self, exc_type, exc, tb):
+            pass
+
+    monkeypatch.setattr(utils.smtplib, "SMTP", FailSMTP)
+    # Should not raise even if connection fails
+    utils.send_email("sub", "body", "to@example.com")
