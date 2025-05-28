@@ -1,5 +1,48 @@
 {% extends 'base.html' %}
 {% block content %}
+<style>
+  .employee-box {
+    cursor: pointer;
+    padding: 5px 8px; /* Adjusted padding slightly for better look with border */
+    margin: 2px;
+    border: 1px solid #ccc;
+    display: inline-block; 
+    border-radius: 4px; /* Added border-radius for consistency */
+    transition: background-color 0.2s ease-in-out; /* Smooth transition */
+  }
+  .emp-selected {
+    background-color: #aaddff; /* Light blue for selected */
+    font-weight: bold;
+    border-color: #007bff; /* Darker blue border for selected */
+  }
+  .assignments span.assigned {
+    display: block; /* Make each assigned employee take a new line */
+    margin-bottom: 3px; /* Slightly increased margin */
+    padding: 3px 5px; /* Adjusted padding */
+    background-color: #e9ecef; /* Lighter grey for assigned items */
+    border-radius: 3px;
+    font-size: 0.9em; /* Slightly smaller font for assigned items */
+  }
+  /* Styling for the draggable employee boxes from static/css/style.css for reference if needed */
+  /* .employee-box (from static/css/style.css) {
+    border: 1px solid #2196F3;
+    background: #e3f2fd;
+    padding: 4px 8px;
+    margin: 2px;
+    display: inline-block;
+    border-radius: 4px;
+    cursor: move; // Note: This will be overridden by the new .employee-box cursor: pointer
+  } */
+  /* .shift-cell .assigned (from static/css/style.css) {
+    display: block;
+    background: #bbdefb;
+    margin: 2px 0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+  } */
+</style>
+
 <h1>{{ month.strftime('%Y-%m') }} シフト管理</h1>
 <div>
     {% if nav_prev_month %}
@@ -15,6 +58,7 @@
 </div>
 <div class="shift-users">
 {% for emp in employees %}
+    {# draggable="true" might be removed if drag is fully replaced by click #}
     <div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>
 {% endfor %}
 </div>
@@ -67,4 +111,3 @@
 <p><a href="{{ url_for('calendario.index', month=month.strftime('%Y-%m')) }}">戻る</a></p>
 <script src="{{ url_for('static', filename='js/shift_manager.js') }}" defer></script>
 {% endblock %}
-
