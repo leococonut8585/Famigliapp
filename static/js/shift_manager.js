@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       }
+      updateShiftCounts(); // Call to update counts after drop
     }
 
     cell.addEventListener('dragover', e => {
@@ -79,4 +80,78 @@ document.addEventListener('DOMContentLoaded', () => {
     cell.addEventListener('drop', handleDrop);
     list.addEventListener('drop', handleDrop);
   });
+
+  function updateShiftCounts() {
+    const statsSummaryDiv = document.querySelector('.employee-stats-summary');
+    if (!statsSummaryDiv) {
+      console.error('Error: Employee stats summary element not found.');
+      return;
+    }
+    const currentMonth = statsSummaryDiv.dataset.currentMonth;
+    if (!currentMonth) {
+      console.error('Error: data-current-month attribute not found on stats summary element.');
+      return;
+    }
+
+    const currentAssignments = {};
+    document.querySelectorAll('form input[type="hidden"][name^="d-"]').forEach(input => {
+      const dateKey = input.name.substring(2); // Remove "d-" prefix
+      const employees = input.value ? input.value.split(',').map(emp => emp.trim()).filter(emp => emp) : [];
+      currentAssignments[dateKey] = employees;
+    });
+
+    fetch('/api/calendario/recalculate_shift_counts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Consider adding CSRF token if your Flask app uses Flask-WTF CSRF protection globally
+        // const csrfToken = document.querySelector('input[name="csrf_token"]');
+        // if (csrfToken) { headers['X-CSRFToken'] = csrfToken.value; }
+      },
+      body: JSON.stringify({
+        month: currentMonth,
+        assignments: currentAssignments
+      })
+    })
+    .then(response => {
+      if (!response.ok) {
+        // Attempt to parse error from JSON response, otherwise use status text
+        return response.json().then(errData => {
+          throw new Error(errData.error || response.statusText || `HTTP error! status: ${response.status}`);
+        }).catch(() => { // Fallback if parsing JSON fails
+          throw new Error(response.statusText || `HTTP error! status: ${response.status}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        if (data.counts) {
+          for (const [emp, workDays] of Object.entries(data.counts)) {
+            const workCountSpan = document.querySelector(`.work-count[data-emp="${emp}"]`);
+            if (workCountSpan) {
+              workCountSpan.textContent = workDays;
+            } else {
+              console.warn(`Warning: Work count span not found for employee: ${emp}`);
+            }
+          }
+        }
+        if (data.off_counts) {
+          for (const [emp, offDays] of Object.entries(data.off_counts)) {
+            const offCountSpan = document.querySelector(`.off-count[data-emp="${emp}"]`);
+            if (offCountSpan) {
+              offCountSpan.textContent = offDays;
+            } else {
+              console.warn(`Warning: Off count span not found for employee: ${emp}`);
+            }
+          }
+        }
+      } else {
+        console.error('API error when recalculating shift counts:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error during recalculate_shift_counts:', error);
+    });
+  }
 });

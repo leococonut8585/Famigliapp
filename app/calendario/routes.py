@@ -313,10 +313,16 @@ def shift():
             return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
         if action == "notify":
-            utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
-            flash("通知を送信しました")
-        else:
-            flash("保存しました") 
+            try:
+                utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
+                flash("通知を送信しました")
+            except Exception as e:
+                # Log the exception e
+                flash(f"通知の送信に失敗しました: {str(e)}", "error")
+        elif action == "complete":
+            flash("保存しました")
+        else: # Default case for any other action, or if action is None
+            flash("変更が保存されました") # Slightly different message for clarity if needed
         
         return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
@@ -464,3 +470,83 @@ def api_assign() -> "flask.Response":
     employee_api = data.get("employee", "") 
     ok_api_status = utils.assign_employee(event_id_api, employee_api) 
     return jsonify({"success": ok_api_status})
+
+
+@bp.route("/api/calendario/recalculate_shift_counts", methods=["POST"])
+def api_recalculate_shift_counts() -> "flask.Response":
+    """
+    Recalculates shift counts based on provided assignments without saving.
+    Expects a JSON payload like:
+    {
+        "month": "YYYY-MM",
+        "assignments": {
+            "YYYY-MM-DD": ["employeeA", "employeeB"],
+            ...
+        }
+    }
+    Returns:
+    {
+        "success": True,
+        "counts": {"employeeA": 10, ...},
+        "off_counts": {"employeeA": 15, ...}
+    }
+    or {"success": False, "error": "description"}
+    """
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"success": False, "error": "Invalid JSON payload"}), 400
+
+    month_str = data.get("month")
+    assignments = data.get("assignments")
+
+    if not month_str or not isinstance(month_str, str):
+        return jsonify({"success": False, "error": "Missing or invalid month string"}), 400
+    
+    if assignments is None or not isinstance(assignments, dict): # Allow empty assignments
+        return jsonify({"success": False, "error": "Missing or invalid assignments data"}), 400
+
+    try:
+        year, mon = map(int, month_str.split("-"))
+        current_month_date = date(year, mon, 1)
+        _, days_in_month = calendar.monthrange(year, mon)
+    except ValueError:
+        return jsonify({"success": False, "error": "Invalid month format. Use YYYY-MM"}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Error processing month: {str(e)}"}), 400
+
+    # Get non-admin employees
+    try:
+        employees = [
+            name
+            for name, user_info in config.USERS.items()
+            if user_info.get("role") != "admin" and name not in config.EXCLUDED_USERS
+        ]
+    except AttributeError: # Handle cases where USERS or EXCLUDED_USERS might not be structured as expected
+        employees = [
+            name
+            for name, user_info in getattr(config, "USERS", {}).items()
+            if user_info.get("role") != "admin" and name not in getattr(config, "EXCLUDED_USERS", [])
+        ]
+
+
+    counts = {emp: 0 for emp in employees}
+
+    for date_str, assigned_employees in assignments.items():
+        # Validate date_str format if necessary, though not strictly required by problem
+        # For now, assume dates in assignments are for the correct month
+        # and are valid date strings.
+        if not isinstance(assigned_employees, list):
+            # If a specific date's assignments are malformed, we can skip it or error out.
+            # For now, let's be lenient and skip.
+            continue
+        for emp in assigned_employees:
+            if emp in counts:
+                counts[emp] += 1
+    
+    off_counts = {emp: days_in_month - counts.get(emp, 0) for emp in employees}
+
+    return jsonify({
+        "success": True,
+        "counts": counts,
+        "off_counts": off_counts
+    })

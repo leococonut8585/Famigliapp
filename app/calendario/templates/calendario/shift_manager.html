@@ -63,14 +63,14 @@
 {% endfor %}
 </div>
 
-<div class="employee-stats-summary" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+<div class="employee-stats-summary" data-current-month="{{ month.strftime('%Y-%m') }}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
     <h3 style="margin-top: 0;">今月の集計</h3>
     {% if employees %}
         {% for emp in employees %}
             <p style="margin: 5px 0;">
                 {{ emp }}:
-                勤務日数 {{ counts.get(emp, 0) }}日,
-                休日数 {{ off_counts.get(emp, 0) }}日
+                勤務日数 <span class="work-count" data-emp="{{ emp }}">{{ counts.get(emp, 0) }}</span>日,
+                休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
             </p>
         {% endfor %}
     {% else %}

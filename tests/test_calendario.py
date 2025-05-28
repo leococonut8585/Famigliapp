@@ -208,3 +208,156 @@ def test_assign_employee_api():
         assert utils.load_events()[0]["employee"] == "taro"
 
 
+# --- Tests for /api/calendario/recalculate_shift_counts ---
+
+MOCK_USERS_FOR_RECALC_TEST = {
+    "admin_user": {"role": "admin", "email": "admin@example.com"},
+    "user1": {"role": "user", "email": "u1@example.com"},
+    "user2": {"role": "user", "email": "u2@example.com"},
+    "user3": {"role": "user", "email": "u3@example.com"},
+    "user4_excluded": {"role": "user", "email": "u4_excluded@example.com"},
+    "user5_non_assigned": {"role": "user", "email": "u5@example.com"},
+}
+MOCK_EXCLUDED_USERS_FOR_RECALC_TEST = ["user4_excluded"]
+
+def test_recalculate_shift_counts_valid_request(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    # Patch config directly where it's imported in the routes blueprint
+    monkeypatch.setattr("app.calendario.routes.config.USERS", MOCK_USERS_FOR_RECALC_TEST)
+    monkeypatch.setattr("app.calendario.routes.config.EXCLUDED_USERS", MOCK_EXCLUDED_USERS_FOR_RECALC_TEST)
+
+    with app.test_client() as client:
+        # Simulate login
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+
+        payload = {
+            "month": "2024-07",
+            "assignments": {
+                "2024-07-01": ["user1", "user2"],
+                "2024-07-02": ["user1"],
+                "2024-07-15": ["user3"],
+                "2024-07-16": ["user4_excluded"], # This assignment should be ignored for counts as user is excluded
+                "2024-07-17": ["admin_user"],   # This assignment should be ignored as user is admin
+            }
+        }
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload)
+
+        assert res.status_code == 200
+        assert res.content_type == "application/json"
+        data = res.get_json()
+        assert data["success"] is True
+
+        # July has 31 days
+        days_in_july = 31
+        expected_counts = {
+            "user1": 2,
+            "user2": 1,
+            "user3": 1,
+            "user5_non_assigned": 0,
+        }
+        # admin_user and user4_excluded should not be in counts
+        assert "admin_user" not in data["counts"]
+        assert "user4_excluded" not in data["counts"]
+        assert data["counts"] == expected_counts
+
+        expected_off_counts = {
+            "user1": days_in_july - 2,
+            "user2": days_in_july - 1,
+            "user3": days_in_july - 1,
+            "user5_non_assigned": days_in_july - 0,
+        }
+        assert "admin_user" not in data["off_counts"]
+        assert "user4_excluded" not in data["off_counts"]
+        assert data["off_counts"] == expected_off_counts
+
+def test_recalculate_shift_counts_invalid_month_format(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    monkeypatch.setattr("app.calendario.routes.config.USERS", MOCK_USERS_FOR_RECALC_TEST)
+    monkeypatch.setattr("app.calendario.routes.config.EXCLUDED_USERS", MOCK_EXCLUDED_USERS_FOR_RECALC_TEST)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+        
+        payload = {"month": "2024/07", "assignments": {}}
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload)
+        assert res.status_code == 400
+        data = res.get_json()
+        assert data["success"] is False
+        assert "Invalid month format" in data["error"]
+
+        payload = {"month": "July-2024", "assignments": {}}
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload)
+        assert res.status_code == 400
+        data = res.get_json()
+        assert data["success"] is False
+        assert "Invalid month format" in data["error"]
+
+
+def test_recalculate_shift_counts_missing_payload_keys(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    monkeypatch.setattr("app.calendario.routes.config.USERS", MOCK_USERS_FOR_RECALC_TEST)
+    monkeypatch.setattr("app.calendario.routes.config.EXCLUDED_USERS", MOCK_EXCLUDED_USERS_FOR_RECALC_TEST)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+
+        # Missing 'month'
+        payload_missing_month = {"assignments": {}}
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload_missing_month)
+        assert res.status_code == 400
+        data = res.get_json()
+        assert data["success"] is False
+        assert "Missing or invalid month string" in data["error"]
+
+        # Missing 'assignments'
+        payload_missing_assignments = {"month": "2024-07"}
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload_missing_assignments)
+        assert res.status_code == 400
+        data = res.get_json()
+        assert data["success"] is False
+        assert "Missing or invalid assignments data" in data["error"]
+
+def test_recalculate_shift_counts_empty_assignments_valid(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    monkeypatch.setattr("app.calendario.routes.config.USERS", MOCK_USERS_FOR_RECALC_TEST)
+    monkeypatch.setattr("app.calendario.routes.config.EXCLUDED_USERS", MOCK_EXCLUDED_USERS_FOR_RECALC_TEST)
+    
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "user1", "role": "user", "email": "u1@example.com"}
+
+        payload = {"month": "2024-03", "assignments": {}} # March has 31 days
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload)
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data["success"] is True
+        days_in_march = 31
+        expected_counts = {
+            "user1": 0, "user2": 0, "user3": 0, "user5_non_assigned": 0,
+        }
+        assert data["counts"] == expected_counts
+        expected_off_counts = {
+             "user1": days_in_march, "user2": days_in_march, "user3": days_in_march, "user5_non_assigned": days_in_march,
+        }
+        assert data["off_counts"] == expected_off_counts
+
+
+def test_recalculate_shift_counts_unauthenticated():
+    app = create_app()
+    app.config["TESTING"] = True
+    # No monkeypatching of config needed as auth should fail before that logic is hit
+    with app.test_client() as client:
+        payload = {"month": "2024-07", "assignments": {}}
+        res = client.post("/calendario/api/calendario/recalculate_shift_counts", json=payload)
+        # Expecting redirect to login page
+        assert res.status_code == 302 
+        assert "auth/login" in res.headers["Location"]
+
+
