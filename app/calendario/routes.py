@@ -312,17 +312,30 @@ def shift():
             flash(f"シフトの保存中にエラーが発生しました: {e}", "error")
             return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
+        # Save the schedule. Notifications from within set_shift_schedule are now disabled by default.
+        try:
+            utils.set_shift_schedule(month, schedule) 
+        except Exception as e:
+            flash(f"シフトの保存中にエラーが発生しました: {e}", "error")
+            return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
+
+        # Handle notifications and flash messages based on action
         if action == "notify":
             try:
+                # Send the main summary notification
                 utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
+                
+                # Send rule violation notifications (if any)
+                utils.check_rules_and_notify(send_notifications=True)
+                
                 flash("通知を送信しました")
             except Exception as e:
-                # Log the exception e
-                flash(f"通知の送信に失敗しました: {str(e)}", "error")
+                # Log the exception e (consider adding actual logging here)
+                flash(f"通知の送信中にエラーが発生しました: {str(e)}", "error")
         elif action == "complete":
             flash("保存しました")
         else: # Default case for any other action, or if action is None
-            flash("変更が保存されました") # Slightly different message for clarity if needed
+            flash("変更が保存されました")
         
         return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
