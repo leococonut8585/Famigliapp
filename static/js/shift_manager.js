@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     list.addEventListener('dragover', e => {
       e.preventDefault();
-      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.dropEffect = 'move'; // Corrected property
     });
     cell.addEventListener('drop', handleDrop);
     list.addEventListener('drop', handleDrop);
