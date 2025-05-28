@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentAssignments[dateKey] = employees;
     });
 
-    fetch('/api/calendario/recalculate_shift_counts', {
+    fetch('/calendario/api/shift_counts/recalculate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
