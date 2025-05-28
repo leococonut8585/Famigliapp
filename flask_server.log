@@ -4,30 +4,5 @@ WARNING: This is a development server. Do not use it in a production deployment.
  * Running on http://127.0.0.1:5000
  * Running on http://192.168.0.2:5000
 Press CTRL+C to quit
-[2025-05-28 10:41:58,249] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,251] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,252] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,254] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,256] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,258] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,259] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,261] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,263] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,264] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,265] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,267] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,268] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,270] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,271] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,273] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,274] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,276] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,278] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,279] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,281] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-[2025-05-28 10:41:58,282] WARNING in utils: Failed to send email: [Errno 97] Address family not supported by protocol
-127.0.0.1 - - [28/May/2025 10:41:58] "POST /calendario/shift?month=2024-05 HTTP/1.1" 302 -
-127.0.0.1 - - [28/May/2025 10:41:59] "GET /calendario/shift?month=2024-05 HTTP/1.1" 200 -
-u should be redirected automatically to the target URL: <a href="/calendario/shift?month=2024-05">/calendario/shift?month=2024-05</a>. If not, click the link.
-
---- SIMULATING GET REQUEST ---
+127.0.0.1 - - [28/May/2025 12:03:22] "POST /calendario/shift?month=2024-05 HTTP/1.1" 302 -
+127.0.0.1 - - [28/May/2025 12:03:22] "POST /auth/login?next=http://localhost:5000/calendario/shift?month%3D2024-05 HTTP/1.1" 200 -
