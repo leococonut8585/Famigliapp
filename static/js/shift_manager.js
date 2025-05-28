@@ -74,10 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     list.addEventListener('dragover', e => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
+      e.dataTransfer.effectAllowed = 'move';
     });
     cell.addEventListener('drop', handleDrop);
     list.addEventListener('drop', handleDrop);
   });
 });
-
