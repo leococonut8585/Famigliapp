@@ -301,9 +301,10 @@ def set_shift_schedule(month_date: date, schedule_data: Dict[str, List[str]]) ->
             next_id += 1
             
     save_events(events)
-    for shift_ev in newly_added_shifts: 
-        _notify_event("add", shift_ev)
-    check_rules_and_notify()
+    # Individual shift add notifications removed as per new logic
+    # for shift_ev in newly_added_shifts: 
+    #     _notify_event("add", shift_ev) 
+    check_rules_and_notify(send_notifications=False) # Always check rules, but don't notify from here
 
 
 def get_admin_email_address() -> Optional[str]: # Renamed
@@ -313,7 +314,7 @@ def get_admin_email_address() -> Optional[str]: # Renamed
     return getattr(config, "ADMIN_EMAIL", None) 
 
 
-def check_rules_and_notify() -> None:
+def check_rules_and_notify(send_notifications: bool = False) -> None: # Added send_notifications parameter
     rules, _ = load_rules() # Correctly unpack the tuple
     events = load_events()
     admin_email_addr = get_admin_email_address() # Renamed
@@ -346,7 +347,7 @@ def check_rules_and_notify() -> None:
                 if work_dates[i] == work_dates[i - 1] + timedelta(days=1):
                     consecutive_count += 1
                     if consecutive_count > max_consecutive:
-                        if admin_email_addr:
+                        if admin_email_addr and send_notifications: # MODIFIED
                             msg = f"{emp_name_rule} が {consecutive_count} 日連続で勤務しています (上限: {max_consecutive}日)。日付: {work_dates[i-consecutive_count+1].isoformat()} から {work_dates[i].isoformat()}"
                             send_email("連勤警告", msg, admin_email_addr)
                         break 
@@ -367,7 +368,7 @@ def check_rules_and_notify() -> None:
     
     for date_iso, staff_num in events_by_date_staff_count.items(): # Renamed
         if staff_num < min_staff:
-            if admin_email_addr:
+            if admin_email_addr and send_notifications: # MODIFIED
                 send_email("人数不足警告", f"{date_iso} の勤務者数は {staff_num} 人です (最低必要数: {min_staff}人)。", admin_email_addr)
 
     # Advanced rule checks (pairs, attributes)
@@ -387,7 +388,7 @@ def check_rules_and_notify() -> None:
     for date_iso_adv_check, emps_on_day_list in events_by_date_employee_list.items(): # Renamed
         for pair_forbidden in forbidden_pairs_list: # Renamed
             if len(pair_forbidden) >= 2 and pair_forbidden[0] in emps_on_day_list and pair_forbidden[1] in emps_on_day_list:
-                if admin_email_addr:
+                if admin_email_addr and send_notifications: # MODIFIED
                     send_email("組み合わせ禁止警告", f"{date_iso_adv_check} にて {pair_forbidden[0]} と {pair_forbidden[1]} が同時に勤務しています（禁止設定）。", admin_email_addr)
         
         for pair_required in required_pairs_list: # Renamed
@@ -395,7 +396,7 @@ def check_rules_and_notify() -> None:
                 emp_a, emp_b = pair_required[0], pair_required[1]
                 if (emp_a in emps_on_day_list and emp_b not in emps_on_day_list) or \
                    (emp_b in emps_on_day_list and emp_a not in emps_on_day_list):
-                    if admin_email_addr:
+                    if admin_email_addr and send_notifications: # MODIFIED
                         send_email("組み合わせ不足警告", f"{date_iso_adv_check} にて {emp_a} と {emp_b} はペア勤務が必要です（片方のみ勤務中）。", admin_email_addr)
         
         if required_attributes_map:
@@ -416,7 +417,7 @@ def check_rules_and_notify() -> None:
                     except ValueError: continue 
                 
                 if current_day_attr_counts.get(req_attr_name, 0) < actual_min_count:
-                    if admin_email_addr:
+                    if admin_email_addr and send_notifications: # MODIFIED
                         msg = f"{date_iso_adv_check} にて属性 '{req_attr_name}' の必要勤務者数 {actual_min_count}人を満たしていません（現在: {current_day_attr_counts.get(req_attr_name, 0)}人）。"
                         send_email("属性不足警告", msg, admin_email_addr)
 
