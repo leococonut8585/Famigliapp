@@ -288,14 +288,14 @@ def assign(event_id: int):
 @bp.route("/shift", methods=["GET", "POST"])
 def shift():
     user = session.get("user")
-    if user.get("role") != "admin":
+    # Restored original admin check
+    if user.get("role") != "admin": 
         flash("権限がありません")
         return redirect(url_for("calendario.index"))
 
     month_param = request.args.get("month")
-    today = date.today() # Already present
+    today = date.today()
     
-    # Navigation limits for shift view
     limit_past_date = today.replace(year=today.year - 2)
     limit_future_date = today.replace(year=today.year + 2)
 
@@ -310,12 +310,16 @@ def shift():
 
     events = utils.load_events()
     assignments: Dict[str, List[str]] = {}
+    
+    # For logging: Filtered events for the current month and category "shift"
+    current_month_shift_events = []
     for e in events:
         if (
             e.get("category") == "shift"
             and e.get("date", "").startswith(month.strftime("%Y-%m"))
         ):
             assignments.setdefault(e["date"], []).append(e.get("employee", ""))
+            current_month_shift_events.append(e) # Add to log list
 
     employees = [n for n, info in config.USERS.items() if info.get("role") != "admin"]
     counts = {emp: sum(emp in v for v in assignments.values()) for emp in employees}
@@ -337,6 +341,8 @@ def shift():
             flash("保存しました")
         return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
+    # Removed debug print statements
+
     cal = calendar.Calendar(firstweekday=0)
     weeks = [w for w in cal.monthdatescalendar(month.year, month.month)]
 
@@ -351,14 +357,14 @@ def shift():
     return render_template(
         "shift_manager.html",
         user=user,
-        month=month, # current month being viewed
+        month=month, 
         weeks=weeks,
         employees=employees,
-        assignments=assignments,
-        counts=counts,
-        off_counts=off_counts,
-        nav_prev_month=nav_prev_month, # Date object or None
-        nav_next_month=nav_next_month, # Date object or None
+        assignments=assignments, 
+        counts=counts,         
+        off_counts=off_counts, 
+        nav_prev_month=nav_prev_month, 
+        nav_next_month=nav_next_month, 
     )
 
 
@@ -373,21 +379,16 @@ def shift_rules():
     form = ShiftRulesForm()
     employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS]
     
-    # 'attributes' passed to template will now be 'defined_attributes'
-    # The old hardcoded list 'attributes = ["Dog", ...]' is removed.
-
     if request.method == "GET":
         form.max_consecutive_days.data = str(rules.get("max_consecutive_days", ""))
         form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
         form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", []))
         form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
-        # employee_attributes are strings like "emp:attr1|attr2"
-        # Ensure that data fetched from rules for employee_attributes is correctly formatted if it's not already a string
         emp_attrs_items = []
         for k, v_list in rules.get("employee_attributes", {}).items():
             if isinstance(v_list, list):
                 emp_attrs_items.append(f"{k}:{ '|'.join(v_list) }")
-            else: # if it's already a string (though unlikely if parsed correctly)
+            else: 
                 emp_attrs_items.append(f"{k}:{v_list}")
         form.employee_attributes.data = ",".join(emp_attrs_items)
         
@@ -397,7 +398,7 @@ def shift_rules():
         form.required_attributes.data = ",".join(req_attrs_items)
 
     if form.validate_on_submit():
-        rules_to_save = {} # Rebuild rules from form to ensure clean data
+        rules_to_save = {} 
         rules_to_save["max_consecutive_days"] = int(form.max_consecutive_days.data or 0)
         rules_to_save["min_staff_per_day"] = int(form.min_staff_per_day.data or 0)
         rules_to_save["forbidden_pairs"] = utils.parse_pairs(form.forbidden_pairs.data or "")
@@ -405,20 +406,19 @@ def shift_rules():
         rules_to_save["employee_attributes"] = utils.parse_kv(form.employee_attributes.data or "")
         rules_to_save["required_attributes"] = utils.parse_kv_int(form.required_attributes.data or "")
         
-        # Retrieve and parse defined_attributes from the hidden form field
         defined_attributes_json_str = request.form.get("defined_attributes_json_str", "[]")
         try:
             submitted_defined_attributes = json.loads(defined_attributes_json_str)
             if not isinstance(submitted_defined_attributes, list) or \
                not all(isinstance(attr, str) for attr in submitted_defined_attributes):
                 flash("属性リストの形式が不正です。", "error")
-                submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
-            elif not submitted_defined_attributes: # Ensure not empty if user deletes all
+                submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
+            elif not submitted_defined_attributes: 
                  flash("属性リストは空にできません。デフォルトに戻します。", "warning")
-                 submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
+                 submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
         except json.JSONDecodeError:
             flash("属性リストのJSON解析に失敗しました。", "error")
-            submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] # Fallback
+            submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
             
         utils.save_rules(rules_to_save, submitted_defined_attributes)
         flash("保存しました")
@@ -429,7 +429,7 @@ def shift_rules():
         form=form,
         user=user,
         employees=employees,
-        attributes=defined_attributes, # Pass the dynamic list
+        attributes=defined_attributes, 
     )
 
 
@@ -472,4 +472,3 @@ def api_assign() -> "flask.Response":
     employee = data.get("employee", "")
     ok = utils.assign_employee(event_id, employee)
     return jsonify({"success": ok})
-

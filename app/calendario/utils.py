@@ -314,7 +314,7 @@ def get_admin_email_address() -> Optional[str]: # Renamed
 
 
 def check_rules_and_notify() -> None:
-    rules = load_rules()
+    rules, _ = load_rules() # Correctly unpack the tuple
     events = load_events()
     admin_email_addr = get_admin_email_address() # Renamed
 
