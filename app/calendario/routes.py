@@ -472,7 +472,7 @@ def api_assign() -> "flask.Response":
     return jsonify({"success": ok_api_status})
 
 
-@bp.route("/api/calendario/recalculate_shift_counts", methods=["POST"])
+@bp.route("/api/shift_counts/recalculate", methods=["POST"])
 def api_recalculate_shift_counts() -> "flask.Response":
     """
     Recalculates shift counts based on provided assignments without saving.
