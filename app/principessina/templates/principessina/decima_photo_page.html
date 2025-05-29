@@ -76,20 +76,58 @@
                     {% if entry.server_filepath %}
                     <img src="{{ url_for('static', filename=entry.server_filepath) }}" class="card-img-top" alt="{{ entry.title or entry.original_filename }}" style="object-fit: cover; height: 200px;">
                     {% endif %}
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column"> {# Use flex for footer alignment #}
                         <h6 class="card-title">{{ entry.title or entry.original_filename }}</h6>
                         <p class="card-text"><small class="text-muted">投稿者: {{ entry.uploader_username }}<br>
                         日時: {{ format_datetime_field(entry.upload_timestamp) }}
                         {% if entry.custom_folder_name %}
-                        <br>フォルダ: {{ entry.custom_folder_name }}
+                        <br>プライマリフォルダ: {{ entry.custom_folder_name }}
+                        {% else %}
+                        <br>プライマリフォルダ: 年月フォルダ
+                        {% endif %}
+                        {% if entry.referenced_in_custom_folders %}
+                        <br>参照フォルダ: {{ entry.referenced_in_custom_folders|join(', ') }}
                         {% endif %}
                         </small></p>
+
+                        {# "別のカスタムフォルダへコピー" Section #}
+                        {% if all_custom_photo_folders %} {# Use photo-specific variable #}
+                        <form method="POST" action="{{ url_for('principessina.copy_media_to_folder', media_id=entry.id) }}" class="mt-auto pt-2"> {# mt-auto for pushing to bottom #}
+                            {{ copy_form.csrf_token }}
+                            <input type="hidden" name="media_type" value="photo"> {# To redirect back to photo page #}
+                            <input type="hidden" name="source_folder" value="{{ current_folder_name if current_folder_name else '' }}">
+                            <div class="input-group input-group-sm mb-2">
+                                <label for="{{ copy_form.target_custom_folder.id }}_{{ entry.id }}" class="input-group-text">{{ copy_form.target_custom_folder.label.text }}</label>
+                                <select name="{{ copy_form.target_custom_folder.name }}" id="{{ copy_form.target_custom_folder.id }}_{{ entry.id }}" class="form-select form-select-sm">
+                                  <option value="">-- フォルダを選択 --</option>
+                                  {% for folder_name in all_custom_photo_folders %}
+                                    {% if folder_name != entry.custom_folder_name and folder_name not in entry.referenced_in_custom_folders %}
+                                      <option value="{{ folder_name }}">{{ folder_name }}</option>
+                                    {% endif %}
+                                  {% endfor %}
+                                </select>
+                                {{ copy_form.submit_copy(class="btn btn-outline-secondary btn-sm") }}
+                            </div>
+                        </form>
+                        {% endif %}
+
+                        {# "このフォルダから参照を削除" Button #}
+                        {% if current_folder_name and current_folder_name in entry.referenced_in_custom_folders and current_folder_name != entry.custom_folder_name %}
+                          <form method="POST" action="{{ url_for('principessina.remove_media_reference', media_id=entry.id) }}" style="display: block; margin-top: 5px;"> {# Changed to block for spacing #}
+                            {{ copy_form.csrf_token }} {# Assuming copy_form's token can be reused #}
+                            <input type="hidden" name="folder_to_remove" value="{{ current_folder_name }}">
+                            <input type="hidden" name="media_type" value="photo">
+                            <button type="submit" class="btn btn-outline-warning btn-sm w-100">このフォルダから参照を削除</button>
+                          </form>
+                        {% endif %}
                     </div>
                     <div class="card-footer">
-                        <a href="{{ url_for('principessina.download_media_file', filepath_in_json=entry.server_filepath) }}" class="btn btn-sm btn-outline-secondary">ダウンロード</a>
+                        <a href="{{ url_for('principessina.download_media_file', filepath_in_json=entry.server_filepath) }}" class="btn btn-sm btn-outline-dark">ダウンロード</a>
                         {% if user.role == 'admin' %}
                         <form method="POST" action="{{ url_for('principessina.delete_media', media_id=entry.id) }}" style="display: inline;" onsubmit="return confirm('この写真を本当に削除しますか？メディアファイルも完全に削除されます。');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# General CSRF if not using WTForms for this #}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="media_type" value="photo"> {# For redirecting back to photo page #}
+                            <input type="hidden" name="source_folder" value="{{ current_folder_name if current_folder_name else '' }}">
                             <button type="submit" class="btn btn-sm btn-danger">削除</button>
                         </form>
                         {% endif %}
