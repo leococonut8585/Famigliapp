@@ -8,18 +8,18 @@ from typing import List, Dict, Optional
 import config
 
 
-LEZZIONE_PATH = Path(getattr(config, "LEZZIONE_FILE", "lezzione.json"))
+SEMINARIO_PATH = Path(getattr(config, "SEMINARIO_FILE", "seminario.json")) # MODIFIED
 
 
 def load_entries() -> List[Dict[str, str]]:
-    if LEZZIONE_PATH.exists():
-        with open(LEZZIONE_PATH, "r", encoding="utf-8") as f:
+    if SEMINARIO_PATH.exists(): # MODIFIED
+        with open(SEMINARIO_PATH, "r", encoding="utf-8") as f: # MODIFIED
             return json.load(f)
     return []
 
 
 def save_entries(entries: List[Dict[str, str]]) -> None:
-    with open(LEZZIONE_PATH, "w", encoding="utf-8") as f:
+    with open(SEMINARIO_PATH, "w", encoding="utf-8") as f: # MODIFIED
         json.dump(entries, f, ensure_ascii=False, indent=2)
 
 

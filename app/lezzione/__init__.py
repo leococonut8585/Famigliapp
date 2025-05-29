@@ -4,10 +4,10 @@ from flask import Blueprint
 
 
 bp = Blueprint(
-    "lezzione",
+    "seminario",
     __name__,
-    url_prefix="/lezzione",
-    template_folder="templates/lezzione",
+    url_prefix="/seminario",
+    template_folder="templates/seminario",
 )
 
 
