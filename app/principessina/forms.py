@@ -2,7 +2,7 @@
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
-from wtforms import StringField, TextAreaField, SubmitField, FileField, SelectField # Added SelectField
+from wtforms import StringField, TextAreaField, SubmitField, FileField, SelectField, DateField # Added DateField
 from wtforms.validators import DataRequired, Optional, Length
 
 from app.validators import FileSize
@@ -43,7 +43,7 @@ class PhotoUploadForm(FlaskForm):
     submit = SubmitField("アップロード")
 
 
-class CreateCustomFolderForm(FlaskForm):
+class CreateCustomFolderForm(FlaskForm): # For Media
     """Form to create a new custom folder for media."""
     folder_name = StringField(
         "新しいフォルダ名", 
@@ -52,14 +52,44 @@ class CreateCustomFolderForm(FlaskForm):
             Length(min=1, max=100, message="フォルダ名は1文字以上100文字以内で入力してください。")
         ]
     )
-    submit = SubmitField("フォルダ作成")
+    submit = SubmitField("フォルダ作成") 
 
 
-class CopyMediaToCustomFolderForm(FlaskForm):
+class CopyMediaToCustomFolderForm(FlaskForm): # For Media
     """Form to copy (reference) a media item to a custom folder."""
     target_custom_folder = SelectField(
         "コピー先のカスタムフォルダ", 
-        choices=[], # To be populated dynamically in the route
+        choices=[], 
         validators=[DataRequired(message="コピー先のフォルダを選択してください。")]
     )
-    submit_copy = SubmitField("このフォルダにコピー")
+    submit_copy = SubmitField("このフォルダにコピー") 
+
+
+class CreateCustomReportFolderForm(FlaskForm):
+    """Form to create a new custom folder for reports."""
+    folder_name = StringField(
+        "新しいカスタム報告フォルダ名", 
+        validators=[
+            DataRequired(message="フォルダ名を入力してください。"), 
+            Length(min=1, max=100, message="フォルダ名は1文字以上100文字以内で入力してください。")
+        ]
+    )
+    submit_create_folder = SubmitField("報告フォルダ作成") 
+
+
+class CopyReportToCustomFolderForm(FlaskForm):
+    """Form to copy (reference) a report to a custom folder."""
+    target_custom_folder = SelectField(
+        "コピー先のカスタム報告フォルダ", 
+        choices=[], 
+        validators=[DataRequired(message="コピー先のフォルダを選択してください。")]
+    )
+    submit_copy_report = SubmitField("この報告フォルダにコピー")
+
+
+class SearchPassatoForm(FlaskForm):
+    """Form to search archived reports."""
+    phrase = StringField("検索語句", validators=[Optional()])
+    date_from = DateField("期間（開始日）", validators=[Optional()])
+    date_to = DateField("期間（終了日）", validators=[Optional()])
+    submit_search = SubmitField("検索実行")

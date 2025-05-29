@@ -457,3 +457,22 @@ def compute_employee_stats(
             emp_data["off_days"] = total_days_in_range_val - num_work_days
         final_stats[emp_name_stats_final] = emp_data
     return final_stats
+
+
+def get_users_on_shift(target_date: date) -> List[str]:
+    """
+    Retrieves a list of unique usernames of employees on shift for a given target_date.
+    """
+    events = load_events()
+    users_on_shift_today: Set[str] = set()
+    target_date_iso = target_date.isoformat()
+
+    for event in events:
+        event_date_str = event.get('date')
+        category = event.get('category')
+        employee = event.get('employee')
+
+        if event_date_str == target_date_iso and category == 'shift' and employee:
+            users_on_shift_today.add(employee)
+            
+    return list(users_on_shift_today)

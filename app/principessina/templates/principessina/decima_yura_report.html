@@ -38,7 +38,7 @@
                     投稿者: {{ report.author }} | 
                     投稿日時: {{ format_datetime_field(report.timestamp) }}
                     {% if user.role == 'admin' %}
-                    | <a href="{{ url_for('principessina.delete', report_id=report.id) }}" class="text-danger" onclick="return confirm('この報告を本当に削除しますか？');">削除</a>
+                    | <a href="{{ url_for('principessina.delete_report', report_id=report.id) }}" class="text-danger" onclick="return confirm('この報告を本当に削除しますか？');">削除</a>
                     {% endif %}
                 </small>
             </li>

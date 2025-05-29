@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %}
+
+{% block title %}Decima - Passato (アーカイブ){% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Passato （アーカイブ済み報告） - {{ current_folder_name or '年月週別' }}</h1>
+    <p class="lead">過去の「今日のユラちゃん」および「食べたもの」の報告を検索・閲覧します。</p>
+
+    {# Search Form #}
+    <div class="card mb-4">
+        <div class="card-header">報告を検索</div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('.passato_top') }}" class="row g-3 align-items-end">
+                {# CSRF not strictly needed for GET forms, but Flask-WTF might add it.
+                   If search_form.csrf_token exists and is needed: {{ search_form.csrf_token }} #}
+                <input type="hidden" name="current_folder" value="{{ current_folder_name if current_folder_name else '' }}">
+                
+                <div class="col-md-4">
+                    {{ search_form.phrase.label(class="form-label") }}
+                    {{ search_form.phrase(class="form-control form-control-sm" + (" is-invalid" if search_form.phrase.errors else ""), placeholder="内容に含まれる語句") }}
+                    {% if search_form.phrase.errors %}<div class="invalid-feedback">{% for e in search_form.phrase.errors %}{{e}}<br>{% endfor %}</div>{% endif %}
+                </div>
+                <div class="col-md-3">
+                    {{ search_form.date_from.label(class="form-label") }}
+                    {{ search_form.date_from(class="form-control form-control-sm" + (" is-invalid" if search_form.date_from.errors else "")) }}
+                     {% if search_form.date_from.errors %}<div class="invalid-feedback">{% for e in search_form.date_from.errors %}{{e}}<br>{% endfor %}</div>{% endif %}
+                </div>
+                <div class="col-md-3">
+                    {{ search_form.date_to.label(class="form-label") }}
+                    {{ search_form.date_to(class="form-control form-control-sm" + (" is-invalid" if search_form.date_to.errors else "")) }}
+                    {% if search_form.date_to.errors %}<div class="invalid-feedback">{% for e in search_form.date_to.errors %}{{e}}<br>{% endfor %}</div>{% endif %}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.submit_search(class="btn btn-info btn-sm w-100") }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Display Active Search Criteria #}
+    {% if request.args.get('phrase') or request.args.get('date_from') or request.args.get('date_to') %}
+    <div class="alert alert-light p-2 mb-3">
+        <strong>現在の検索条件:</strong>
+        {% if request.args.get('phrase') %}語句「{{ request.args.get('phrase') }}」 {% endif %}
+        {% if request.args.get('date_from') %}開始日 {{ request.args.get('date_from') }} {% endif %}
+        {% if request.args.get('date_to') %}終了日 {{ request.args.get('date_to') }} {% endif %}
+        <a href="{{ url_for('.passato_top', current_folder=current_folder_name if current_folder_name else None) }}" class="ms-2 btn btn-sm btn-outline-secondary">検索解除</a>
+    </div>
+    {% endif %}
+
+    {# Custom Folder Navigation & Create Folder Form #}
+    <div class="d-flex flex-wrap align-items-center mb-1">
+        <a href="{{ url_for('.passato_top', phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" 
+           class="btn btn-sm btn-outline-primary me-1 mb-1 {% if not current_folder_name %}active{% endif %}">全ての年月週アーカイブ</a>
+        {% for folder in custom_report_folders %}
+            <a href="{{ url_for('.passato_top', current_folder=folder, phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" 
+               class="btn btn-sm btn-outline-primary me-1 mb-1 {% if current_folder_name == folder %}active{% endif %}">{{ folder }}</a>
+        {% endfor %}
+        <button class="btn btn-sm btn-info mb-1 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#createReportFolderCollapse" aria-expanded="false" aria-controls="createReportFolderCollapse">
+            新しい報告フォルダ作成
+        </button>
+    </div>
+    <div class="collapse mb-3" id="createReportFolderCollapse">
+      <div class="card card-body">
+        <form method="POST" action="{{ url_for('.passato_top', current_folder=current_folder_name, phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" class="needs-validation" novalidate>
+            {{ create_folder_form.csrf_token }}
+            <input type="hidden" name="form_type" value="create_report_folder">
+            <div class="form-group mb-2">
+                {{ create_folder_form.folder_name.label(class="form-label") }}
+                {{ create_folder_form.folder_name(class="form-control form-control-sm" + (" is-invalid" if create_folder_form.folder_name.errors else ""), placeholder="フォルダ名") }}
+                {% if create_folder_form.folder_name.errors %}<div class="invalid-feedback">{% for e in create_folder_form.folder_name.errors %}{{e}}<br>{% endfor %}</div>{% endif %}
+            </div>
+            {{ create_folder_form.submit_create_folder(class="btn btn-success btn-sm") }}
+        </form>
+      </div>
+    </div>
+    <hr>
+
+    {% if reports %}
+        {% if not current_folder_name and not request.args.get('phrase') and not request.args.get('date_from') and not request.args.get('date_to') %}
+            <p class="text-muted"><em>年月週別のグループ表示は近日対応予定です。現在はアーカイブ日付順に表示しています。検索結果やフォルダ表示の場合は全件日付順です。</em></p>
+        {% endif %}
+
+        {% for report in reports %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    {% if report.report_type == 'yura' %}今日のユラちゃん
+                    {% elif report.report_type == 'mangiato' %}食べたもの
+                    {% else %}報告 ({{ report.report_type or '種別不明' }})
+                    {% endif %}
+                    {% if report.custom_folder_name %}<span class="badge bg-info text-dark ms-2">プライマリ: {{ report.custom_folder_name }}</span>{% endif %}
+                    {% if report.referenced_in_custom_folders %}<span class="badge bg-secondary ms-1">参照: {{ report.referenced_in_custom_folders|join(', ') }}</span>{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><small class="text-muted">
+                    投稿者: {{ report.author }} <br>
+                    元投稿日時: {{ format_datetime_field(report.timestamp) }} <br>
+                    アーカイブ日時: {{ format_datetime_field(report.archived_timestamp) if report.archived_timestamp else 'N/A' }}
+                </small></p>
+                <div style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #e9ecef; margin-bottom: 1rem;">{{ report.text_content }}</div>
+
+                {% if custom_report_folders %}
+                <form method="POST" action="{{ url_for('principessina.copy_report_to_folder', report_id=report.id) }}" class="mt-2">
+                    {{ copy_report_form.csrf_token }}
+                    <input type="hidden" name="source_folder_for_redirect" value="{{ current_folder_name if current_folder_name else '' }}">
+                    <input type="hidden" name="phrase_for_redirect" value="{{ request.args.get('phrase', '') }}">
+                    <input type="hidden" name="date_from_for_redirect" value="{{ request.args.get('date_from', '') }}">
+                    <input type="hidden" name="date_to_for_redirect" value="{{ request.args.get('date_to', '') }}">
+                    <div class="input-group input-group-sm mb-2">
+                        <label for="{{ copy_report_form.target_custom_folder.id }}_{{ report.id }}" class="input-group-text">{{ copy_report_form.target_custom_folder.label.text }}</label>
+                        <select name="{{ copy_report_form.target_custom_folder.name }}" id="{{ copy_report_form.target_custom_folder.id }}_{{ report.id }}" class="form-select form-select-sm">
+                          <option value="">-- フォルダを選択 --</option>
+                          {% for folder_name in custom_report_folders %}
+                            {% if folder_name != report.custom_folder_name and folder_name not in report.referenced_in_custom_folders %}
+                              <option value="{{ folder_name }}">{{ folder_name }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                        {{ copy_report_form.submit_copy_report(class="btn btn-outline-secondary btn-sm") }}
+                    </div>
+                </form>
+                {% endif %}
+
+                {% if current_folder_name and current_folder_name in report.referenced_in_custom_folders and current_folder_name != report.custom_folder_name %}
+                  <form method="POST" action="{{ url_for('principessina.remove_report_reference', report_id=report.id) }}" style="display: inline-block; margin-top: 5px;">
+                    {{ copy_report_form.csrf_token }} 
+                    <input type="hidden" name="folder_to_remove" value="{{ current_folder_name }}">
+                    <input type="hidden" name="phrase_for_redirect" value="{{ request.args.get('phrase', '') }}">
+                    <input type="hidden" name="date_from_for_redirect" value="{{ request.args.get('date_from', '') }}">
+                    <input type="hidden" name="date_to_for_redirect" value="{{ request.args.get('date_to', '') }}">
+                    <button type="submit" class="btn btn-outline-warning btn-sm">この「{{ current_folder_name }}」フォルダから参照を削除</button>
+                  </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        このビューまたは検索条件に一致するアーカイブされた報告はありません。
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('principessina.index') }}" class="btn btn-secondary">Decimaメインに戻る</a>
+    </p>
+</div>
+{% endblock %}
