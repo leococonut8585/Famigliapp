@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %}
+
+{% block title %}Decima - Video{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Decima - Video</h1>
+    <p class="lead">動画のアップロードと閲覧を行います。</p>
+
+    <hr>
+
+    {# Section 1: Video Upload Form #}
+    <div class="card mb-4">
+        <div class="card-header">動画をアップロード</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('principessina.video_page', current_folder=current_folder_name if current_folder_name else None) }}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {{ video_form.csrf_token }}
+                <div class="form-group mb-3">
+                    {{ video_form.title.label(class="form-label") }}
+                    {{ video_form.title(class="form-control" + (" is-invalid" if video_form.title.errors else ""), placeholder="例：公園でのひととき") }}
+                    {% if video_form.title.errors %}
+                        <div class="invalid-feedback">{% for error in video_form.title.errors %}<span>{{ error }}</span><br>{% endfor %}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3">
+                    {{ video_form.video_file.label(class="form-label") }}
+                    {{ video_form.video_file(class="form-control-file" + (" is-invalid" if video_form.video_file.errors else "")) }}
+                    {% if video_form.video_file.errors %}
+                        <div class="invalid-feedback d-block">{% for error in video_form.video_file.errors %}<span>{{ error }}</span><br>{% endfor %}</div>
+                    {% endif %}
+                </div>
+                <input type="hidden" name="form_type" value="upload_video">
+                {{ video_form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+    </div>
+
+    {# Section 2: Create Custom Folder Form #}
+    <div class="card mb-4">
+        <div class="card-header">カスタムフォルダを作成</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('principessina.video_page', current_folder=current_folder_name if current_folder_name else None) }}" class="needs-validation" novalidate>
+                {{ folder_form.csrf_token }}
+                <div class="form-group mb-3">
+                    {{ folder_form.folder_name.label(class="form-label") }}
+                    {{ folder_form.folder_name(class="form-control" + (" is-invalid" if folder_form.folder_name.errors else ""), placeholder="例：お気に入り動画") }}
+                    {% if folder_form.folder_name.errors %}
+                        <div class="invalid-feedback">{% for error in folder_form.folder_name.errors %}<span>{{ error }}</span><br>{% endfor %}</div>
+                    {% endif %}
+                </div>
+                 <input type="hidden" name="form_type" value="create_folder">
+                {{ folder_form.submit(class="btn btn-secondary") }}
+            </form>
+        </div>
+    </div>
+    
+    <hr>
+
+    {# Section 3: Video Display Area #}
+    <h2>動画一覧 - {{ current_folder_display_name | default("年月フォルダ") }}</h2>
+
+    {# Custom Folders Navigation #}
+    <div class="mb-3">
+        <a href="{{ url_for('.video_page') }}" class="btn btn-sm btn-outline-primary {% if not current_folder_name %}active{% endif %}">年月フォルダ</a>
+        {% for folder in custom_video_folders %}
+            <a href="{{ url_for('.video_page', current_folder=folder) }}" class="btn btn-sm btn-outline-primary {% if current_folder_name == folder %}active{% endif %}">{{ folder }}</a>
+        {% endfor %}
+    </div>
+
+    {% if video_entries %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for entry in video_entries %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">{{ entry.title or entry.original_filename }}</h6>
+                    </div>
+                    <div class="card-body">
+                        <video controls width="100%" style="max-height: 300px;" class="mb-2 rounded">
+                            {# server_filepath is like 'principessina/videos/YYYY/MM/WW/filename.ext' #}
+                            {# url_for('static', filename=...) expects path relative to static folder #}
+                            <source src="{{ url_for('static', filename=entry.server_filepath) }}" type="video/{{ entry.original_filename.split('.')[-1]|lower if '.' in entry.original_filename else 'mp4' }}">
+                            お使いのブラウザはビデオタグをサポートしていません。
+                        </video>
+                        <p class="card-text"><small class="text-muted">投稿者: {{ entry.uploader_username }}<br>
+                        日時: {{ format_datetime_field(entry.upload_timestamp) }}
+                        {% if entry.custom_folder_name %}
+                        <br>フォルダ: {{ entry.custom_folder_name }}
+                        {% endif %}
+                        </small></p>
+                        <a href="{{ url_for('principessina.download_media_file', filepath_in_json=entry.server_filepath) }}" class="btn btn-sm btn-outline-secondary">ダウンロード</a>
+                        {% if user.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('principessina.delete_media', media_id=entry.id) }}" style="display: inline;" onsubmit="return confirm('この動画を本当に削除しますか？メディアファイルも完全に削除されます。');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {# General CSRF if not using WTForms for this #}
+                            <button type="submit" class="btn btn-sm btn-danger">削除</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        このフォルダには動画がありません。
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('principessina.index') }}" class="btn btn-secondary">Decimaメインに戻る</a>
+    </p>
+</div>
+{% endblock %}
