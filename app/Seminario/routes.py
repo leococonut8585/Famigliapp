@@ -22,7 +22,7 @@ def index():
     entries = utils.get_active_seminars()
     # Sort by lesson_date (start date), newest first. Ensure robust sorting.
     entries.sort(key=lambda e: e.get("lesson_date") or "", reverse=True)
-    return render_template("seminario/seminario_list.html", entries=entries, user=user)
+    return render_template("seminario_list.html", entries=entries, user=user)
 
 
 @bp.route("/schedule", methods=["GET", "POST"])
@@ -43,7 +43,7 @@ def schedule():
         )
         flash("新しいセミナーを登録しました。", "success")
         return redirect(url_for(".index"))
-    return render_template("seminario/seminario_schedule_form.html", form=form, user=user)
+    return render_template("seminario_schedule_form.html", form=form, user=user)
 
 
 # The old feedback(entry_id) route has been removed.
@@ -56,7 +56,7 @@ def confirm_list():
     seminars = utils.get_kouza_seminars()
     # Sort by lesson_date (start date), newest first
     seminars.sort(key=lambda e: e.get("lesson_date") or "", reverse=True)
-    return render_template("seminario/seminario_confirm_list.html", seminars=seminars, user=user)
+    return render_template("seminario_confirm_list.html", seminars=seminars, user=user)
 
 
 @bp.route("/feedback_submission")
@@ -67,7 +67,7 @@ def feedback_submission_page():
     # Sort by feedback_deadline, newest first
     seminars_for_feedback.sort(key=lambda e: e.get("feedback_deadline") or "", reverse=True)
     return render_template(
-        "seminario/seminario_feedback_submission.html",
+        "seminario_feedback_submission.html",
         seminars_for_feedback=seminars_for_feedback,
         user=user,  # Pass user object for current_user.username in template
     )
@@ -131,7 +131,7 @@ def completed_list():
     # Sort by seminar_end_date, newest first
     completed_seminars.sort(key=lambda e: e.get("seminar_end_date") or "", reverse=True)
     return render_template(
-        "seminario/seminario_completed_list.html",
+        "seminario_completed_list.html",
         completed_seminars=completed_seminars,
         user=user,
     )
