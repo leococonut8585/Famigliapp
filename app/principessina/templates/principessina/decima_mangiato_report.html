@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %} {# Assuming macros.html exists in app/templates/ #}
+
+{% block title %}Decima - 食べたもの{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>食べたもの</h1>
+    <p>今日ユラちゃんが食べたものを報告してください。</p>
+
+    <form method="POST" action="{{ url_for('principessina.mangiato_report') }}" class="needs-validation mb-4" novalidate>
+        {{ form.csrf_token }}
+        <div class="form-group mb-3">
+            {{ form.text_content.label(class="form-label") }}
+            {{ form.text_content(class="form-control" + (" is-invalid" if form.text_content.errors else ""), rows=3, placeholder="例：朝食 - ミルク200ml、昼食 - バナナ1本、夕食 - お粥") }}
+            {% if form.text_content.errors %}
+              <div class="invalid-feedback">
+                {% for error in form.text_content.errors %}
+                  <span>{{ error }}</span><br>
+                {% endfor %}
+              </div>
+            {% endif %}
+        </div>
+        <div class="mt-3">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+
+    <hr>
+
+    <h2>今日の報告一覧</h2>
+    {% if reports %}
+        <ul class="list-group">
+            {% for report in reports %}
+            <li class="list-group-item">
+                <p style="white-space: pre-wrap; margin-bottom: 0.5rem;">{{ report.text_content }}</p>
+                <small class="text-muted">
+                    投稿者: {{ report.author }} | 
+                    投稿日時: {{ format_datetime_field(report.timestamp) }}
+                    {% if user.role == 'admin' %}
+                    | <a href="{{ url_for('principessina.delete', report_id=report.id) }}" class="text-danger" onclick="return confirm('この報告を本当に削除しますか？');">削除</a>
+                    {% endif %}
+                </small>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        今日の「食べたもの」に関する報告はまだありません。
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('principessina.index') }}" class="btn btn-secondary">Decimaメインに戻る</a>
+    </p>
+</div>
+{% endblock %}
