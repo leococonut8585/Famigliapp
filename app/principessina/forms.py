@@ -1,12 +1,12 @@
 """Forms for Decima (formerly Principessina) blueprint."""
 
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed # Re-added
-from wtforms import StringField, TextAreaField, SubmitField, FileField # Re-added FileField, StringField
-from wtforms.validators import DataRequired, Optional, Length # Re-added Optional, added Length
+from flask_wtf.file import FileAllowed
+from wtforms import StringField, TextAreaField, SubmitField, FileField, SelectField # Added SelectField
+from wtforms.validators import DataRequired, Optional, Length
 
-from app.validators import FileSize # Re-added
-from . import utils # Added for accessing constants
+from app.validators import FileSize
+from . import utils 
 
 
 class ReportForm(FlaskForm):
@@ -50,8 +50,16 @@ class CreateCustomFolderForm(FlaskForm):
         validators=[
             DataRequired(message="フォルダ名を入力してください。"), 
             Length(min=1, max=100, message="フォルダ名は1文字以上100文字以内で入力してください。")
-            # Consider adding a Regexp validator here for allowed characters in folder names
-            # e.g., Regexp(r'^[a-zA-Z0-9_-]+$', message="フォルダ名には英数字、アンダースコア、ハイフンのみ使用できます。")
         ]
     )
     submit = SubmitField("フォルダ作成")
+
+
+class CopyMediaToCustomFolderForm(FlaskForm):
+    """Form to copy (reference) a media item to a custom folder."""
+    target_custom_folder = SelectField(
+        "コピー先のカスタムフォルダ", 
+        choices=[], # To be populated dynamically in the route
+        validators=[DataRequired(message="コピー先のフォルダを選択してください。")]
+    )
+    submit_copy = SubmitField("このフォルダにコピー")
