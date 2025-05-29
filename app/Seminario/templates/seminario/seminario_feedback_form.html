@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Seminario フィードバック</h1>
+
+<h1>Seminario フィードバック</h1> <!-- MODIFIED -->
 <form method="post">
     {{ form.hidden_tag() }}
     <p>{{ form.body.label }}<br>{{ form.body(rows=4, cols=40) }}</p>

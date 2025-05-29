@@ -31,7 +31,8 @@ VOTE_BOX_FILE = "votebox.json"
 CALENDAR_FILE = "events.json"
 CALENDAR_RULES_FILE = "calendar_rules.json"
 RESOCONTO_FILE = "resoconto.json"
-SEMINARIO_FILE = "seminario.json"
+
+SEMINARIO_FILE = "seminario.json" # MODIFIED
 PRINCIPESSINA_FILE = "principessina.json"
 MONSIGNORE_FILE = "monsignore.json"
 INVITES_FILE = "invites.json"
