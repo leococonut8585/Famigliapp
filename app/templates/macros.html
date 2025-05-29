@@ -1,0 +1,11 @@
+{% macro format_datetime_field(timestamp_string) %}
+  {# This macro is a placeholder. Date formatting should ideally be done
+     in the Python view function before passing to the template,
+     or via a custom Jinja filter for parsing ISO strings.
+     For now, it will just display the raw string if not empty. #}
+  {% if timestamp_string %}
+    {{ timestamp_string }}
+  {% else %}
+    {# Handle empty or None timestamp_string #}
+  {% endif %}
+{% endmacro %}
