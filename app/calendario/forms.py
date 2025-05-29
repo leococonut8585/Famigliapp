@@ -26,6 +26,8 @@ class EventForm(FlaskForm):
             ("shift", "シフト"),
             ("lesson", "レッスン"),
             ("hug", "ハグの日"),
+            ('kouza', '講座'),
+            ('shucchou', '出張'),
             ("other", "その他"),
         ],
         validators=[DataRequired()],

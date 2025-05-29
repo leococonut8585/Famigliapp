@@ -1,19 +1,43 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Seminario</h1>
-<ul>
-{% for e in entries %}
-    <li>[{{ e.id }}] {{ e.lesson_date }} {{ e.author }} {{ e.title }}
-        {% if e.feedback %}
-            - {{ e.feedback }}
-        {% else %}
-            <a href="{{ url_for('seminario.feedback', entry_id=e.id) }}">感想を書く</a>
-        {% endif %}
-    </li>
-{% endfor %}
-</ul>
-<p><a href="{{ url_for('seminario.schedule') }}">予定を登録</a></p>
-<p><a href="{{ url_for('index') }}">戻る</a></p>
+<div class="container mt-4">
+    <h1>Seminario一覧</h1> {# Changed heading slightly as per prompt's mention #}
+
+    <p class="mt-3 mb-3">
+      <a href="{{ url_for('seminario.confirm_list') }}" class="btn btn-info btn-sm">Seminarioを確認</a>
+      <a href="{{ url_for('seminario.feedback_submission_page') }}" class="btn btn-info btn-sm">Seminarioの感想を投稿</a>
+      <a href="{{ url_for('seminario.completed_list') }}" class="btn btn-info btn-sm">終了したSeminarioを確認</a>
+    </p>
+
+    <h2>現在アクティブなSeminario</h2>
+    {% if entries %}
+    <ul class="list-group">
+    {% for seminar in entries %} {# Renamed 'e' to 'seminar' for clarity #}
+        <li class="list-group-item">
+            <strong>タイトル:</strong> {{ seminar.title }}<br>
+            <strong>ID:</strong> {{ seminar.id }}<br>
+            <strong>講師:</strong> {{ seminar.author }}<br>
+            <strong>開始日:</strong> {{ seminar.lesson_date }}<br>
+            <strong>終了日:</strong> {{ seminar.seminar_end_date }}<br>
+            <strong>種類:</strong> {{ seminar.calendar_event_type }}
+            {# The old feedback link/text is removed as per new feedback system #}
+            {# If a direct link to submit feedback for THIS specific seminar is desired,
+               it would be a link to feedback_submission_page possibly with a query param
+               or an anchor to the specific tab, but the current structure is a general link. #}
+        </li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        現在アクティブなセミナーはありません。
+    </div>
+    {% endif %}
+
+    <hr>
+
+    <p><a href="{{ url_for('seminario.schedule') }}" class="btn btn-primary">新しいSeminarioを登録</a></p> {# Styled button #}
+    <p><a href="{{ url_for('index') }}" class="btn btn-secondary">メインページに戻る</a></p> {# Styled button #}
+</div>
 {% endblock %}
 

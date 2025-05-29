@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Seminario感想投稿ページ</h2>
+
+    {% if not seminars_for_feedback %}
+    <div class="alert alert-info" role="alert">
+        現在、感想を投稿できる講座はありません。
+    </div>
+    <p><a href="{{ url_for('seminario.seminario_list') }}" class="btn btn-secondary">Seminario一覧に戻る</a></p>
+    {% else %}
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="seminarTabs" role="tablist">
+        {% for seminar in seminars_for_feedback %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ seminar.id }}" data-bs-toggle="tab" data-bs-target="#content-{{ seminar.id }}" type="button" role="tab" aria-controls="content-{{ seminar.id }}" aria-selected="{{ 'true' if loop.first else 'false' }}">
+                {{ seminar.title }}
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content" id="seminarTabsContent">
+        {% for seminar in seminars_for_feedback %}
+        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="content-{{ seminar.id }}" role="tabpanel" aria-labelledby="tab-{{ seminar.id }}">
+            <div class="p-3 border border-top-0">
+                <h4>{{ seminar.title }}</h4>
+                <p><strong>終了日:</strong> {{ seminar.seminar_end_date }}</p>
+                <p><strong>フィードバック締切:</strong> {{ seminar.feedback_deadline }}</p>
+
+                {% if seminar.has_submitted_feedback %}
+                <div class="alert alert-info" role="alert">
+                    この講座に関する感想は投稿済みです。
+                </div>
+                {% if seminar.feedback_submissions and current_user and current_user.username in seminar.feedback_submissions %}
+                <div>
+                    <p><strong>あなたの投稿内容:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ seminar.feedback_submissions[current_user.username].text }}</p>
+                </div>
+                {% elif seminar.submitted_feedback_text %} {# Fallback if specific user feedback text is pre-processed #}
+                <div>
+                    <p><strong>あなたの投稿内容:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ seminar.submitted_feedback_text }}</p>
+                </div>
+                {% endif %}
+                {% else %}
+                {# Assuming form.csrf_token is not needed as no FlaskForm is explicitly passed for this page in the prompt #}
+                {# The backend route url_for('seminario.submit_feedback_for_seminar') should handle CSRF protection #}
+                <form method="POST" action="{{ url_for('seminario.submit_feedback_for_seminar', entry_id=seminar.id) }}">
+                    <div class="mb-3">
+                        <label for="body-{{ seminar.id }}" class="form-label">感想 (300文字以上):</label>
+                        <textarea class="form-control" id="body-{{ seminar.id }}" name="body" rows="8" required minlength="300"></textarea>
+                        <small class="form-text text-muted">
+                            感想は具体的に、300文字以上でご記入ください。
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">感想を送信</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <p class="mt-4">
+        <a href="{{ url_for('seminario.seminario_list') }}" class="btn btn-secondary">Seminario一覧に戻る</a>
+    </p>
+    {% endif %}
+</div>
+
+<script>
+// Optional: Ensure Bootstrap tabs are correctly initialized if not using data-bs-toggle for everything
+// var triggerTabList = [].slice.call(document.querySelectorAll('#seminarTabs button'))
+// triggerTabList.forEach(function (triggerEl) {
+//   var tabTrigger = new bootstrap.Tab(triggerEl)
+//   triggerEl.addEventListener('click', function (event) {
+//     event.preventDefault()
+//     tabTrigger.show()
+//   })
+// })
+</script>
+
+{% endblock %}
