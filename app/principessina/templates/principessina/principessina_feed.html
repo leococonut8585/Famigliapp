@@ -22,10 +22,9 @@
       <a href="{{ url_for('principessina.mangiato_report') }}" class="list-group-item list-group-item-action">
         Mangiato （食べたもの）
       </a>
-      {# Placeholder links for other Decima features - URLs will be updated later #}
-      <a href="#" class="list-group-item list-group-item-action disabled" aria-disabled="true">Video (近日公開)</a>
-      <a href="#" class="list-group-item list-group-item-action disabled" aria-disabled="true">Photo (近日公開)</a>
-      <a href="#" class="list-group-item list-group-item-action disabled" aria-disabled="true">Passato （アーカイブ） (近日公開)</a>
+      <a href="{{ url_for('principessina.video_page') }}" class="list-group-item list-group-item-action">Video</a>
+      <a href="{{ url_for('principessina.photo_page') }}" class="list-group-item list-group-item-action">Photo</a>
+      <a href="{{ url_for('principessina.passato_top') }}" class="list-group-item list-group-item-action">Passato （アーカイブ）</a>
     </div>
 
     <hr class="mt-4">
