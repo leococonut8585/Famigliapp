@@ -1,24 +1,32 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Monsignore</h1>
-<form method="get">
-    {{ form.author.label }} {{ form.author(size=10) }}
-    {{ form.keyword.label }} {{ form.keyword(size=10) }}
-    {{ form.submit() }}
-</form>
-<ul>
-{% for p in posts %}
-    <li>[{{ p.id }}] {{ p.timestamp }} {{ p.author }} {{ p.body }}
-        {% if p.filename %}
-            <img src="{{ url_for('static', filename='uploads/' + p.filename) }}" alt="img" width="100">
-        {% endif %}
-        {% if user.role == 'admin' %}
-            <a href="{{ url_for('monsignore.delete', post_id=p.id) }}">削除</a>
-        {% endif %}
-    </li>
-{% endfor %}
-</ul>
-<p><a href="{{ url_for('monsignore.add') }}">投稿する</a></p>
-<p><a href="{{ url_for('index') }}">戻る</a></p>
+<div class="container mt-4">
+    <h1>Monsignore</h1>
+    <p class="lead">「大事な言葉」機能へようこそ。</p>
+
+    <hr>
+
+    <h2>Monsignore メニュー</h2>
+    <div class="list-group mt-3">
+      <a href="{{ url_for('monsignore.add') }}" class="list-group-item list-group-item-action list-group-item-primary">
+        新しい「言葉」を投稿する
+      </a>
+      <a href="{{ url_for('monsignore.kadai_list') }}" class="list-group-item list-group-item-action">
+        大事な言葉を確認 (アクティブ)
+      </a>
+      <a href="{{ url_for('monsignore.kadai_feedback_page') }}" class="list-group-item list-group-item-action">
+        Monsignore感想投稿
+      </a>
+      <a href="{{ url_for('monsignore.archive_list') }}" class="list-group-item list-group-item-action">
+        過ぎた言葉（アーカイブ）
+      </a>
+    </div>
+
+    <hr class="mt-4">
+
+    <p class="mt-3">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">メインページに戻る</a>
+    </p>
+</div>
 {% endblock %}

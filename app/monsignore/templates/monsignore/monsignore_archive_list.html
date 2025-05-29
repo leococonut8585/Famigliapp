@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>過ぎた言葉</h1>
+
+    {% if archived_kadai_entries %}
+        {% for entry in archived_kadai_entries %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ entry.title }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><small class="text-muted">投稿者: {{ entry.author }} | 投稿日時: {{ format_datetime_field(entry.timestamp) }}</small></p>
+                
+                {% if entry.text_body %}
+                <p class="card-text" style="white-space: pre-wrap;">{{ entry.text_body }}</p>
+                {% endif %}
+
+                {% if entry.filename and entry.file_type %}
+                    <div class="mb-2">
+                        <h6>添付ファイル:</h6>
+                        {% if entry.file_type == 'image' %}
+                            <img src="{{ url_for('static', filename='uploads/monsignore_kadai/' + entry.filename) }}" class="img-fluid rounded mb-2" alt="{{ entry.original_filename or '添付画像' }}" style="max-height: 300px;">
+                        {% elif entry.file_type == 'video' %}
+                            <video controls width="100%" style="max-width: 400px;" class="mb-2 rounded">
+                                <source src="{{ url_for('static', filename='uploads/monsignore_kadai/' + entry.filename) }}" type="video/{{ entry.filename.split('.')[-1] | lower }}">
+                                お使いのブラウザはビデオタグをサポートしていません。
+                            </video>
+                        {% endif %}
+                        <p>
+                            <a href="{{ url_for('monsignore.download_kadai_file', filename=entry.filename) }}" class="btn btn-sm btn-outline-secondary">
+                                ダウンロード: {{ entry.original_filename or entry.filename }}
+                            </a>
+                        </p>
+                    </div>
+                {% endif %}
+                
+                {# Optional: Display feedback if desired for archived entries #}
+                {% if entry.feedback_submissions and entry.feedback_submissions | length > 0 %}
+                <div class="mt-3">
+                    <h6>投稿された感想:</h6>
+                    {% for username, feedback in entry.feedback_submissions.items() %}
+                    <div class="alert alert-light p-2 mb-2">
+                        <strong>{{ username }}:</strong>
+                        <p style="white-space: pre-wrap; margin-bottom: 0;">{{ feedback.text }}</p>
+                        <small class="text-muted">({{ format_datetime_field(feedback.timestamp) }})</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        アーカイブされた「言葉」はありません。
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('monsignore.kadai_list') }}" class="btn btn-secondary">アクティブな「言葉」一覧に戻る</a>
+    </p>
+</div>
+{% endblock %}

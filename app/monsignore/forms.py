@@ -13,14 +13,25 @@ class AddMonsignoreForm(FlaskForm):
         "画像",
         validators=[
             Optional(),
-            FileAllowed(utils.ALLOWED_EXTS, "許可されていないファイル形式です"),
-            FileSize(utils.MAX_SIZE),
+            FileAllowed(utils.POST_ALLOWED_EXTS, "許可されていないファイル形式です"), # Updated to POST_ALLOWED_EXTS
+            FileSize(utils.MAX_POST_FILE_SIZE), # Updated to MAX_POST_FILE_SIZE
         ],
     )
     submit = SubmitField("投稿")
 
 
-class MonsignoreFilterForm(FlaskForm):
-    author = StringField("投稿者", validators=[Optional()])
-    keyword = StringField("キーワード", validators=[Optional()])
-    submit = SubmitField("絞り込み")
+# MonsignoreFilterForm has been removed as requested.
+
+
+class AddKadaiForm(FlaskForm):
+    title = StringField("タイトル", validators=[DataRequired()])
+    text_body = TextAreaField("本文（任意）", validators=[Optional()])
+    attachment = FileField(
+        "画像または動画ファイル",
+        validators=[
+            Optional(),
+            FileAllowed(utils.KADAI_ALLOWED_EXTS, "許可されていないファイル形式です"),
+            FileSize(utils.MAX_KADAI_FILE_SIZE)
+        ]
+    )
+    submit = SubmitField("投稿")

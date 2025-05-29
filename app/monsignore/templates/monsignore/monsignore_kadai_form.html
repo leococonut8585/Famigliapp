@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h1>新しい言葉を投稿</h1>
+  <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+    {{ form.csrf_token }}
+    <div class="form-group mb-3">
+      {{ form.title.label(class="form-label") }}
+      {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="例：今日の気づき、大切な引用など") }}
+      {% if form.title.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.title.errors %}
+            <span>{{ error }}</span><br>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="form-group mb-3">
+      {{ form.text_body.label(class="form-label") }}
+      {{ form.text_body(class="form-control" + (" is-invalid" if form.text_body.errors else ""), rows=5, placeholder="本文を入力してください（任意）") }}
+      {% if form.text_body.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.text_body.errors %}
+            <span>{{ error }}</span><br>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="form-group mb-3">
+      {{ form.attachment.label(class="form-label") }}
+      {{ form.attachment(class="form-control-file" + (" is-invalid" if form.attachment.errors else "")) }}
+      {% if form.attachment.errors %}
+        <div class="invalid-feedback d-block"> {# Ensure error messages are displayed for file input #}
+          {% for error in form.attachment.errors %}
+            <span>{{ error }}</span><br>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <small class="form-text text-muted">
+        許可されるファイル形式: {{ allowed_exts_str }}. 最大サイズ: {{ max_size_mb }} MB.
+      </small>
+    </div>
+    <div class="mt-3">
+      {{ form.submit(class="btn btn-primary") }}
+    </div>
+  </form>
+  <p class="mt-3"><a href="{{ url_for('monsignore.index') }}">投稿一覧に戻る</a></p>
+</div>
+{% endblock %}
