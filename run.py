@@ -12,12 +12,12 @@ from app.resoconto import utils as resoconto_utils
 from app.resoconto import tasks as resoconto_tasks
 from app.resoconto.tasks import start_scheduler
 from app.intrattenimento.tasks import start_scheduler as start_intrattenimento_scheduler
-from app.lezzione.tasks import start_scheduler as start_lezzione_scheduler
+from app.seminario.tasks import start_scheduler as start_seminario_scheduler
 from app.principessina.tasks import start_scheduler as start_principessina_scheduler
 from app.corso.tasks import start_scheduler as start_corso_scheduler
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
-from app.lezzione import utils as lezzione_utils
+from app.seminario import utils as seminario_utils
 from app.bravissimo import utils as bravissimo_utils
 from app.scatola_capriccio import utils as scatola_capriccio_utils
 from app.monsignore import utils as monsignore_utils
@@ -58,9 +58,9 @@ def display_menu(user: Dict[str, str]):
         if user["role"] == "admin":
             print("24. Questを削除する")
             print("25. Quest報酬を設定する")
-        print("26. Lezzione一覧を見る")
-        print("27. Lezzioneをスケジュールする")
-        print("28. Lezzioneにフィードバックする")
+        print("26. Seminario一覧を見る")
+        print("27. Seminarioをスケジュールする")
+        print("28. Seminarioにフィードバックする")
         print("29. Bravissimo を見る")
         if user["role"] == "admin":
             print("30. Bravissimo に投稿する")
@@ -165,11 +165,11 @@ def display_menu(user: Dict[str, str]):
             else:
                 print("権限がありません")
         elif choice == "26":
-            show_lezzione_entries(user)
+            show_seminario_entries(user)
         elif choice == "27":
-            schedule_lezzione(user)
+            schedule_seminario(user)
         elif choice == "28":
-            add_lezzione_feedback_cli(user)
+            add_seminario_feedback_cli(user)
         elif choice == "29":
             show_bravissimo_posts(user)
         elif choice == "30":
@@ -795,8 +795,8 @@ def edit_quest_cli() -> None:
         print("該当IDがありません")
 
 
-def show_lezzione_entries(user: Dict[str, str]) -> None:
-    entries = lezzione_utils.load_entries()
+def show_seminario_entries(user: Dict[str, str]) -> None:
+    entries = seminario_utils.load_entries()
     for e in entries:
         if user["role"] != "admin" and e.get("author") != user["username"]:
             continue
@@ -804,7 +804,7 @@ def show_lezzione_entries(user: Dict[str, str]) -> None:
             f"[{e['id']}] {e['lesson_date']} {e['author']} {e['title']} {e.get('feedback','')}")
     
 
-def schedule_lezzione(user: Dict[str, str]) -> None:
+def schedule_seminario(user: Dict[str, str]) -> None:
     date_s = input("日付 YYYY-MM-DD: ").strip()
     title = input("タイトル: ").strip()
     try:
@@ -812,17 +812,17 @@ def schedule_lezzione(user: Dict[str, str]) -> None:
     except ValueError:
         print("日付の形式が正しくありません")
         return
-    lezzione_utils.add_schedule(user["username"], d, title)
+    seminario_utils.add_schedule(user["username"], d, title)
     print("登録しました")
 
 
-def add_lezzione_feedback_cli(user: Dict[str, str]) -> None:
+def add_seminario_feedback_cli(user: Dict[str, str]) -> None:
     try:
         entry_id = int(input("フィードバックするID: "))
     except ValueError:
         print("数値を入力してください")
         return
-    entries = lezzione_utils.load_entries()
+    entries = seminario_utils.load_entries()
     entry = next((e for e in entries if e.get("id") == entry_id), None)
     if not entry:
         print("該当IDがありません")
@@ -831,7 +831,7 @@ def add_lezzione_feedback_cli(user: Dict[str, str]) -> None:
         print("権限がありません")
         return
     body = input("内容: ").strip()
-    if lezzione_utils.add_feedback(entry_id, body):
+    if seminario_utils.add_feedback(entry_id, body):
         print("投稿しました")
     else:
         print("該当IDがありません")
@@ -1160,7 +1160,7 @@ def edit_calendario_rules() -> None:
 def main():
     start_scheduler()
     start_intrattenimento_scheduler()
-    start_lezzione_scheduler()
+    start_seminario_scheduler()
     start_principessina_scheduler()
     start_corso_scheduler()
     username = input("ユーザー名: ")

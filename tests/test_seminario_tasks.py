@@ -8,14 +8,14 @@ import pytest
 flask = pytest.importorskip("flask")
 
 import config
-from app.lezzione import utils, tasks
+from app.seminario import utils, tasks
 
 
 def setup_module(module):
     global _tmpdir
     _tmpdir = tempfile.TemporaryDirectory()
-    config.LEZZIONE_FILE = os.path.join(_tmpdir.name, "lezzione.json")
-    utils.LEZZIONE_PATH = Path(config.LEZZIONE_FILE)
+    config.SEMINARIO_FILE = os.path.join(_tmpdir.name, "seminario.json")
+    utils.SEMINARIO_PATH = Path(config.SEMINARIO_FILE)
 
 
 def teardown_module(module):

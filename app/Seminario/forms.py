@@ -1,4 +1,4 @@
-"""Forms for Lezzione blueprint."""
+"""Forms for Seminario blueprint."""
 
 from flask_wtf import FlaskForm
 from wtforms import DateField, StringField, TextAreaField, SubmitField
