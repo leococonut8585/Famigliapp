@@ -8,7 +8,7 @@
     <div class="alert alert-info" role="alert">
         現在、感想を投稿できる講座はありません。
     </div>
-    <p><a href="{{ url_for('seminario.seminario_list') }}" class="btn btn-secondary">Seminario一覧に戻る</a></p>
+    <p><a href="{{ url_for('seminario.index') }}" class="btn btn-secondary">Seminario一覧に戻る</a></p>
     {% else %}
     <!-- Nav tabs -->
     <ul class="nav nav-tabs" id="seminarTabs" role="tablist">
@@ -65,7 +65,7 @@
     </div>
 
     <p class="mt-4">
-        <a href="{{ url_for('seminario.seminario_list') }}" class="btn btn-secondary">Seminario一覧に戻る</a>
+        <a href="{{ url_for('seminario.index') }}" class="btn btn-secondary">Seminario一覧に戻る</a>
     </p>
     {% endif %}
 </div>
