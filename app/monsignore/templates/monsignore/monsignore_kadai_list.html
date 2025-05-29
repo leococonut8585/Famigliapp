@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>大事な言葉を確認</h1>
+
+    {% if kadai_entries %}
+        {% for entry in kadai_entries %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{{ entry.title }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><small class="text-muted">投稿者: {{ entry.author }} | 投稿日時: {{ format_datetime_field(entry.timestamp) }}</small></p>
+                
+                {% if entry.text_body %}
+                <p class="card-text" style="white-space: pre-wrap;">{{ entry.text_body }}</p>
+                {% endif %}
+
+                {% if entry.filename and entry.file_type %}
+                    <div class="mb-2">
+                        <h6>添付ファイル:</h6>
+                        {% if entry.file_type == 'image' %}
+                            <img src="{{ url_for('static', filename='uploads/monsignore_kadai/' + entry.filename) }}" class="img-fluid rounded mb-2" alt="{{ entry.original_filename or '添付画像' }}" style="max-height: 400px;">
+                        {% elif entry.file_type == 'video' %}
+                            <video controls width="100%" style="max-width: 500px;" class="mb-2 rounded">
+                                <source src="{{ url_for('static', filename='uploads/monsignore_kadai/' + entry.filename) }}" type="video/{{ entry.filename.split('.')[-1] | lower }}">
+                                お使いのブラウザはビデオタグをサポートしていません。
+                            </video>
+                        {% endif %}
+                        <p>
+                            <a href="{{ url_for('monsignore.download_kadai_file', filename=entry.filename) }}" class="btn btn-sm btn-outline-secondary">
+                                ダウンロード: {{ entry.original_filename or entry.filename }}
+                            </a>
+                        </p>
+                    </div>
+                {% endif %}
+                
+                <p class="card-text"><strong>フィードバック締切:</strong> {{ format_datetime_field(entry.feedback_deadline) }}</p>
+                
+                <a href="{{ url_for('monsignore.kadai_feedback', kadai_id=entry.id) }}" class="btn btn-primary">感想を伝える</a>
+                
+                {% if user.role == 'admin' %}
+                <a href="{{ url_for('monsignore.delete', kadai_id=entry.id) }}" class="btn btn-danger btn-sm float-end" onclick="return confirm('この「言葉」を本当に削除しますか？');">削除</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        現在アクティブな「言葉」はありません。
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('monsignore.index') }}" class="btn btn-secondary">Monsignoreメインに戻る</a>
+    </p>
+</div>
+{% endblock %}

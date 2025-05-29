@@ -11,3 +11,7 @@ bp = Blueprint(
 
 # Import routes so that they are registered with the blueprint
 from . import routes  # noqa: E402
+
+from . import tasks
+if tasks.scheduler is not None: # Ensure scheduler was initialized
+    tasks.start_scheduler()

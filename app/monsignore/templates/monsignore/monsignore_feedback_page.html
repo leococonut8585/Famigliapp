@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Monsignore 感想投稿</h2>
+
+    {% if not kadai_entries_for_feedback %}
+    <div class="alert alert-info" role="alert">
+        現在、感想を投稿できる「言葉」はありません。
+    </div>
+    {% else %}
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="kadaiFeedbackTabs" role="tablist">
+        {% for kadai in kadai_entries_for_feedback %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ kadai.id }}" data-bs-toggle="tab" data-bs-target="#content-{{ kadai.id }}" type="button" role="tab" aria-controls="content-{{ kadai.id }}" aria-selected="{{ 'true' if loop.first else 'false' }}">
+                {{ kadai.title | truncate(30, True) }} {# Truncate title if too long for tab #}
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content" id="kadaiFeedbackTabsContent">
+        {% for kadai in kadai_entries_for_feedback %}
+        <div class="tab-pane fade {% if loop.first %}show active{% endif %} p-3 border border-top-0" id="content-{{ kadai.id }}" role="tabpanel" aria-labelledby="tab-{{ kadai.id }}">
+            <h4>{{ kadai.title }}</h4>
+            <p><small class="text-muted">投稿者: {{ kadai.author }} | フィードバック締切: {{ format_datetime_field(kadai.feedback_deadline) }}</small></p>
+
+            {% if kadai.user_has_submitted %}
+            <div class="alert alert-info" role="alert">
+                この「言葉」に関する感想は投稿済みです。
+            </div>
+            {% if kadai.user_feedback_text %}
+            <div>
+                <p><strong>あなたの投稿内容:</strong></p>
+                <p style="white-space: pre-wrap;">{{ kadai.user_feedback_text }}</p>
+            </div>
+            {% endif %}
+            {% else %}
+            <form method="POST" action="{{ url_for('monsignore.submit_kadai_feedback', kadai_id=kadai.id) }}">
+                {# Assuming general CSRF protection for POST routes, not a specific Flask-WTF form object here #}
+                <div class="mb-3">
+                    <label for="feedback_text-{{ kadai.id }}" class="form-label">感想 (300文字以上):</label>
+                    <textarea class="form-control" id="feedback_text-{{ kadai.id }}" name="feedback_text" rows="8" required minlength="300"></textarea>
+                    <small class="form-text text-muted">
+                        感想は具体的に、300文字以上でご記入ください。
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary">感想を送信</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <p class="mt-4">
+        <a href="{{ url_for('monsignore.kadai_list') }}" class="btn btn-secondary">「言葉」一覧に戻る</a>
+    </p>
+</div>
+{% endblock %}
