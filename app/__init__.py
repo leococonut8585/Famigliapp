@@ -51,7 +51,6 @@ def create_app() -> "Flask":
     from .invites import bp as invites_bp
     from .calendario import bp as calendario_bp
     from .resoconto import bp as resoconto_bp
-
     from .seminario import bp as seminario_bp # MODIFIED (path changed)
 
     app.register_blueprint(auth_bp)
@@ -70,8 +69,8 @@ def create_app() -> "Flask":
     app.register_blueprint(invites_bp)
     app.register_blueprint(calendario_bp)
     app.register_blueprint(resoconto_bp)
-
     app.register_blueprint(seminario_bp) # MODIFIED
+
     if db is not None:
         from . import models  # noqa: F401
 

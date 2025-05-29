@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Seminario トップページ</h1>
+<p><a href="{{ url_for('seminario.view_seminarii') }}">Seminarioを確認</a></p>
+<p><a href="{{ url_for('seminario.submit_seminario_feedback') }}">Seminario感想を投稿</a></p>
+<p><a href="{{ url_for('seminario.completed_seminarii') }}">終了したSeminario</a></p>
+{% endblock %}

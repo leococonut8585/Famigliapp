@@ -1,4 +1,4 @@
-"""Background tasks for Seminario blueprint."""
+"""Background tasks for Lezzione blueprint."""
 
 from datetime import date, timedelta
 from typing import List, Dict, Optional

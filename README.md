@@ -43,9 +43,9 @@ python run.py
 23. **Questを完了する** ― Accept済みのQuestを完了扱いにします。
 24. **Questを削除する** ― 管理者のみ利用可能。IDを指定してQuestを削除します。
 25. **Quest報酬を設定する** ― 管理者が報酬を登録します。
-26. Seminario一覧を見る
-27. Seminarioをスケジュールする
-28. Seminarioにフィードバックする
+26. Lezzione一覧を見る
+27. Lezzioneをスケジュールする
+28. Lezzioneにフィードバックする
 29. Bravissimo を見る
 30. Bravissimo に投稿する (管理者のみ)
 31. Bravissimo 投稿を削除する (管理者のみ)

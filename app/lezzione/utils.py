@@ -1,4 +1,4 @@
-"""Utility functions for Seminario schedules and feedback."""
+"""Utility functions for Lezzione schedules and feedback."""
 
 import json
 from datetime import datetime, date
@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List, Dict, Optional
 
 import config
-
 
 
 SEMINARIO_PATH = Path(getattr(config, "SEMINARIO_FILE", "seminario.json")) # MODIFIED
@@ -20,7 +19,6 @@ def load_entries() -> List[Dict[str, str]]:
 
 
 def save_entries(entries: List[Dict[str, str]]) -> None:
-
     with open(SEMINARIO_PATH, "w", encoding="utf-8") as f: # MODIFIED
         json.dump(entries, f, ensure_ascii=False, indent=2)
 
