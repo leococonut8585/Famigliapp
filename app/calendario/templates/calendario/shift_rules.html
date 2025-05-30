@@ -1,100 +1,180 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>シフト計算詳細設定</h1>
-<form method="post" id="rules-form">
-    {{ form.hidden_tag() }}
-    {# These hidden fields will be populated by JS for list-based settings #}
-    {{ form.forbidden_pairs(id='forbidden_pairs_hidden') }}
-    {{ form.required_pairs(id='required_pairs_hidden') }}
-    {{ form.employee_attributes(id='employee_attributes_hidden') }}
-    {{ form.required_attributes(id='required_attributes_hidden') }}
-
-    {# Direct rendering for single-value settings #}
-    <div class="form-group">
-        {{ form.max_consecutive_days.label(class="form-label") }}
-        {{ form.max_consecutive_days(class="form-control", type="number") }}
-        {% if form.max_consecutive_days.errors %}
-            <ul class="errors">{% for error in form.max_consecutive_days.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-        {% endif %}
-    </div>
-
-    <div class="form-group">
-        {{ form.min_staff_per_day.label(class="form-label") }}
-        {{ form.min_staff_per_day(class="form-control", type="number") }}
-        {% if form.min_staff_per_day.errors %}
-            <ul class="errors">{% for error in form.min_staff_per_day.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-        {% endif %}
-    </div>
-
-    {# Manage Attribute Names Section #}
-    <div class="form-section">
-        <h2>属性名の管理</h2>
-        <input type="text" id="new_defined_attribute_input" placeholder="新しい属性名">
-        <button type="button" id="add_defined_attribute_button">属性を追加</button>
-        <p>現在の属性:</p>
-        <ul id="defined_attributes_list_display">
-            {# JavaScript will populate this list #}
-        </ul>
-        {# This hidden field will store the JSON string of defined attributes #}
+<div class="container mt-4">
+    <h1>シフト計算詳細設定</h1>
+    <form method="post" id="rules-form">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="forbidden_pairs" id="forbidden_pairs_hidden" value="{{ form.forbidden_pairs.data or '' }}">
+        <input type="hidden" name="required_pairs" id="required_pairs_hidden" value="{{ form.required_pairs.data or '' }}">
+        <input type="hidden" name="employee_attributes" id="employee_attributes_hidden" value="{{ form.employee_attributes.data or '' }}">
+        <input type="hidden" name="required_attributes" id="required_attributes_hidden" value="{{ form.required_attributes.data or '' }}">
         <input type="hidden" name="defined_attributes_json_str" id="defined_attributes_json_str">
-    </div>
 
-    <div>
-        <label>禁止組み合わせ</label><br>
-        <select id="forbidden_a">
-            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
-        </select>
-        <select id="forbidden_b">
-            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
-        </select>
-        <button type="button" id="forbidden_pairs_add">追加</button> {# Label changed #}
-        <ul id="forbidden_pairs_list"></ul>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">基本設定</div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    {{ form.max_consecutive_days.label(class="form-label") }}
+                    {{ form.max_consecutive_days(class="form-control form-control-sm", type="number") }}
+                    {% if form.max_consecutive_days.errors %}
+                        <div class="invalid-feedback d-block">{% for error in form.max_consecutive_days.errors %}<span>{{ error }}</span><br>{% endfor %}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group mb-3">
+                    {{ form.min_staff_per_day.label(class="form-label") }}
+                    {{ form.min_staff_per_day(class="form-control form-control-sm", type="number") }}
+                    {% if form.min_staff_per_day.errors %}
+                         <div class="invalid-feedback d-block">{% for error in form.min_staff_per_day.errors %}<span>{{ error }}</span><br>{% endfor %}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-    <div>
-        <label>必須組み合わせ</label><br>
-        <select id="required_a">
-            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
-        </select>
-        <select id="required_b">
-            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
-        </select>
-        <button type="button" id="required_pairs_add">追加</button> {# Label changed #}
-        <ul id="required_pairs_list"></ul>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">属性名の管理</div>
+            <div class="card-body">
+                <label for="new_defined_attribute_input" class="form-label">新しい属性名:</label>
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="new_defined_attribute_input" class="form-control" placeholder="例：リーダー、新人">
+                    <button type="button" id="add_defined_attribute_button" class="btn btn-outline-secondary">属性を追加</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">ペア設定</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">禁止組み合わせ</label>
+                    <div class="input-group input-group-sm">
+                        <select id="forbidden_a" class="form-select">
+                            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
+                        </select>
+                        <span class="input-group-text">-</span>
+                        <select id="forbidden_b" class="form-select">
+                            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
+                        </select>
+                        <button type="button" id="forbidden_pairs_add" class="btn btn-outline-danger">追加</button>
+                    </div>
+                </div>
+                <hr>
+                <div>
+                    <label class="form-label">必須組み合わせ</label>
+                    <div class="input-group input-group-sm">
+                        <select id="required_a" class="form-select">
+                            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
+                        </select>
+                        <span class="input-group-text">-</span>
+                        <select id="required_b" class="form-select">
+                            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
+                        </select>
+                        <button type="button" id="required_pairs_add" class="btn btn-outline-success">追加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div>
-        <label>従業員属性</label><br>
-        <select id="attr_employee">
-            {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
-        </select>
-        <span id="employee_attributes_checkbox_group">
-            {% for attr_name in attributes %} {# attributes is defined_attributes from route #}
-                <label><input type="checkbox" class="attr_cb" value="{{ attr_name }}">{{ attr_name }}</label>
-            {% endfor %}
-        </span>
-        <button type="button" id="attr_add">追加</button> {# Label changed #}
-        <ul id="attr_list"></ul>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">従業員属性設定</div>
+            <div class="card-body">
+                <div class="form-group mb-2">
+                    <label for="attr_employee" class="form-label">従業員</label>
+                    <select id="attr_employee" class="form-select form-select-sm">
+                        {% for emp in employees %}<option value="{{ emp }}">{{ emp }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="form-label d-block">属性</label> {# d-block for spacing #}
+                    <div id="employee_attributes_checkbox_group" class="p-2 border rounded" style="min-height: 38px;">
+                        {# Checkboxes populated by JS. Provide some default or initial state if attributes exist #}
+                        {% if attributes %}
+                            {% for attr_name in attributes %} 
+                                <label class="me-2 form-check-label"><input type="checkbox" class="attr_cb form-check-input" value="{{ attr_name }}">{{ attr_name }}</label>
+                            {% endfor %}
+                        {% else %}
+                            <small class="text-muted">利用可能な属性はありません。まず「属性名の管理」で属性を追加してください。</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <button type="button" id="attr_add" class="btn btn-outline-primary btn-sm mt-2">従業員に属性を追加/更新</button>
+            </div>
+        </div>
 
-    <div>
-        <label>属性ごとの１日当たりの必要人数</label><br>
-        <select id="req_attr_attr">
-            {# Options will be populated by JS initially and on updates #}
-            {% for attr_name in attributes %} {# attributes is defined_attributes from route #}
-                <option value="{{ attr_name }}">{{ attr_name }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="req_attr_num">
-        <button type="button" id="req_attr_add">追加</button> {# Label changed #}
-        <ul id="req_attr_list"></ul>
-    </div>
+        <div class="card mb-3">
+            <div class="card-header">属性ごとの１日当たりの必要人数</div>
+            <div class="card-body">
+                <div class="input-group input-group-sm">
+                    <select id="req_attr_attr" class="form-select">
+                        {# Options populated by JS. Provide some default or initial state if attributes exist #}
+                        {% if attributes %}
+                            {% for attr_name in attributes %}
+                                <option value="{{ attr_name }}">{{ attr_name }}</option>
+                            {% endfor %}
+                        {% else %}
+                             <option value="">属性なし</option>
+                        {% endif %}
+                    </select>
+                    <input type="number" id="req_attr_num" class="form-control" placeholder="人数" min="0">
+                    <button type="button" id="req_attr_add" class="btn btn-outline-primary">追加/更新</button>
+                </div>
+            </div>
+        </div>
 
-    {{ form.submit(class="btn btn-primary") }}
-</form>
-<p><a href="{{ url_for('calendario.shift') }}">戻る</a></p>
-+<script>
-+    window.initialShiftAttributes = {{ attributes|tojson|safe }};
-+</script>
+        <hr class="my-4">
+        <h2>現在設定されているルール詳細</h2>
+
+        <div class="card mb-3">
+            <div class="card-header">定義済み属性名一覧</div>
+            <div class="card-body">
+                <ul id="defined_attributes_list_display" class="list-unstyled"></ul>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">禁止組み合わせ一覧</div>
+                    <div class="card-body">
+                        <ul id="forbidden_pairs_list" class="list-unstyled"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">必須組み合わせ一覧</div>
+                    <div class="card-body">
+                        <ul id="required_pairs_list" class="list-unstyled"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">従業員属性一覧</div>
+                    <div class="card-body">
+                        <ul id="attr_list" class="list-unstyled"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">属性ごとの必要人数一覧</div>
+                    <div class="card-body">
+                        <ul id="req_attr_list" class="list-unstyled"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="my-4">
+        {{ form.submit(class="btn btn-primary btn-lg") }}
+    </form>
+    <p class="mt-3"><a href="{{ url_for('calendario.shift') }}" class="btn btn-secondary">シフト表に戻る</a></p>
+</div>
+<script>
+    window.initialShiftAttributes = {{ attributes|tojson|safe }};
+</script>
 <script src="{{ url_for('static', filename='js/shift_rules.js') }}" defer></script>
 {% endblock %}

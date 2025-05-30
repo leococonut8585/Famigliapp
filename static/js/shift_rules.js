@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.addEventListener('click', () => {
           currentDefinedAttributes.splice(index, 1);
           renderDefinedAttributesList(); // Re-render this list
-          updateAttributeDependentUI(); // Re-render dependent UI
+          renderAttributeDependentUI(); // Corrected call: Re-render dependent UI
           updateHiddenDefinedAttributes(); // Update hidden field for form submission
         });
         li.appendChild(deleteBtn);
@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDefinedAttributes.push(newAttr);
         definedAttributesInputEl.value = '';
         renderDefinedAttributesList();
-        updateAttributeDependentUI();
+        renderAttributeDependentUI(); // Corrected call
         updateHiddenDefinedAttributes();
       } else if (!newAttr) {
         alert('属性名を入力してください。');
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial setup
   renderDefinedAttributesList();
-  updateAttributeDependentUI();
+  renderAttributeDependentUI(); // Corrected call
   updateHiddenDefinedAttributes(); // Ensure hidden field is populated on load
 
   setupPairList('forbidden_pairs', '#forbidden_a', '#forbidden_b');
