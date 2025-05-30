@@ -392,7 +392,7 @@ def shift_rules():
         emp_attrs_items = []
         for k, v_list in rules.get("employee_attributes", {}).items():
             if isinstance(v_list, list):
-                emp_attrs_items.append(f"{k}:{ '|'.join(v_list) }")
+                emp_attrs_items.append(f"{k}:{'|'.join(v_list) }")
             else: 
                 emp_attrs_items.append(f"{k}:{v_list}")
         form.employee_attributes.data = ",".join(emp_attrs_items)
@@ -414,8 +414,7 @@ def shift_rules():
         defined_attributes_json_str = request.form.get("defined_attributes_json_str", "[]")
         try:
             submitted_defined_attributes = json.loads(defined_attributes_json_str)
-            if not isinstance(submitted_defined_attributes, list) or \
-               not all(isinstance(attr, str) for attr in submitted_defined_attributes):
+            if not isinstance(submitted_defined_attributes, list) or                not all(isinstance(attr, str) for attr in submitted_defined_attributes):
                 flash("属性リストの形式が不正です。", "error")
                 submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
             elif not submitted_defined_attributes: 
@@ -472,7 +471,7 @@ def api_assign() -> "flask.Response":
     event_id_api = int(data.get("event_id", 0)) 
     employee_api = data.get("employee", "") 
     ok_api_status = utils.assign_employee(event_id_api, employee_api) 
-    return jsonify({"success": ok_api_status})
+    return jsonify({"success": ok_api_status}) 
 
 
 @bp.route("/api/shift_counts/recalculate", methods=["POST"])
@@ -522,4 +521,29 @@ def api_recalculate_shift_counts() -> "flask.Response":
 
     return jsonify({ "success": True, "counts": counts, "off_counts": off_counts })
 
-[end of app/calendario/routes.py]
+@bp.route('/api/check_shift_violations', methods=['POST'])
+def check_shift_violations_api():
+    assignments_data = request.get_json()
+    if not assignments_data: # Check if data is None or empty
+        return jsonify({"success": False, "error": "Invalid request data: No data received"}), 400
+
+    current_assignments = assignments_data.get('assignments')
+    if current_assignments is None: # Check if 'assignments' key is missing or its value is None
+         # If assignments_data itself is the dict, use it directly (as a fallback)
+        if isinstance(assignments_data, dict) and any(re.match(r'\d{4}-\d{2}-\d{2}', k) for k in assignments_data.keys()):
+            current_assignments = assignments_data
+        else:
+            return jsonify({"success": False, "error": "Invalid request data: 'assignments' key missing or invalid"}), 400
+            
+    rules, defined_attributes = utils.load_rules()
+    users_config = config.USERS
+            
+    # Actual call to utils.get_shift_violations
+    violation_list = utils.get_shift_violations(
+        current_assignments,
+        rules,
+        # defined_attributes, # This is part of rules dict now
+        users_config
+    )
+
+    return jsonify({"success": True, "violations": violation_list})
