@@ -15,7 +15,7 @@ from flask import (
 )
 
 from . import bp
-from .forms import EventForm, StatsForm, ShiftRulesForm
+from .forms import EventForm, StatsForm, ShiftRulesForm, ShiftManagementForm # Added ShiftManagementForm
 from . import utils
 import config
 from typing import Dict, List
@@ -358,11 +358,15 @@ def shift():
     rules, defined_attributes = utils.load_rules()
     rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
 
+    # Instantiate ShiftManagementForm for CSRF token
+    csrf_form = ShiftManagementForm()
+
     return render_template(
         "shift_manager.html",
         user=user,
         month=month,
-        rules_for_js=rules_data_for_js, # Pass rules data to template
+        rules_for_js=rules_data_for_js, 
+        form=csrf_form, # Pass the CSRF-only form
         weeks=weeks,
         employees=employees,
         assignments=assignments, 

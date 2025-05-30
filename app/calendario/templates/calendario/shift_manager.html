@@ -78,8 +78,8 @@
 </div>
 
 <form method="post">
+    {{ form.hidden_tag() }} {# Replaced csrf_token() with Flask-WTF form hidden_tag #}
     <input type="hidden" name="action" value="complete" id="action-field">
-    {{ csrf_token() }} {# Added CSRF token if using Flask-WTF globally #}
     <table class="calendar table table-bordered">
         <thead class="table-light">
             <tr>
