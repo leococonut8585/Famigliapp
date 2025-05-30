@@ -13,7 +13,7 @@
             </div>
             <div class="card-body">
                 <p class="card-text"><small class="text-muted">投稿者: {{ entry.author }} | 投稿日時: {{ format_datetime_field(entry.timestamp) }}</small></p>
-                
+
                 {% if entry.text_body %}
                 <p class="card-text" style="white-space: pre-wrap;">{{ entry.text_body }}</p>
                 {% endif %}
@@ -36,11 +36,11 @@
                         </p>
                     </div>
                 {% endif %}
-                
+
                 <p class="card-text"><strong>フィードバック締切:</strong> {{ format_datetime_field(entry.feedback_deadline) }}</p>
-                
+
                 <a href="{{ url_for('monsignore.kadai_feedback', kadai_id=entry.id) }}" class="btn btn-primary">感想を伝える</a>
-                
+
                 {% if user.role == 'admin' %}
                 <a href="{{ url_for('monsignore.delete', kadai_id=entry.id) }}" class="btn btn-danger btn-sm float-end" onclick="return confirm('この「言葉」を本当に削除しますか？');">削除</a>
                 {% endif %}

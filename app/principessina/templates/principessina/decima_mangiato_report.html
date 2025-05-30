@@ -35,7 +35,7 @@
             <li class="list-group-item">
                 <p style="white-space: pre-wrap; margin-bottom: 0.5rem;">{{ report.text_content }}</p>
                 <small class="text-muted">
-                    投稿者: {{ report.author }} | 
+                    投稿者: {{ report.author }} |
                     投稿日時: {{ format_datetime_field(report.timestamp) }}
                     {% if user.role == 'admin' %}
                     | <a href="{{ url_for('principessina.delete_report', report_id=report.id) }}" class="text-danger" onclick="return confirm('この報告を本当に削除しますか？');">削除</a>

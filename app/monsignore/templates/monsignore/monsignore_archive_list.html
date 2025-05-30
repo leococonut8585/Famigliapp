@@ -13,7 +13,7 @@
             </div>
             <div class="card-body">
                 <p class="card-text"><small class="text-muted">投稿者: {{ entry.author }} | 投稿日時: {{ format_datetime_field(entry.timestamp) }}</small></p>
-                
+
                 {% if entry.text_body %}
                 <p class="card-text" style="white-space: pre-wrap;">{{ entry.text_body }}</p>
                 {% endif %}
@@ -36,7 +36,7 @@
                         </p>
                     </div>
                 {% endif %}
-                
+
                 {# Optional: Display feedback if desired for archived entries #}
                 {% if entry.feedback_submissions and entry.feedback_submissions | length > 0 %}
                 <div class="mt-3">

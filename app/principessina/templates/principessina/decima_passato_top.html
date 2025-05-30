@@ -16,7 +16,7 @@
                 {# CSRF not strictly needed for GET forms, but Flask-WTF might add it.
                    If search_form.csrf_token exists and is needed: {{ search_form.csrf_token }} #}
                 <input type="hidden" name="current_folder" value="{{ current_folder_name if current_folder_name else '' }}">
-                
+
                 <div class="col-md-4">
                     {{ search_form.phrase.label(class="form-label") }}
                     {{ search_form.phrase(class="form-control form-control-sm" + (" is-invalid" if search_form.phrase.errors else ""), placeholder="内容に含まれる語句") }}
@@ -52,10 +52,10 @@
 
     {# Custom Folder Navigation & Create Folder Form #}
     <div class="d-flex flex-wrap align-items-center mb-1">
-        <a href="{{ url_for('.passato_top', phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" 
+        <a href="{{ url_for('.passato_top', phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}"
            class="btn btn-sm btn-outline-primary me-1 mb-1 {% if not current_folder_name %}active{% endif %}">全ての年月週アーカイブ</a>
         {% for folder in custom_report_folders %}
-            <a href="{{ url_for('.passato_top', current_folder=folder, phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" 
+            <a href="{{ url_for('.passato_top', current_folder=folder, phrase=request.args.get('phrase'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}"
                class="btn btn-sm btn-outline-primary me-1 mb-1 {% if current_folder_name == folder %}active{% endif %}">{{ folder }}</a>
         {% endfor %}
         <button class="btn btn-sm btn-info mb-1 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#createReportFolderCollapse" aria-expanded="false" aria-controls="createReportFolderCollapse">
@@ -127,7 +127,7 @@
 
                 {% if current_folder_name and current_folder_name in report.referenced_in_custom_folders and current_folder_name != report.custom_folder_name %}
                   <form method="POST" action="{{ url_for('principessina.remove_report_reference', report_id=report.id) }}" style="display: inline-block; margin-top: 5px;">
-                    {{ copy_report_form.csrf_token }} 
+                    {{ copy_report_form.csrf_token }}
                     <input type="hidden" name="folder_to_remove" value="{{ current_folder_name }}">
                     <input type="hidden" name="phrase_for_redirect" value="{{ request.args.get('phrase', '') }}">
                     <input type="hidden" name="date_from_for_redirect" value="{{ request.args.get('date_from', '') }}">

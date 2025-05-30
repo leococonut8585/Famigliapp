@@ -25,7 +25,7 @@ def notify_kadai_feedback_reminders() -> List[Dict[str, Any]]:
     """
     today = date.today()
     active_kadai_entries = utils.get_active_kadai_entries()
-    
+
     general_users_with_email: Dict[str, Dict[str, Any]] = {}
     if hasattr(config, "USERS") and isinstance(config.USERS, dict):
         for username, user_data in config.USERS.items():
@@ -33,7 +33,7 @@ def notify_kadai_feedback_reminders() -> List[Dict[str, Any]]:
                user_data.get("role") != "admin" and \
                user_data.get("email"):
                 general_users_with_email[username] = user_data
-                
+
     admin_users_with_email = utils.get_admin_users()
 
     notified_actions: List[Dict[str, Any]] = []
@@ -73,7 +73,7 @@ def notify_kadai_feedback_reminders() -> List[Dict[str, Any]]:
                         user_email
                     )
                     notified_actions.append({**common_notification_data, 'status': 'notified_due'})
-                
+
                 elif today > feedback_deadline_obj:
                     send_email(
                         f"【至急】「{kadai_title}」の感想が未提出です",
@@ -92,14 +92,14 @@ def notify_kadai_feedback_reminders() -> List[Dict[str, Any]]:
                                     f"ユーザー「{username}」が「言葉」の「{kadai_title}」(ID: {kadai_id}) に対する感想を期限超過しています。\n締切: {feedback_deadline_str.split('T')[0]}.",
                                     admin_email
                                 )
-                        
+
                         if utils.add_user_to_kadai_admin_notified_list(kadai_id, username):
                              notified_actions.append({
                                 **common_notification_data,
                                 'status': 'notified_overdue_admin',
                                 'admin_notified_count': len(admin_users_with_email)
                             })
-                            
+
     return notified_actions
 
 
@@ -125,14 +125,14 @@ def archive_old_kadai_entries() -> List[int]:
         except ValueError:
             # Log error or skip if timestamp format is invalid
             continue
-        
+
         archive_trigger_time = creation_dt + timedelta(hours=48)
 
         if now >= archive_trigger_time:
             if utils.archive_kadai_entry(kadai_id):
                 archived_ids.append(kadai_id)
                 # Optional: Log("Archived Kadai ID: {kadai_id}")
-    
+
     return archived_ids
 
 
@@ -148,7 +148,7 @@ def start_scheduler() -> None:
     # Check if jobs are already scheduled to prevent duplicates if called multiple times
     # This simplistic check assumes job IDs are not explicitly set or are predictable.
     # A more robust check might involve inspecting scheduler.get_jobs() more thoroughly.
-    if not scheduler.get_jobs(): 
+    if not scheduler.get_jobs():
         scheduler.add_job(
             notify_kadai_feedback_reminders,
             "cron",

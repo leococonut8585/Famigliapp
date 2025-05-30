@@ -100,7 +100,7 @@ def add_kadai_entry(
     """Adds a new Kadai entry and returns its ID."""
     entries = load_kadai_entries()
     next_id = max((int(e.get("id", 0)) for e in entries), default=0) + 1
-    
+
     new_entry = {
         "id": next_id,
         "author": author,
@@ -161,7 +161,7 @@ def delete_kadai_entry(entry_id: int) -> bool:
     entries = load_kadai_entries()
     original_length = len(entries)
     new_entries = [entry for entry in entries if entry.get("id") != entry_id]
-    
+
     if len(new_entries) < original_length:
         # Also consider deleting the associated file if it exists
         # For now, just removing the entry from JSON
@@ -195,8 +195,8 @@ def add_feedback_to_kadai(entry_id: int, username: str, feedback_text: str) -> b
                     "timestamp": datetime.now().isoformat(timespec="seconds")
                 }
                 entry_updated = True
-            break 
-            
+            break
+
     if entry_updated:
         save_kadai_entries(entries)
         return True

@@ -180,4 +180,3 @@ def get_admin_users() -> List[Dict[str, Any]]:
                 # user_data_with_username['username'] = user_name
                 admin_users.append(user_data) # user_data already contains all info
     return admin_users
-

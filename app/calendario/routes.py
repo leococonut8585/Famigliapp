@@ -3,7 +3,7 @@
 from datetime import datetime, date, timedelta
 import calendar
 
-import json 
+import json
 from flask import (
     render_template,
     session,
@@ -15,12 +15,12 @@ from flask import (
 )
 
 from . import bp
-from .forms import EventForm, StatsForm, ShiftRulesForm, ShiftManagementForm 
+from .forms import EventForm, StatsForm, ShiftRulesForm, ShiftManagementForm
 from . import utils
 import config
 from typing import Dict, List
-import re 
-from collections import defaultdict 
+import re
+from collections import defaultdict
 
 
 @bp.before_request
@@ -77,9 +77,9 @@ def index():
         if header_nav_prev_month.replace(day=calendar.monthrange(header_nav_prev_month.year, header_nav_prev_month.month)[1]) < limit_past_date: header_nav_prev_month = None
         header_nav_next_month = (display_month + timedelta(days=31)).replace(day=1)
         if header_nav_next_month > limit_future_date: header_nav_next_month = None
-        return render_template("week_view.html", user=user, stats=stats, start=start_d, week_days=week_days, time_slots=time_slots, 
-                               structured_events=structured_events, timedelta=timedelta, view=view, month=display_month, 
-                               today_date=today.isoformat(), nav_prev_week=nav_prev_week, nav_next_week=nav_next_week, 
+        return render_template("week_view.html", user=user, stats=stats, start=start_d, week_days=week_days, time_slots=time_slots,
+                               structured_events=structured_events, timedelta=timedelta, view=view, month=display_month,
+                               today_date=today.isoformat(), nav_prev_week=nav_prev_week, nav_next_week=nav_next_week,
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
     else: # month view
         events_month = [e for e in events if e.get("date", "").startswith(month.strftime("%Y-%m"))]
@@ -89,7 +89,7 @@ def index():
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
         events_by_date = {};_ = [events_by_date.setdefault(e_event_by_date["date"], []).append(e_event_by_date) for e_event_by_date in events_month]
         cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(month.year, month.month)]
-        return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=month, 
+        return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=month,
                                nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -107,7 +107,7 @@ def edit_event(event_id: int):
     form = EventForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            new_event_data = {"date": form.date.data.isoformat(), "title": form.title.data, "description": form.description.data or "", 
+            new_event_data = {"date": form.date.data.isoformat(), "title": form.title.data, "description": form.description.data or "",
                               "employee": form.employee.data or "", "category": form.category.data, "participants": form.participants.data or []}
             if utils.update_event(event_id, new_event_data): flash("イベントが更新されました。", "success")
             else: flash("イベントの更新に失敗しました。", "error")
@@ -129,7 +129,7 @@ def delete(event_id: int):
 @bp.route("/move/<int:event_id>", methods=["POST"])
 def move(event_id: int):
     user = session.get("user"); new_date_str = request.form.get("date")
-    try: new_date_obj = datetime.fromisoformat(new_date_str).date() 
+    try: new_date_obj = datetime.fromisoformat(new_date_str).date()
     except Exception: flash("日付の形式が不正です"); return redirect(url_for("calendario.index"))
     if utils.move_event(event_id, new_date_obj): flash("移動しました")
     else: flash("該当IDがありません")
@@ -155,7 +155,7 @@ def shift():
         action = request.form.get("action"); schedule: Dict[str, List[str]] = {}
         for key, val in request.form.items():
             if key.startswith("d-"): schedule[key[2:]] = [e for e in val.split(',') if e]
-        try: utils.set_shift_schedule(month, schedule) 
+        try: utils.set_shift_schedule(month, schedule)
         except Exception as e: flash(f"シフトの保存中にエラーが発生しました: {e}", "error"); return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
         if action == "notify":
             try: utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました"); utils.check_rules_and_notify(send_notifications=True); flash("通知を送信しました")
@@ -180,7 +180,7 @@ def shift():
     rules, defined_attributes = utils.load_rules(); rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
     csrf_form = ShiftManagementForm()
     consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments, month)
-    return render_template("shift_manager.html", user=user, month=month, rules_for_js=rules_data_for_js, form=csrf_form, 
+    return render_template("shift_manager.html", user=user, month=month, rules_for_js=rules_data_for_js, form=csrf_form,
                            weeks=weeks, employees=employees, assignments=assignments, counts=counts, off_counts=off_counts,
                            nav_prev_month=nav_prev_month, nav_next_month=nav_next_month, consecutive_days_data=consecutive_days_data)
 
@@ -205,31 +205,31 @@ def shift_rules():
         try:
             submitted_defined_attributes = json.loads(defined_attributes_json_str)
             if not (isinstance(submitted_defined_attributes, list) and all(isinstance(attr, str) for attr in submitted_defined_attributes)):
-                flash("属性リストの形式が不正です。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
+                flash("属性リストの形式が不正です。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
             elif not submitted_defined_attributes: 
-                 flash("属性リストは空にできません。デフォルトに戻します。", "warning"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
-        except json.JSONDecodeError: flash("属性リストのJSON解析に失敗しました。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:] 
+                 flash("属性リストは空にできません。デフォルトに戻します。", "warning"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
+        except json.JSONDecodeError: flash("属性リストのJSON解析に失敗しました。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
         utils.save_rules(rules_to_save, submitted_defined_attributes); flash("保存しました"); return redirect(url_for("calendario.shift_rules"))
     return render_template("shift_rules.html", form=form, user=user, employees=form_employees, attributes=defined_attributes)
 
 @bp.route("/stats", methods=["GET", "POST"])
 def stats():
     user = session.get("user"); form = StatsForm(request.values)
-    start_val = form.start.data; end_val = form.end.data 
+    start_val = form.start.data; end_val = form.end.data
     stats_data = utils.compute_employee_stats(start_date_param=start_val, end_date_param=end_val) 
     return render_template("stats.html", form=form, stats=stats_data, user=user)
 
 @bp.route("/api/move", methods=["POST"])
 def api_move() -> "flask.Response":
-    data = request.get_json(silent=True) or {}; event_id_val = int(data.get("event_id", 0)); date_str_val = data.get("date", "") 
-    try: new_date_api = datetime.fromisoformat(date_str_val).date() 
+    data = request.get_json(silent=True) or {}; event_id_val = int(data.get("event_id", 0)); date_str_val = data.get("date", "")
+    try: new_date_api = datetime.fromisoformat(date_str_val).date()
     except Exception: return jsonify({"success": False, "error": "invalid date"}), 400
-    ok_status = utils.move_event(event_id_val, new_date_api); return jsonify({"success": ok_status}) 
+    ok_status = utils.move_event(event_id_val, new_date_api); return jsonify({"success": ok_status})
 
 @bp.route("/api/assign", methods=["POST"])
 def api_assign() -> "flask.Response":
-    data = request.get_json(silent=True) or {}; event_id_api = int(data.get("event_id", 0)); employee_api = data.get("employee", "") 
-    ok_api_status = utils.assign_employee(event_id_api, employee_api); return jsonify({"success": ok_api_status}) 
+    data = request.get_json(silent=True) or {}; event_id_api = int(data.get("event_id", 0)); employee_api = data.get("employee", "")
+    ok_api_status = utils.assign_employee(event_id_api, employee_api); return jsonify({"success": ok_api_status})
 
 @bp.route("/api/shift_counts/recalculate", methods=["POST"])
 def api_recalculate_shift_counts() -> "flask.Response":
@@ -262,24 +262,24 @@ def check_shift_violations_api():
 
     if current_assignments is None or not isinstance(current_assignments, dict):
         return jsonify({"success": False, "error": "Invalid request data: 'assignments' key missing or invalid"}), 400
-    
+
     if not target_month_str or not isinstance(target_month_str, str):
         return jsonify({"success": False, "error": "Invalid request data: 'month' key missing or invalid"}), 400
-    
+
     try:
         year, month_num = map(int, target_month_str.split('-'))
         target_month_start = date(year, month_num, 1)
     except ValueError:
         return jsonify({"success": False, "error": "Invalid month format. Please use YYYY-MM."}), 400
-            
+
     rules, _ = utils.load_rules() # defined_attributes is part of rules dict
     users_config = config.USERS
-            
+
     violation_list = utils.get_shift_violations(current_assignments, rules, users_config)
     consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start)
 
     return jsonify({
-        "success": True, 
+        "success": True,
         "violations": violation_list,
         "consecutive_work_info": consecutive_info
     })

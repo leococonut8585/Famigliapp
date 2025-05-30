@@ -40,7 +40,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="card mb-3">
             <div class="card-header">ペア設定</div>
             <div class="card-body">
@@ -88,7 +88,7 @@
                     <div id="employee_attributes_checkbox_group" class="p-2 border rounded" style="min-height: 38px;">
                         {# Checkboxes populated by JS. Provide some default or initial state if attributes exist #}
                         {% if attributes %}
-                            {% for attr_name in attributes %} 
+                            {% for attr_name in attributes %}
                                 <label class="me-2 form-check-label"><input type="checkbox" class="attr_cb form-check-input" value="{{ attr_name }}">{{ attr_name }}</label>
                             {% endfor %}
                         {% else %}
@@ -129,7 +129,7 @@
                 <ul id="defined_attributes_list_display" class="list-unstyled"></ul>
             </div>
         </div>
-        
+
         <div class="row">
             <div class="col-md-6">
                 <div class="card mb-3">
@@ -167,7 +167,7 @@
                 </div>
             </div>
         </div>
-        
+
         <hr class="my-4">
         {{ form.submit(class="btn btn-primary btn-lg") }}
     </form>

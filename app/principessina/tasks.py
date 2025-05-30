@@ -1,5 +1,5 @@
-from datetime import date, datetime, timedelta 
-from typing import List, Dict, Any 
+from datetime import date, datetime, timedelta
+from typing import List, Dict, Any
 
 try:  # pragma: no cover - optional dependency
     from apscheduler.schedulers.background import BackgroundScheduler
@@ -9,11 +9,11 @@ except ImportError:  # pragma: no cover - optional dependency
 scheduler = BackgroundScheduler() if BackgroundScheduler else None
 
 import config
-from app.utils import send_email 
-from . import utils 
+from app.utils import send_email
+from . import utils
 from app.calendario import utils as calendario_utils # Import Calendario utils
 
-admin_overdue_alert_sent_today: Dict[date, bool] = {} 
+admin_overdue_alert_sent_today: Dict[date, bool] = {}
 
 def get_admin_user_emails() -> List[str]:
     admins = []
@@ -47,7 +47,7 @@ def send_decima_report_reminders() -> List[Dict[str, Any]]:
         return notified_actions # No users on shift, no reminders to send
 
     all_reports = utils.load_posts()
-    
+
     for username_on_shift in shift_users_today_usernames:
         user_config = getattr(config, "USERS", {}).get(username_on_shift)
         if not user_config or not user_config.get("email"):
@@ -69,13 +69,13 @@ def send_decima_report_reminders() -> List[Dict[str, Any]]:
             if not user_has_yura: missing_reports_parts.append("「今日のユラちゃん」")
             if not user_has_mangiato: missing_reports_parts.append("「食べたもの」")
             missing_reports_str = "と".join(missing_reports_parts)
-            
+
             email_subject = "Decima報告リマインダー"
             email_body = (f"今日のDecima報告のうち、{missing_reports_str}の報告がまだのようです。\n"
                           f"投稿期限は本日（または本日開始のシフトの場合、翌朝）4時です。\nご提出をお願いいたします。")
             send_email(email_subject, email_body, user_email)
             notified_actions.append({
-                "username": username_on_shift, "status": "reminder_sent", 
+                "username": username_on_shift, "status": "reminder_sent",
                 "missing": missing_reports_str, "reporting_day": reporting_day_date.isoformat()
             })
     return notified_actions
@@ -112,7 +112,7 @@ def send_decima_overdue_notifications() -> List[Dict[str, Any]]:
                         elif report.get("report_type") == "mangiato": user_has_mangiato = True
                 except ValueError: continue
             if user_has_yura and user_has_mangiato: break
-        
+
         if not (user_has_yura and user_has_mangiato):
             overdue_shift_users_exist = True
             missing_reports_parts = []
@@ -137,7 +137,7 @@ def send_decima_overdue_notifications() -> List[Dict[str, Any]]:
                               f"詳細はシステムログまたは該当ユーザーへの通知をご確認ください。")
                 for admin_email in admin_emails:
                     send_email(email_subject, email_body, admin_email)
-                admin_overdue_alert_sent_today[date.today()] = True 
+                admin_overdue_alert_sent_today[date.today()] = True
                 notified_actions.append({"status": "overdue_admins_notified", "due_reporting_day": due_reporting_day_date.isoformat()})
     return notified_actions
 
@@ -161,7 +161,7 @@ def archive_old_reports() -> List[int]:
 
 def start_scheduler() -> None:
     if scheduler is None: return # pragma: no cover
-    if not scheduler.get_jobs(): 
+    if not scheduler.get_jobs():
         scheduler.add_job(send_decima_report_reminders, "cron", hour='11-23,0-4', minute=5, id="decima_hourly_reminder")
         scheduler.add_job(send_decima_overdue_notifications, "cron", hour='5-23/2', minute=15, id="decima_overdue_notification")
         scheduler.add_job(reset_daily_admin_alert_flag, "cron", hour=0, minute=1, id="reset_admin_alert_flag")
