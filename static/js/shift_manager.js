@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
           emps.splice(idx, 1);
           input.value = emps.join(',');
           span.remove();
+          updateShiftCounts(); // Added this line
         }
       });
     }
