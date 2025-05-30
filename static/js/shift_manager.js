@@ -84,15 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function updateShiftCounts() { // Modified to return promise
-    const statsSummaryDiv = document.querySelector('.employee-stats-summary');
-    if (!statsSummaryDiv) {
-      console.error('Error: Employee stats summary element not found.');
-      return Promise.resolve(); // Return a resolved promise
+    const statsSummaryCardBody = document.querySelector('.employee-stats-summary .card-body');
+    if (!statsSummaryCardBody) {
+      console.error('Error: Stats summary card body element (.employee-stats-summary .card-body) not found.');
+      return Promise.reject('Stats summary card body not found'); // Return a rejected promise
     }
-    const currentMonth = statsSummaryDiv.dataset.currentMonth;
+    const currentMonth = statsSummaryCardBody.dataset.currentMonth;
     if (!currentMonth) {
-      console.error('Error: data-current-month attribute not found on stats summary element.');
-      return Promise.resolve();
+      console.error('Error: data-current-month attribute not found on stats summary card body element.');
+      return Promise.reject('data-current-month attribute not found'); // Return a rejected promise
     }
 
     const currentAssignments = {};
