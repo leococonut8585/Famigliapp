@@ -1,23 +1,23 @@
 """Utility functions for Calendario."""
 
 import json
-from datetime import date, timedelta, datetime 
+from datetime import date, timedelta, datetime
 from pathlib import Path
 from typing import List, Dict, Set, Optional, Iterable, Any
-from collections import defaultdict 
+from collections import defaultdict
 import calendar # Added calendar import
 
-import config 
-from app.utils import send_email 
+import config
+from app.utils import send_email
 
 
 def _notify_all(subject: str, body: str) -> None:
-    for user_info_val in config.USERS.values(): 
+    for user_info_val in config.USERS.values():
         email = user_info_val.get("email")
         if email: send_email(subject, body, email)
 
 def _notify_event(action: str, event_data: Dict[str, Any], old_date_val: str = "") -> None:
-    title = event_data.get("title", ""); date_str = event_data.get("date", "") 
+    title = event_data.get("title", ""); date_str = event_data.get("date", "")
     body = ""
     if action == "add": body = f"{date_str} に '{title}' が追加されました。"
     elif action == "delete": body = f"{date_str} の '{title}' が削除されました。"
@@ -32,7 +32,7 @@ DEFAULT_RULES: Dict[str, Any] = {
     "forbidden_pairs": [], "required_pairs": [],
     "required_attributes": {}, "employee_attributes": {},
 }
-DEFAULT_DEFINED_ATTRIBUTES = ["Dog", "Lady", "Man", "Kaji", "Massage"] 
+DEFAULT_DEFINED_ATTRIBUTES = ["Dog", "Lady", "Man", "Kaji", "Massage"]
 
 EVENTS_PATH = Path(getattr(config, "CALENDAR_FILE", "events.json"))
 RULES_PATH = Path(getattr(config, "CALENDAR_RULES_FILE", "calendar_rules.json"))
@@ -126,7 +126,7 @@ def parse_kv_int(text: str) -> Dict[str, int]:
     return result
 
 def move_event(event_id: int, new_event_date: date) -> bool:
-    events = load_events(); updated = False; changed_event_copy = None; original_date_str = ""    
+    events = load_events(); updated = False; changed_event_copy = None; original_date_str = ""
     for ev_item in events:
         if ev_item.get("id") == event_id:
             original_date_str = ev_item.get("date", ""); ev_item["date"] = new_event_date.isoformat(); updated = True
@@ -196,7 +196,7 @@ def get_shift_violations(assignments: Dict[str, List[str]], rules: Dict[str, Any
         try:
             current_date_obj = date.fromisoformat(date_iso_str)
             for emp_name in assignments[date_iso_str]: employee_work_dates[emp_name].append(current_date_obj)
-        except ValueError: print(f"Warning: Invalid date format '{date_iso_str}' in assignments for rule check."); continue 
+        except ValueError: print(f"Warning: Invalid date format '{date_iso_str}' in assignments for rule check."); continue
     for emp_name, work_dates in employee_work_dates.items():
         if not work_dates: continue; work_dates.sort(); consecutive_run = 0
         if work_dates:
@@ -226,7 +226,7 @@ def get_shift_violations(assignments: Dict[str, List[str]], rules: Dict[str, Any
         for pair in required_pairs_list:
             if len(pair) >= 2:
                 empA, empB = pair[0], pair[1]; empA_present = empA in assigned_emps_set; empB_present = empB in assigned_emps_set
-                if empA_present != empB_present: 
+                if empA_present != empB_present:
                     missing_member = empB if empA_present else empA; present_member = empA if empA_present else empB
                     detected_violations.append({"date": target_date_iso_str, "rule_type": "required_pair", "employees": pair, "description": f"{pair[0]}さんと{pair[1]}さんは{target_date_iso_str}にペアでの勤務が必要です ({missing_member}さんがいません)", "details": {"pair": pair, "present_member": present_member, "missing_member": missing_member, "date": target_date_iso_str}})
     employee_attributes_map = rules.get("employee_attributes", {}); required_attributes_map = rules.get("required_attributes", {})
@@ -243,7 +243,7 @@ def get_shift_violations(assignments: Dict[str, List[str]], rules: Dict[str, Any
 
 # --- New function for Step 1 of this subtask ---
 def calculate_consecutive_work_days_for_all(
-    assignments: Dict[str, List[str]], 
+    assignments: Dict[str, List[str]],
     target_month_start: date
 ) -> Dict[str, Dict[str, int]]:
     all_consecutive_info: Dict[str, Dict[str, int]] = defaultdict(dict)
@@ -275,7 +275,7 @@ def calculate_consecutive_work_days_for_all(
         
         if not employee_work_dates:
             continue
-            
+
         employee_work_dates.sort() # Crucial for consecutive day calculation
 
         consecutive_days_count = 0

@@ -87,7 +87,7 @@ def submit_feedback_for_seminar(entry_id: int):
     if seminar.get("calendar_event_type") != "kouza":
         flash("この種類のセミナーには感想を投稿できません。", "warning")
         return redirect(url_for(".feedback_submission_page"))
-        
+
     # Check if seminar is active
     if seminar.get("status") != "active":
         flash("このセミナーは現在アクティブではないため、感想を投稿できません。", "warning")
@@ -105,11 +105,11 @@ def submit_feedback_for_seminar(entry_id: int):
         except ValueError:
             flash("セミナーの締切日フォーマットが無効です。", "danger") # Should not happen with good data
             return redirect(url_for(".feedback_submission_page"))
-            
+
     if len(body) < 300:
         flash("感想は300文字以上で入力してください。もう少し詳しく教えていただけますか？", "warning")
         return redirect(url_for(".feedback_submission_page"))
-    
+
     # Check if user has already submitted feedback (server-side check)
     if user["username"] in seminar.get("feedback_submissions", {}):
         flash("既にこのセミナーに関する感想を投稿済みです。", "info")
@@ -156,5 +156,5 @@ def mark_seminar_completed(entry_id: int):
         flash(f"セミナー「{seminar.get('title', '')}」を完了にしました。", "success")
     else:
         flash("セミナーの完了処理中にエラーが発生しました。", "danger")
-    
+
     return redirect(url_for(".confirm_list"))

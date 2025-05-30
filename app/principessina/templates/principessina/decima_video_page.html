@@ -54,7 +54,7 @@
             </form>
         </div>
     </div>
-    
+
     <hr>
 
     {# Section 3: Video Display Area #}
@@ -92,7 +92,7 @@
                         <br>参照フォルダ: {{ entry.referenced_in_custom_folders|join(', ') }}
                         {% endif %}
                         </small></p>
-                        
+
                         {# "別のカスタムフォルダへコピー" Section #}
                         {% if all_custom_video_folders %}
                         <form method="POST" action="{{ url_for('principessina.copy_media_to_folder', media_id=entry.id) }}" class="mt-2">

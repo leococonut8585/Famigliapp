@@ -66,4 +66,3 @@ class ShiftManagementForm(FlaskForm):
     # If we needed a submit button tied to this specific form for some reason:
     # submit_shifts = SubmitField('更新') # Example, not strictly needed if using JS/other buttons
     pass
-

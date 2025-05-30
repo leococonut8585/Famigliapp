@@ -4,7 +4,7 @@ import os
 from flask import render_template, session, redirect, url_for, flash, request, send_from_directory
 from app.utils import save_uploaded_file, send_email # Added send_email
 import config
-from datetime import datetime, date 
+from datetime import datetime, date
 
 from . import bp
 from .forms import AddKadaiForm
@@ -48,7 +48,7 @@ def download_kadai_file(filename):
 def kadai_feedback_page():
     user = session.get("user")
     active_kadai = utils.get_active_kadai_entries()
-    
+
     for kadai_entry in active_kadai:
         user_feedback = kadai_entry.get("feedback_submissions", {}).get(user["username"])
         if user_feedback:
@@ -57,9 +57,9 @@ def kadai_feedback_page():
         else:
             kadai_entry['user_has_submitted'] = False
             kadai_entry['user_feedback_text'] = None
-            
+
     active_kadai.sort(key=lambda x: x.get("feedback_deadline") or x.get("timestamp",""), reverse=True)
-    
+
     return render_template(
         "monsignore_feedback_page.html",
         kadai_entries_for_feedback=active_kadai,
@@ -93,7 +93,7 @@ def submit_kadai_feedback(kadai_id: int):
 
 
 @bp.route("/add", methods=["GET", "POST"])
-def add(): 
+def add():
     user = session.get("user")
     form = AddKadaiForm()
     if form.validate_on_submit():
@@ -126,7 +126,7 @@ def add():
                     allowed_exts_str=", ".join(utils.KADAI_ALLOWED_EXTS),
                     max_size_mb=int(utils.MAX_KADAI_FILE_SIZE / (1024*1024))
                 )
-        
+
         new_kadai_id = utils.add_kadai_entry(
             author=user["username"],
             title=form.title.data,
@@ -156,7 +156,7 @@ def add():
                         if isinstance(user_data, dict) and \
                            user_data.get("role") != "admin" and \
                            user_data.get("email"):
-                            
+
                             email_subject = f"新しい「言葉」が追加されました: {kadai_title}"
                             email_body = (
                                 f"新しい「言葉」が {kadai_author} さんによって追加されました。\n\n"
@@ -165,7 +165,7 @@ def add():
                                 f"確認・感想投稿はこちら: {kadai_url}"
                             )
                             send_email(email_subject, email_body, user_data["email"])
-        
+
         flash("新しい「言葉」を投稿しました。", "success")
         return redirect(url_for(".kadai_list"))
 
@@ -183,8 +183,8 @@ def delete(kadai_id: int):
     user = session.get("user")
     if user.get("role") != "admin":
         flash("権限がありません。", "danger")
-        return redirect(url_for(".kadai_list")) 
-    
+        return redirect(url_for(".kadai_list"))
+
     kadai_entry = utils.get_kadai_entry_by_id(kadai_id)
     if not kadai_entry:
         flash("該当IDの「言葉」エントリーが見つかりません。", "warning")

@@ -6,7 +6,7 @@ from wtforms import StringField, TextAreaField, SubmitField, FileField, SelectFi
 from wtforms.validators import DataRequired, Optional, Length
 
 from app.validators import FileSize
-from . import utils 
+from . import utils
 
 
 class ReportForm(FlaskForm):
@@ -19,10 +19,10 @@ class VideoUploadForm(FlaskForm):
     """Form to upload a video."""
     title = StringField("タイトル（任意）", validators=[Optional(), Length(max=200)])
     video_file = FileField(
-        "動画ファイル", 
+        "動画ファイル",
         validators=[
-            DataRequired(message="動画ファイルを選択してください。"), 
-            FileAllowed(utils.ALLOWED_VIDEO_EXTS, "許可されていない動画形式です。"), 
+            DataRequired(message="動画ファイルを選択してください。"),
+            FileAllowed(utils.ALLOWED_VIDEO_EXTS, "許可されていない動画形式です。"),
             FileSize(utils.MAX_MEDIA_SIZE)
         ]
     )
@@ -33,10 +33,10 @@ class PhotoUploadForm(FlaskForm):
     """Form to upload a photo."""
     title = StringField("タイトル（任意）", validators=[Optional(), Length(max=200)])
     photo_file = FileField(
-        "写真ファイル", 
+        "写真ファイル",
         validators=[
-            DataRequired(message="写真ファイルを選択してください。"), 
-            FileAllowed(utils.ALLOWED_PHOTO_EXTS, "許可されていない写真形式です。"), 
+            DataRequired(message="写真ファイルを選択してください。"),
+            FileAllowed(utils.ALLOWED_PHOTO_EXTS, "許可されていない写真形式です。"),
             FileSize(utils.MAX_MEDIA_SIZE)
         ]
     )
@@ -46,42 +46,42 @@ class PhotoUploadForm(FlaskForm):
 class CreateCustomFolderForm(FlaskForm): # For Media
     """Form to create a new custom folder for media."""
     folder_name = StringField(
-        "新しいフォルダ名", 
+        "新しいフォルダ名",
         validators=[
-            DataRequired(message="フォルダ名を入力してください。"), 
+            DataRequired(message="フォルダ名を入力してください。"),
             Length(min=1, max=100, message="フォルダ名は1文字以上100文字以内で入力してください。")
         ]
     )
-    submit = SubmitField("フォルダ作成") 
+    submit = SubmitField("フォルダ作成")
 
 
 class CopyMediaToCustomFolderForm(FlaskForm): # For Media
     """Form to copy (reference) a media item to a custom folder."""
     target_custom_folder = SelectField(
-        "コピー先のカスタムフォルダ", 
-        choices=[], 
+        "コピー先のカスタムフォルダ",
+        choices=[],
         validators=[DataRequired(message="コピー先のフォルダを選択してください。")]
     )
-    submit_copy = SubmitField("このフォルダにコピー") 
+    submit_copy = SubmitField("このフォルダにコピー")
 
 
 class CreateCustomReportFolderForm(FlaskForm):
     """Form to create a new custom folder for reports."""
     folder_name = StringField(
-        "新しいカスタム報告フォルダ名", 
+        "新しいカスタム報告フォルダ名",
         validators=[
-            DataRequired(message="フォルダ名を入力してください。"), 
+            DataRequired(message="フォルダ名を入力してください。"),
             Length(min=1, max=100, message="フォルダ名は1文字以上100文字以内で入力してください。")
         ]
     )
-    submit_create_folder = SubmitField("報告フォルダ作成") 
+    submit_create_folder = SubmitField("報告フォルダ作成")
 
 
 class CopyReportToCustomFolderForm(FlaskForm):
     """Form to copy (reference) a report to a custom folder."""
     target_custom_folder = SelectField(
-        "コピー先のカスタム報告フォルダ", 
-        choices=[], 
+        "コピー先のカスタム報告フォルダ",
+        choices=[],
         validators=[DataRequired(message="コピー先のフォルダを選択してください。")]
     )
     submit_copy_report = SubmitField("この報告フォルダにコピー")

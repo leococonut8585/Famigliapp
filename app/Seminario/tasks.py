@@ -27,7 +27,7 @@ def notify_pending_feedback() -> List[Dict[str, Any]]:
     today = date.today()
     # utils.pending_feedback returns active 'kouza' seminars where seminar_end_date < today
     relevant_seminars = utils.pending_feedback(today)
-    
+
     admin_users = utils.get_admin_users()  # List of admin user dicts with emails
     notified_actions: List[Dict[str, Any]] = []
 
@@ -50,7 +50,7 @@ def notify_pending_feedback() -> List[Dict[str, Any]]:
         for username_key, user_config_data in config.USERS.items():
             if user_config_data.get('role') != 'admin' and user_config_data.get('email'):
                 user_email = user_config_data['email']
-                
+
                 submitted = username_key in seminar.get("feedback_submissions", {})
 
                 if not submitted:
@@ -70,7 +70,7 @@ def notify_pending_feedback() -> List[Dict[str, Any]]:
                             user_email
                         )
                         notified_actions.append({**common_notification_data, 'status': 'notified_due'})
-                    
+
                     # Overdue Notification (deadline passed, feedback not submitted)
                     else: # today > feedback_deadline_obj
                         send_email(
@@ -91,7 +91,7 @@ def notify_pending_feedback() -> List[Dict[str, Any]]:
                                         f"User '{username_key}' has not submitted feedback for seminar '{seminar_title}' (ID: {seminar_id}) which was due on {feedback_deadline_str}.",
                                         admin_email
                                     )
-                            
+
                             if utils.add_user_to_admin_notified_list(seminar_id, username_key):
                                 notified_actions.append({
                                     **common_notification_data,
@@ -99,7 +99,7 @@ def notify_pending_feedback() -> List[Dict[str, Any]]:
                                     'admin_notified_count': len(admin_users)
                                 })
                             # else: Log failure to add user to notified list if necessary
-                            
+
     return notified_actions
 
 

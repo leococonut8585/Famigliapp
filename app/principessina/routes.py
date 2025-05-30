@@ -8,15 +8,15 @@ from flask import (
     url_for,
     flash,
     request,
-    send_from_directory, 
-    current_app 
+    send_from_directory,
+    current_app
 )
-from app.utils import save_uploaded_file 
+from app.utils import save_uploaded_file
 from datetime import datetime, date, timedelta # Added timedelta for report submission reporting day logic
 
 from . import bp
 from .forms import (
-    ReportForm, VideoUploadForm, PhotoUploadForm, 
+    ReportForm, VideoUploadForm, PhotoUploadForm,
     CreateCustomFolderForm, CopyMediaToCustomFolderForm,
     CreateCustomReportFolderForm, CopyReportToCustomFolderForm,
     SearchPassatoForm # Ensured SearchPassatoForm is imported
@@ -65,7 +65,7 @@ def yura_report():
         flash("カレンダーデータが見つかりません。管理者に連絡してください。", "danger")
         shift_users_today = [] # Assume no one is on shift if calendar is missing
         # Potentially redirect or disable form, but for now, allow attempt if user proceeds
-        
+
     if request.method == 'POST':
         if user['username'] not in shift_users_today and user.get("role") != "admin": # Admins can bypass
             flash(f"{current_reporting_day.strftime('%Y-%m-%d')}のシフト担当者ではないため、報告を投稿できません。", "warning")
@@ -78,16 +78,16 @@ def yura_report():
                 utils.add_report(author=user['username'], report_type="yura", text_content=text)
                 flash("「今日のユラちゃん」を報告しました。", "success")
                 return redirect(url_for('.yura_report'))
-    
+
     # GET: Fetch today's "yura" reports (for the current calendar day, not reporting day)
     # Display is for current calendar day's submissions.
     today_display_date = date.today()
     today_yura_reports = [
-        r for r in utils.get_active_reports(report_type="yura") 
+        r for r in utils.get_active_reports(report_type="yura")
         if datetime.fromisoformat(r['timestamp']).date() == today_display_date
     ]
     today_yura_reports.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
-    
+
     # Check if current user can post (is on shift for the current reporting day)
     can_post = user['username'] in shift_users_today or user.get("role") == "admin"
 
@@ -118,7 +118,7 @@ def mangiato_report():
 
     today_display_date = date.today()
     today_mangiato_reports = [
-        r for r in utils.get_active_reports(report_type="mangiato") 
+        r for r in utils.get_active_reports(report_type="mangiato")
         if datetime.fromisoformat(r['timestamp']).date() == today_display_date
     ]
     today_mangiato_reports.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
@@ -132,11 +132,11 @@ def delete_report(report_id: int):
     user = session.get("user")
     if user.get("role") != "admin":
         flash("権限がありません。", "danger"); return redirect(url_for(".index"))
-    
-    all_reports = utils.load_posts() 
+
+    all_reports = utils.load_posts()
     found_report = next((r for r in all_reports if r.get("id") == report_id), None)
     rt = found_report.get("report_type") if found_report else None
-    
+
     # TODO: Also remove references from custom folders if this report is deleted.
     # This requires iterating all custom report folders and removing this report_id.
     # Or, when displaying, check if referenced reports still exist.
@@ -144,7 +144,7 @@ def delete_report(report_id: int):
 
     if utils.delete_post(report_id): flash("報告を削除しました。", "success")
     else: flash("該当IDの報告が見つかりません。", "warning")
-    
+
     # Try to redirect to the specific report page if type is known, else to index or referrer
     # For simplicity, redirect to Passato if referrer is Passato, else to specific type page.
     # This needs careful handling if delete is initiated from Passato page.
@@ -162,7 +162,7 @@ def passato_top():
     search_form = SearchPassatoForm(request.args)
     create_folder_form = CreateCustomReportFolderForm()
     copy_report_form = CopyReportToCustomFolderForm()
-    
+
     current_folder = request.args.get('current_folder')
     phrase = request.args.get('phrase')
     date_from_str = request.args.get('date_from')
@@ -196,23 +196,23 @@ def passato_top():
     )
     custom_report_folders = utils.get_custom_folders_for_reports()
     copy_report_form.target_custom_folder.choices = [(folder, folder) for folder in custom_report_folders]
-    
+
     return render_template(
-        "decima_passato_top.html", 
-        reports=archived_reports, 
+        "decima_passato_top.html",
+        reports=archived_reports,
         user=user,
         custom_report_folders=custom_report_folders,
         current_folder_name=current_folder,
         create_folder_form=create_folder_form, # Pass potentially validated or empty form
         copy_report_form=copy_report_form,
-        search_form=search_form 
+        search_form=search_form
     )
 
 @bp.route('/report/<int:report_id>/copy_to_folder', methods=['POST'])
 def copy_report_to_folder(report_id: int):
     user = session.get("user")
     form = CopyReportToCustomFolderForm(request.form)
-    
+
     # Preserve search and folder context for redirect
     redirect_args = {
         'current_folder': request.form.get('source_folder_for_redirect'),
@@ -234,14 +234,14 @@ def copy_report_to_folder(report_id: int):
         else: flash("報告のコピーに失敗しました。", "warning")
     else:
         for field, errors in form.errors.items(): flash(f"エラー ({getattr(form, field).label.text}): {', '.join(errors)}", "danger")
-    
+
     return redirect(url_for('.passato_top', **redirect_args))
 
 @bp.route('/report/<int:report_id>/remove_reference', methods=['POST'])
 def remove_report_reference(report_id: int):
     user = session.get("user")
     folder_to_remove = request.form.get('folder_to_remove')
-    
+
     redirect_args = {
         'current_folder': folder_to_remove, # Redirect back to the folder it was removed from
         'phrase': request.form.get('phrase_for_redirect'),
@@ -255,7 +255,7 @@ def remove_report_reference(report_id: int):
         success = utils.remove_report_reference_from_custom_folder(report_id, folder_to_remove)
         if success: flash(f"フォルダ「{folder_to_remove}」からの報告参照を削除しました。", "success")
         else: flash("報告参照の削除に失敗しました。", "warning")
-    
+
     return redirect(url_for('.passato_top', **redirect_args))
 
 # --- Media Feature Routes (Unchanged) ---
@@ -295,7 +295,7 @@ def video_page():
     media_entries.sort(key=lambda x: x.get("upload_timestamp", ""), reverse=True)
     current_folder_display_name = current_folder_name if current_folder_name else "年月フォルダ"
     return render_template("decima_video_page.html", video_form=video_form, folder_form=folder_form, copy_form=copy_form,
-        video_entries=media_entries, custom_video_folders=all_custom_folders, all_custom_video_folders=all_custom_folders, 
+        video_entries=media_entries, custom_video_folders=all_custom_folders, all_custom_video_folders=all_custom_folders,
         current_folder_name=current_folder_name, current_folder_display_name=current_folder_display_name, user=user)
 
 @bp.route('/photo', methods=['GET', 'POST'])
@@ -303,7 +303,7 @@ def photo_page():
     user = session.get("user"); photo_form = PhotoUploadForm(); folder_form = CreateCustomFolderForm()
     copy_form = CopyMediaToCustomFolderForm(); current_folder_name = request.args.get('current_folder')
     media_type_base_path_abs = os.path.join(get_principessina_base_upload_path_abs(), PHOTO_DIR_REL_TO_PRINCIPESSINA_UPLOADS)
-    os.makedirs(media_type_base_path_abs, exist_ok=True) 
+    os.makedirs(media_type_base_path_abs, exist_ok=True)
     all_custom_folders = utils.get_custom_folders(media_type_base_path_abs)
     copy_form.target_custom_folder.choices = [(f, f) for f in all_custom_folders]
     if request.method == 'POST':
@@ -326,20 +326,20 @@ def photo_page():
             except ValueError as e: flash(str(e), "danger")
             return redirect(url_for('.photo_page', current_folder=current_folder_name))
         elif request.form.get('form_type') == 'create_folder' and folder_form.validate_on_submit():
-            n_f_n = folder_form.folder_name.data; success, message = utils.create_custom_media_folder(media_type_base_path_abs, n_f_n) 
+            n_f_n = folder_form.folder_name.data; success, message = utils.create_custom_media_folder(media_type_base_path_abs, n_f_n)
             flash(message, "success" if success else "danger")
             return redirect(url_for('.photo_page', current_folder=n_f_n if success else current_folder_name))
     media_entries = utils.get_media_entries(media_type="photo", custom_folder_name=current_folder_name)
     media_entries.sort(key=lambda x: x.get("upload_timestamp", ""), reverse=True)
     current_folder_display_name = current_folder_name if current_folder_name else "年月フォルダ"
-    return render_template("decima_photo_page.html", photo_form=photo_form, folder_form=folder_form, copy_form=copy_form, 
-        photo_entries=media_entries, custom_photo_folders=all_custom_folders, all_custom_photo_folders=all_custom_folders, 
+    return render_template("decima_photo_page.html", photo_form=photo_form, folder_form=folder_form, copy_form=copy_form,
+        photo_entries=media_entries, custom_photo_folders=all_custom_folders, all_custom_photo_folders=all_custom_folders,
         current_folder_name=current_folder_name, current_folder_display_name=current_folder_display_name, user=user)
 
 @bp.route('/media/<int:media_id>/copy_to_folder', methods=['POST'])
 def copy_media_to_folder(media_id: int):
-    user = session.get("user"); form = CopyMediaToCustomFolderForm(request.form) 
-    media_type = request.form.get('media_type'); source_folder = request.form.get('source_folder') 
+    user = session.get("user"); form = CopyMediaToCustomFolderForm(request.form)
+    media_type = request.form.get('media_type'); source_folder = request.form.get('source_folder')
     if media_type == "video": media_type_base_path_abs = os.path.join(get_principessina_base_upload_path_abs(), VIDEO_DIR_REL_TO_PRINCIPESSINA_UPLOADS)
     elif media_type == "photo": media_type_base_path_abs = os.path.join(get_principessina_base_upload_path_abs(), PHOTO_DIR_REL_TO_PRINCIPESSINA_UPLOADS)
     else: flash("無効なメディアタイプです。", "danger"); return redirect(url_for(".index"))
@@ -365,7 +365,7 @@ def remove_media_reference(media_id: int):
         success = utils.remove_media_reference_from_custom_folder(media_id, folder_to_remove)
         if success: flash(f"フォルダ「{folder_to_remove}」からのメディア参照を削除しました。", "success")
         else: flash("メディア参照の削除に失敗しました。", "warning")
-    rtf = folder_to_remove 
+    rtf = folder_to_remove
     if media_type == "video": return redirect(url_for('.video_page', current_folder=rtf))
     if media_type == "photo": return redirect(url_for('.photo_page', current_folder=rtf))
     return redirect(url_for(".index"))
@@ -381,11 +381,11 @@ def delete_media(media_id: int):
     if user.get("role") != "admin":
         flash("権限がありません。", "danger"); return redirect(request.referrer or url_for('.index'))
     base_static_uploads_abs = os.path.join(current_app.static_folder, 'uploads')
-    media_entries_list = utils.load_media_entries() 
+    media_entries_list = utils.load_media_entries()
     entry_to_delete = next((e for e in media_entries_list if e.get("id") == media_id), None)
-    redirect_url = url_for('.index') 
+    redirect_url = url_for('.index')
     if entry_to_delete:
-        media_type = entry_to_delete.get('media_type'); source_folder = request.form.get('source_folder') 
+        media_type = entry_to_delete.get('media_type'); source_folder = request.form.get('source_folder')
         if media_type == 'video': redirect_url = url_for('.video_page', current_folder=source_folder if source_folder else None)
         elif media_type == 'photo': redirect_url = url_for('.photo_page', current_folder=source_folder if source_folder else None)
     if utils.delete_media_entry(media_id, base_static_uploads_abs): flash("メディアファイルを削除しました。", "success")
