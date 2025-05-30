@@ -59,3 +59,11 @@ class ShiftRulesForm(FlaskForm):
     required_attributes = StringField("属性ごとの必要人数", validators=[Optional()])
     submit = SubmitField("保存")
 
+
+class ShiftManagementForm(FlaskForm):
+    """Minimal form for CSRF token generation on the shift management page."""
+    # No fields needed other than what FlaskForm provides (e.g., CSRF token)
+    # If we needed a submit button tied to this specific form for some reason:
+    # submit_shifts = SubmitField('更新') # Example, not strictly needed if using JS/other buttons
+    pass
+
