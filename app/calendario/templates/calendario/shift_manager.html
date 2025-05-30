@@ -2,96 +2,99 @@
 {% block content %}
 <style>
   .employee-box {
-    cursor: pointer;
-    padding: 5px 8px; /* Adjusted padding slightly for better look with border */
-    margin: 2px;
-    border: 1px solid #ccc;
-    display: inline-block; 
-    border-radius: 4px; /* Added border-radius for consistency */
-    transition: background-color 0.2s ease-in-out; /* Smooth transition */
+    cursor: pointer; padding: 5px 8px; margin: 2px;
+    border: 1px solid #ccc; display: inline-block; 
+    border-radius: 4px; transition: background-color 0.2s ease-in-out;
   }
   .emp-selected {
-    background-color: #aaddff; /* Light blue for selected */
-    font-weight: bold;
-    border-color: #007bff; /* Darker blue border for selected */
+    background-color: #aaddff; font-weight: bold; border-color: #007bff;
   }
   .assignments span.assigned {
-    display: block; /* Make each assigned employee take a new line */
-    margin-bottom: 3px; /* Slightly increased margin */
-    padding: 3px 5px; /* Adjusted padding */
-    background-color: #e9ecef; /* Lighter grey for assigned items */
-    border-radius: 3px;
-    font-size: 0.9em; /* Slightly smaller font for assigned items */
+    display: block; margin-bottom: 3px; padding: 3px 5px;
+    background-color: #e9ecef; border-radius: 3px; font-size: 0.9em;
+    cursor: pointer; /* Make assigned spans also look clickable for removal */
   }
-  /* Styling for the draggable employee boxes from static/css/style.css for reference if needed */
-  /* .employee-box (from static/css/style.css) {
-    border: 1px solid #2196F3;
-    background: #e3f2fd;
-    padding: 4px 8px;
-    margin: 2px;
+  .shift-cell {
+    vertical-align: top; /* Align content to the top */
+    min-height: 80px; /* Ensure a minimum height for cells */
+  }
+  .violation-icons {
+    text-align: right; font-size: 0.9em; min-height: 1.2em; /* Adjusted for visibility */
+    margin-top: 3px;
+  }
+  .violation-icon {
     display: inline-block;
-    border-radius: 4px;
-    cursor: move; // Note: This will be overridden by the new .employee-box cursor: pointer
-  } */
-  /* .shift-cell .assigned (from static/css/style.css) {
-    display: block;
-    background: #bbdefb;
-    margin: 2px 0;
-    padding: 2px 4px;
-    border-radius: 4px;
+    padding: 1px 4px;
+    margin-left: 2px;
+    border-radius: 3px;
+    font-weight: bold;
+    color: white;
     cursor: pointer;
-  } */
+  }
+  .violation-icon.type-max_consecutive_days { background-color: #dc3545; /* Red */ }
+  .violation-icon.type-min_staff_per_day { background-color: #ffc107; color: #333; /* Amber */ }
+  .violation-icon.type-forbidden_pair { background-color: #fd7e14; /* Orange */ }
+  .violation-icon.type-required_pair { background-color: #6f42c1; /* Indigo */ }
+  .violation-icon.type-required_attribute_count { background-color: #0dcaf0; /* Info/Teal */ }
+  .violation-icon.type-placeholder_violation { background-color: #6c757d; /* Secondary/Grey */ }
 </style>
 
 <h1>{{ month.strftime('%Y-%m') }} シフト管理</h1>
 <div>
     {% if nav_prev_month %}
-        <a href="{{ url_for('calendario.shift', month=nav_prev_month.strftime('%Y-%m')) }}">&lt;</a>
+        <a href="{{ url_for('calendario.shift', month=nav_prev_month.strftime('%Y-%m')) }}">&lt; 前月</a>
     {% else %}
-        <span>&lt;</span>
+        <span class="text-muted">&lt; 前月</span>
     {% endif %}
+    | <a href="{{ url_for('calendario.shift') }}">今月</a> |
     {% if nav_next_month %}
-        <a href="{{ url_for('calendario.shift', month=nav_next_month.strftime('%Y-%m')) }}">&gt;</a>
+        <a href="{{ url_for('calendario.shift', month=nav_next_month.strftime('%Y-%m')) }}">次月 &gt;</a>
     {% else %}
-        <span>&gt;</span>
+        <span class="text-muted">次月 &gt;</span>
     {% endif %}
 </div>
-<div class="shift-users">
-{% for emp in employees %}
-    {# draggable="true" might be removed if drag is fully replaced by click #}
-    <div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>
-{% endfor %}
+<div class="shift-users my-3">
+    <strong>従業員リスト (ドラッグ＆ドロップまたはクリックでセルに追加):</strong><br>
+    {% for emp in employees %}
+        <div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>
+    {% endfor %}
 </div>
 
-<div class="employee-stats-summary" data-current-month="{{ month.strftime('%Y-%m') }}" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-    <h3 style="margin-top: 0;">今月の集計</h3>
-    {% if employees %}
-        {% for emp in employees %}
-            <p style="margin: 5px 0;">
-                {{ emp }}:
-                勤務日数 <span class="work-count" data-emp="{{ emp }}">{{ counts.get(emp, 0) }}</span>日,
-                休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
-            </p>
-        {% endfor %}
-    {% else %}
-        <p>表示する従業員がいません。</p>
-    {% endif %}
+<div class="employee-stats-summary card mb-3">
+    <div class="card-header">今月の集計</div>
+    <div class="card-body" data-current-month="{{ month.strftime('%Y-%m') }}">
+        {% if employees %}
+            {% for emp in employees %}
+                <p style="margin: 5px 0;">
+                    {{ emp }}:
+                    勤務日数 <span class="work-count" data-emp="{{ emp }}">{{ counts.get(emp, 0) }}</span>日,
+                    休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
+                </p>
+            {% endfor %}
+        {% else %}
+            <p>表示する従業員がいません。</p>
+        {% endif %}
+    </div>
 </div>
 
 <form method="post">
     <input type="hidden" name="action" value="complete" id="action-field">
-    <table class="calendar">
-        <thead>
+    {{ csrf_token() }} {# Added CSRF token if using Flask-WTF globally #}
+    <table class="calendar table table-bordered">
+        <thead class="table-light">
             <tr>
-                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+                <th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th>
             </tr>
         </thead>
         <tbody>
         {% for week in weeks %}
             <tr>
             {% for d in week %}
-                <td class="{% if d.month != month.month %}other-month{% endif %} shift-cell" data-date="{{ d.isoformat() }}">
-                    {{ d.day }}
+                <td class="{% if d.month != month.month %}other-month text-muted{% else %}shift-cell{% endif %}" 
+                    data-date="{{ d.isoformat() }}" 
+                    style="{% if d.month != month.month %}background-color: #f8f9fa;{% endif %}">
+                    <div class="day-number">{{ d.day }}</div>
+                    <div class="violation-icons"></div> {# Container for violation icons #}
                     <div class="assignments">
                         {% for emp in assignments.get(d.isoformat(), []) %}
                             <span class="assigned">{{ emp }}</span>
@@ -104,10 +107,41 @@
         {% endfor %}
         </tbody>
     </table>
-    <button type="submit" onclick="document.getElementById('action-field').value='complete'">完成</button>
-    <button type="submit" onclick="document.getElementById('action-field').value='notify'">告知</button>
+    <div class="mt-3">
+        <button type="submit" class="btn btn-success" onclick="document.getElementById('action-field').value='complete'">保存</button>
+        <button type="submit" class="btn btn-info" onclick="document.getElementById('action-field').value='notify'">保存して通知</button>
+        <button type="button" class="btn btn-warning" id="checkViolationsBtn">ルールチェック</button> {# Added button #}
+    </div>
 </form>
-<p><a href="{{ url_for('calendario.shift_rules') }}">シフト計算詳細設定</a></p>
-<p><a href="{{ url_for('calendario.index', month=month.strftime('%Y-%m')) }}">戻る</a></p>
+<p class="mt-3"><a href="{{ url_for('calendario.shift_rules') }}" class="btn btn-secondary btn-sm">シフト計算詳細設定</a></p>
+<p><a href="{{ url_for('calendario.index', month=month.strftime('%Y-%m')) }}" class="btn btn-outline-secondary btn-sm">カレンダービューに戻る</a></p>
+
+{# Modal for Violation Details #}
+<div class="modal fade" id="violationDetailModal" tabindex="-1" aria-labelledby="violationDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="violationDetailModalTitle">違反詳細</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="violationDetailModalBody">
+        {# Violation details will be populated here by JavaScript #}
+        <p>詳細情報を読み込み中...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Embed rules data for JavaScript #}
+<script>
+  window.shiftRules = {{ rules_for_js|tojson|safe }};
+  if (typeof window.shiftRules === 'undefined' || window.shiftRules === null) {
+    window.shiftRules = { rules: {}, defined_attributes: [] }; // Fallback
+    console.warn("Shift rules data not loaded into window.shiftRules from template.");
+  }
+</script>
 <script src="{{ url_for('static', filename='js/shift_manager.js') }}" defer></script>
 {% endblock %}

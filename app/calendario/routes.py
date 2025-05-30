@@ -293,8 +293,6 @@ def shift():
         month = date(today.year, today.month, 1)
 
     if request.method == "POST":
-        # The logging print statements from previous subtasks were here.
-        # They are removed now as per this overwrite, which is fine.
         if not user or user.get("role") != "admin":
             flash("権限がありません (POST Auth)") 
             return redirect(url_for("calendario.index", month=month.strftime('%Y-%m')))
@@ -306,35 +304,23 @@ def shift():
                 emps = [e for e in val.split(',') if e]
                 schedule[key[2:]] = emps
         
-        try:
-            utils.set_shift_schedule(month, schedule)
-        except Exception as e:
-            flash(f"シフトの保存中にエラーが発生しました: {e}", "error")
-            return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
-
-        # Save the schedule. Notifications from within set_shift_schedule are now disabled by default.
+        # Removed duplicate call to set_shift_schedule
         try:
             utils.set_shift_schedule(month, schedule) 
         except Exception as e:
             flash(f"シフトの保存中にエラーが発生しました: {e}", "error")
             return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
 
-        # Handle notifications and flash messages based on action
         if action == "notify":
             try:
-                # Send the main summary notification
                 utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました")
-                
-                # Send rule violation notifications (if any)
                 utils.check_rules_and_notify(send_notifications=True)
-                
                 flash("通知を送信しました")
             except Exception as e:
-                # Log the exception e (consider adding actual logging here)
                 flash(f"通知の送信中にエラーが発生しました: {str(e)}", "error")
         elif action == "complete":
             flash("保存しました")
-        else: # Default case for any other action, or if action is None
+        else: 
             flash("変更が保存されました")
         
         return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
@@ -368,10 +354,15 @@ def shift():
     if nav_next_month > limit_future_date:
         nav_next_month = None
 
+    # Load rules data for JavaScript
+    rules, defined_attributes = utils.load_rules()
+    rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
+
     return render_template(
         "shift_manager.html",
         user=user,
-        month=month, 
+        month=month,
+        rules_for_js=rules_data_for_js, # Pass rules data to template
         weeks=weeks,
         employees=employees,
         assignments=assignments, 
@@ -453,7 +444,6 @@ def stats():
     form = StatsForm(request.values)
     start_val = form.start.data 
     end_val = form.end.data 
-    # CORRECTED VERSION FOR stats()
     stats_data = utils.compute_employee_stats(start_date_param=start_val, end_date_param=end_val) 
     return render_template(
         "stats.html",
@@ -487,24 +477,6 @@ def api_assign() -> "flask.Response":
 
 @bp.route("/api/shift_counts/recalculate", methods=["POST"])
 def api_recalculate_shift_counts() -> "flask.Response":
-    """
-    Recalculates shift counts based on provided assignments without saving.
-    Expects a JSON payload like:
-    {
-        "month": "YYYY-MM",
-        "assignments": {
-            "YYYY-MM-DD": ["employeeA", "employeeB"],
-            ...
-        }
-    }
-    Returns:
-    {
-        "success": True,
-        "counts": {"employeeA": 10, ...},
-        "off_counts": {"employeeA": 15, ...}
-    }
-    or {"success": False, "error": "description"}
-    """
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "error": "Invalid JSON payload"}), 400
@@ -515,42 +487,32 @@ def api_recalculate_shift_counts() -> "flask.Response":
     if not month_str or not isinstance(month_str, str):
         return jsonify({"success": False, "error": "Missing or invalid month string"}), 400
     
-    if assignments is None or not isinstance(assignments, dict): # Allow empty assignments
+    if assignments is None or not isinstance(assignments, dict):
         return jsonify({"success": False, "error": "Missing or invalid assignments data"}), 400
 
     try:
         year, mon = map(int, month_str.split("-"))
-        current_month_date = date(year, mon, 1)
+        # current_month_date = date(year, mon, 1) # Not used
         _, days_in_month = calendar.monthrange(year, mon)
     except ValueError:
         return jsonify({"success": False, "error": "Invalid month format. Use YYYY-MM"}), 400
     except Exception as e:
         return jsonify({"success": False, "error": f"Error processing month: {str(e)}"}), 400
 
-    # Get non-admin employees
     try:
         employees = [
-            name
-            for name, user_info in config.USERS.items()
+            name for name, user_info in config.USERS.items()
             if user_info.get("role") != "admin" and name not in config.EXCLUDED_USERS
         ]
-    except AttributeError: # Handle cases where USERS or EXCLUDED_USERS might not be structured as expected
+    except AttributeError: 
         employees = [
-            name
-            for name, user_info in getattr(config, "USERS", {}).items()
+            name for name, user_info in getattr(config, "USERS", {}).items()
             if user_info.get("role") != "admin" and name not in getattr(config, "EXCLUDED_USERS", [])
         ]
 
-
     counts = {emp: 0 for emp in employees}
-
     for date_str, assigned_employees in assignments.items():
-        # Validate date_str format if necessary, though not strictly required by problem
-        # For now, assume dates in assignments are for the correct month
-        # and are valid date strings.
         if not isinstance(assigned_employees, list):
-            # If a specific date's assignments are malformed, we can skip it or error out.
-            # For now, let's be lenient and skip.
             continue
         for emp in assigned_employees:
             if emp in counts:
@@ -558,8 +520,6 @@ def api_recalculate_shift_counts() -> "flask.Response":
     
     off_counts = {emp: days_in_month - counts.get(emp, 0) for emp in employees}
 
-    return jsonify({
-        "success": True,
-        "counts": counts,
-        "off_counts": off_counts
-    })
+    return jsonify({ "success": True, "counts": counts, "off_counts": off_counts })
+
+[end of app/calendario/routes.py]
