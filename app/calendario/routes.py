@@ -69,27 +69,32 @@ def index():
                     structured_events[event_date_iso][slot_time].append(event)
                 else: structured_events[event_date_iso]['all_day'].append(event)
             else: structured_events[event_date_iso]['all_day'].append(event)
-        display_month = start_d.replace(day=1); nav_prev_week = start_d - timedelta(days=7)
+        display_month_obj = start_d.replace(day=1) # Renamed month to display_month_obj for clarity
+        nav_prev_week = start_d - timedelta(days=7)
         if nav_prev_week < limit_past_date: nav_prev_week = None
         nav_next_week = start_d + timedelta(days=7)
         if (nav_next_week + timedelta(days=6)) > limit_future_date: nav_next_week = None
-        header_nav_prev_month = (display_month - timedelta(days=1)).replace(day=1)
+        header_nav_prev_month = (display_month_obj - timedelta(days=1)).replace(day=1)
         if header_nav_prev_month.replace(day=calendar.monthrange(header_nav_prev_month.year, header_nav_prev_month.month)[1]) < limit_past_date: header_nav_prev_month = None
-        header_nav_next_month = (display_month + timedelta(days=31)).replace(day=1)
+        header_nav_next_month = (display_month_obj + timedelta(days=31)).replace(day=1)
         if header_nav_next_month > limit_future_date: header_nav_next_month = None
         return render_template("week_view.html", user=user, stats=stats, start=start_d, week_days=week_days, time_slots=time_slots,
-                               structured_events=structured_events, timedelta=timedelta, view=view, month=display_month,
+                               structured_events=structured_events, timedelta=timedelta, view=view, month=display_month_obj,
                                today_date=today.isoformat(), nav_prev_week=nav_prev_week, nav_next_week=nav_next_week,
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
-    else: # month view
-        events_month = [e for e in events if e.get("date", "").startswith(month.strftime("%Y-%m"))]
-        nav_prev_month_val = (month - timedelta(days=1)).replace(day=1)
+    else: # month view (target_month_display is the 'month' variable here)
+        # This is the original month view logic using calendar.monthdatescalendar
+        # It will be replaced by the 6-week view logic in the /shift route for consistency if desired,
+        # or kept as a distinct view. For now, /shift route gets the new logic.
+        target_month_display = month # month is already the first day of the target month
+        events_month = [e for e in events if e.get("date", "").startswith(target_month_display.strftime("%Y-%m"))]
+        nav_prev_month_val = (target_month_display - timedelta(days=1)).replace(day=1)
         if nav_prev_month_val.replace(day=calendar.monthrange(nav_prev_month_val.year, nav_prev_month_val.month)[1]) < limit_past_date: nav_prev_month_val = None
-        nav_next_month_val = (month + timedelta(days=31)).replace(day=1)
+        nav_next_month_val = (target_month_display + timedelta(days=31)).replace(day=1)
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
         events_by_date = {};_ = [events_by_date.setdefault(e_event_by_date["date"], []).append(e_event_by_date) for e_event_by_date in events_month]
-        cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(month.year, month.month)]
-        return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=month,
+        cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
+        return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=target_month_display,
                                nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
 
 @bp.route("/add", methods=["GET", "POST"])
@@ -145,44 +150,102 @@ def assign(event_id: int):
 @bp.route("/shift", methods=["GET", "POST"])
 def shift():
     user = session.get("user"); month_param = request.args.get("month"); today = date.today()
+    # target_month_display is the first day of the month the user selected to view.
     if month_param:
-        try: year, mon = map(int, month_param.split("-")); month = date(year, mon, 1)
-        except Exception: month = date(today.year, today.month, 1)
-    else: month = date(today.year, today.month, 1)
+        try: year, mon = map(int, month_param.split("-")); target_month_display = date(year, mon, 1)
+        except Exception: target_month_display = date(today.year, today.month, 1)
+    else: target_month_display = date(today.year, today.month, 1)
+
+    # Calculate actual_calendar_start_date (Monday of the week before the week containing month's 1st day)
+    weekday_of_first_day = target_month_display.weekday() # Monday is 0, Sunday is 6
+    start_of_first_week_in_target_month_view = target_month_display - timedelta(days=weekday_of_first_day)
+    actual_calendar_start_date = start_of_first_week_in_target_month_view - timedelta(days=7)
+
+    # Generate the 6 weeks (42 days) for display
+    current_day_iterator = actual_calendar_start_date
+    weeks_for_display = []
+    for _week_num in range(6): # Generate 6 weeks
+        week_row = []
+        for _day_in_week in range(7): # 7 days per week
+            week_row.append(current_day_iterator)
+            current_day_iterator += timedelta(days=1)
+        weeks_for_display.append(week_row)
+
+    # Determine the actual end date of the 6-week display
+    actual_calendar_end_date = weeks_for_display[-1][-1]
+
+    # For consecutive day calculation, fetch data from a bit before actual_calendar_start_date
+    # up to actual_calendar_end_date.
+    # Using a fixed buffer for now, can be refined with rules.get("max_consecutive_days", 7)
+    fetch_data_start_date_for_calc = actual_calendar_start_date - timedelta(days=14) # Wider buffer
+    fetch_data_end_date_for_calc = actual_calendar_end_date
+
     if request.method == "POST":
         if not user or user.get("role") != "admin":
-            flash("権限がありません (POST Auth)"); return redirect(url_for("calendario.index", month=month.strftime('%Y-%m')))
+            flash("権限がありません (POST Auth)"); return redirect(url_for("calendario.index", month=target_month_display.strftime('%Y-%m')))
         action = request.form.get("action"); schedule: Dict[str, List[str]] = {}
         for key, val in request.form.items():
             if key.startswith("d-"): schedule[key[2:]] = [e for e in val.split(',') if e]
-        try: utils.set_shift_schedule(month, schedule)
-        except Exception as e: flash(f"シフトの保存中にエラーが発生しました: {e}", "error"); return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
+        try: utils.set_shift_schedule(target_month_display, schedule) # set_shift_schedule uses target_month_display to clear old shifts
+        except Exception as e: flash(f"シフトの保存中にエラーが発生しました: {e}", "error"); return redirect(url_for("calendario.shift", month=target_month_display.strftime('%Y-%m')))
         if action == "notify":
-            try: utils._notify_all("シフト更新", f"{month.strftime('%Y-%m')} のシフトが更新されました"); utils.check_rules_and_notify(send_notifications=True); flash("通知を送信しました")
+            try: utils._notify_all("シフト更新", f"{target_month_display.strftime('%Y-%m')} のシフトが更新されました"); utils.check_rules_and_notify(send_notifications=True); flash("通知を送信しました")
             except Exception as e: flash(f"通知の送信中にエラーが発生しました: {str(e)}", "error")
         elif action == "complete": flash("保存しました")
         else: flash("変更が保存されました")
-        return redirect(url_for("calendario.shift", month=month.strftime('%Y-%m')))
-    events = utils.load_events(); assignments: Dict[str, List[str]] = {}
-    for e_event in events: 
-        if e_event.get("category") == "shift" and e_event.get("date", "").startswith(month.strftime("%Y-%m")):
-            assignments.setdefault(e_event["date"], []).append(e_event.get("employee", ""))
+        return redirect(url_for("calendario.shift", month=target_month_display.strftime('%Y-%m')))
+
+    all_events = utils.load_events()
+
+    # Assignments for display (covering the 6-week displayed grid)
+    assignments_for_display: Dict[str, List[str]] = defaultdict(list)
+    for event in all_events:
+        if event.get("category") == "shift":
+            try:
+                event_date_obj = date.fromisoformat(event.get("date", ""))
+                if actual_calendar_start_date <= event_date_obj <= actual_calendar_end_date:
+                    assignments_for_display[event["date"]].append(event.get("employee", ""))
+            except ValueError: continue
+
+    # Assignments for calculation (extended range for accuracy)
+    assignments_for_consecutive_calc: Dict[str, List[str]] = defaultdict(list)
+    for event in all_events:
+        if event.get("category") == "shift":
+            try:
+                event_date_obj = date.fromisoformat(event.get("date", ""))
+                if fetch_data_start_date_for_calc <= event_date_obj <= fetch_data_end_date_for_calc:
+                    assignments_for_consecutive_calc[event["date"]].append(event.get("employee", ""))
+            except ValueError: continue
+
     employees = [n for n, info_user in config.USERS.items() if info_user.get("role") != "admin"] 
-    counts = {emp: sum(emp in v for v in assignments.values()) for emp in employees}
-    days_in_month = calendar.monthrange(month.year, month.month)[1]
-    off_counts = {emp: days_in_month - counts.get(emp, 0) for emp in employees}
-    cal = calendar.Calendar(firstweekday=0); weeks = [w for w in cal.monthdatescalendar(month.year, month.month)]
+    # Counts should still be for the target month for the summary display
+    target_month_assignments: Dict[str, List[str]] = {
+        d: emps for d, emps in assignments_for_display.items() if d.startswith(target_month_display.strftime("%Y-%m"))
+    }
+    counts = {emp: sum(emp in v for v in target_month_assignments.values()) for emp in employees}
+    days_in_target_month = calendar.monthrange(target_month_display.year, target_month_display.month)[1]
+    off_counts = {emp: days_in_target_month - counts.get(emp, 0) for emp in employees}
+
     limit_past_date = today.replace(year=today.year - 2); limit_future_date = today.replace(year=today.year + 2)
-    nav_prev_month = (month - timedelta(days=1)).replace(day=1)
-    if nav_prev_month.replace(day=calendar.monthrange(nav_prev_month.year, nav_prev_month.month)[1]) < limit_past_date: nav_prev_month = None
-    nav_next_month = (month + timedelta(days=31)).replace(day=1)
-    if nav_next_month > limit_future_date: nav_next_month = None
+    nav_prev_month_obj = (target_month_display - timedelta(days=1)).replace(day=1) # Renamed for clarity
+    if nav_prev_month_obj.replace(day=calendar.monthrange(nav_prev_month_obj.year, nav_prev_month_obj.month)[1]) < limit_past_date: nav_prev_month_obj = None
+    nav_next_month_obj = (target_month_display + timedelta(days=31)).replace(day=1) # Renamed for clarity
+    if nav_next_month_obj > limit_future_date: nav_next_month_obj = None
+
     rules, defined_attributes = utils.load_rules(); rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
     csrf_form = ShiftManagementForm()
-    consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments, month)
-    return render_template("shift_manager.html", user=user, month=month, rules_for_js=rules_data_for_js, form=csrf_form,
-                           weeks=weeks, employees=employees, assignments=assignments, counts=counts, off_counts=off_counts,
-                           nav_prev_month=nav_prev_month, nav_next_month=nav_next_month, consecutive_days_data=consecutive_days_data)
+
+    consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments_for_consecutive_calc, target_month_display)
+
+    return render_template("shift_manager.html", user=user, month=target_month_display, # Pass target_month_display as 'month'
+                           rules_for_js=rules_data_for_js, form=csrf_form,
+                           weeks=weeks_for_display, # Use the new 6-week list
+                           employees=employees, assignments=assignments_for_display,
+                           counts=counts, off_counts=off_counts,
+                           nav_prev_month=nav_prev_month_obj,
+                           nav_next_month=nav_next_month_obj,
+                           consecutive_days_data=consecutive_days_data
+                           )
 
 @bp.route("/shift_rules", methods=["GET", "POST"])
 def shift_rules():
@@ -254,32 +317,13 @@ def api_recalculate_shift_counts() -> "flask.Response":
 @bp.route('/api/check_shift_violations', methods=['POST'])
 def check_shift_violations_api():
     payload = request.get_json()
-    if not payload:
-        return jsonify({"success": False, "error": "Invalid request data: No data received"}), 400
-
-    current_assignments = payload.get('assignments')
-    target_month_str = payload.get('month') # Expect "YYYY-MM"
-
-    if current_assignments is None or not isinstance(current_assignments, dict):
-        return jsonify({"success": False, "error": "Invalid request data: 'assignments' key missing or invalid"}), 400
-
-    if not target_month_str or not isinstance(target_month_str, str):
-        return jsonify({"success": False, "error": "Invalid request data: 'month' key missing or invalid"}), 400
-
-    try:
-        year, month_num = map(int, target_month_str.split('-'))
-        target_month_start = date(year, month_num, 1)
-    except ValueError:
-        return jsonify({"success": False, "error": "Invalid month format. Please use YYYY-MM."}), 400
-
-    rules, _ = utils.load_rules() # defined_attributes is part of rules dict
-    users_config = config.USERS
-
+    if not payload: return jsonify({"success": False, "error": "Invalid request data: No data received"}), 400
+    current_assignments = payload.get('assignments'); target_month_str = payload.get('month')
+    if current_assignments is None or not isinstance(current_assignments, dict): return jsonify({"success": False, "error": "Invalid request data: 'assignments' key missing or invalid"}), 400
+    if not target_month_str or not isinstance(target_month_str, str): return jsonify({"success": False, "error": "Invalid request data: 'month' key missing or invalid"}), 400
+    try: year, month_num = map(int, target_month_str.split('-')); target_month_start = date(year, month_num, 1)
+    except ValueError: return jsonify({"success": False, "error": "Invalid month format. Please use YYYY-MM."}), 400
+    rules, _ = utils.load_rules(); users_config = config.USERS
     violation_list = utils.get_shift_violations(current_assignments, rules, users_config)
-    consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start)
-
-    return jsonify({
-        "success": True,
-        "violations": violation_list,
-        "consecutive_work_info": consecutive_info
-    })
+    consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start) # This now uses assignments from the API (current view)
+    return jsonify({"success": True, "violations": violation_list, "consecutive_work_info": consecutive_info})
