@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Array.from(list.querySelectorAll('.assigned')).forEach(s => {
         if(!s.dataset.emp && s.textContent) {
-            // Extract name if only textContent is available (e.g. "empName (X日目)")
             const match = s.textContent.trim().match(/^[^(\s]*/);
             if (match) s.dataset.emp = match[0];
         }
@@ -125,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } else { console.error('API error recalculating counts:', data.error); }
     })
-    // No catch here, let the caller chain catch if needed or handle final success/failure
   }
 
   async function triggerShiftViolationCheck() {
@@ -176,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const iconEl = document.createElement('span');
         const iconInfo = ruleTypeToIcon[violation.rule_type] || {text: "?", titlePrefix: "不明ルール"};
         iconEl.className = `violation-icon type-${violation.rule_type}`; iconEl.textContent = iconInfo.text;
-        iconEl.title = `${iconInfo.titlePrefix}: ${violation.description}`; // Use full description for title
-        iconEl.dataset.violationDetails = JSON.stringify(violation); // Store full object
+        iconEl.title = `${iconInfo.titlePrefix}: ${violation.description}`;
+        iconEl.dataset.violationDetails = JSON.stringify(violation);
 
         iconEl.addEventListener('click', () => {
           let detailsObj;
@@ -196,21 +194,41 @@ document.addEventListener('DOMContentLoaded', () => {
           if (modalTitleEl) modalTitleEl.textContent = `${iconInfo.titlePrefix} (${detailsObj.date})`;
 
           if (modalBodyEl) {
-            let detailsHtml = `<p><strong>説明:</strong> ${detailsObj.description || 'N/A'}</p>`;
-            if(detailsObj.employee) detailsHtml += `<p><strong>従業員:</strong> ${detailsObj.employee}</p>`;
-            if(detailsObj.employees && Array.isArray(detailsObj.employees)) detailsHtml += `<p><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
-            if(detailsObj.attribute) detailsHtml += `<p><strong>属性:</strong> ${detailsObj.attribute}</p>`;
+            // New structured HTML for modal body
+            let bodyContent = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
 
-            if(detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
-                detailsHtml += `<p><strong>詳細情報:</strong></p><ul>`;
-                for (const [key, value] of Object.entries(detailsObj.details)) {
-                    detailsHtml += `<li><strong>${key}:</strong> ${value}</li>`;
-                }
-                detailsHtml += `</ul>`;
-            } else {
-                detailsHtml += `<p>追加の詳細情報はありません。</p>`;
+            if (detailsObj.employee) {
+                bodyContent += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
             }
-            modalBodyEl.innerHTML = detailsHtml;
+            if (detailsObj.employees && Array.isArray(detailsObj.employees) && detailsObj.employees.length > 0) {
+                bodyContent += `<p class="mb-1"><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
+            }
+            if (detailsObj.attribute) {
+                bodyContent += `<p class="mb-1"><strong>対象属性:</strong> ${detailsObj.attribute}</p>`;
+            }
+
+            if (detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
+                bodyContent += `<p class="mt-3 mb-1"><strong>詳細情報:</strong></p><ul class="list-unstyled ps-3">`;
+                for (const key in detailsObj.details) {
+                    let displayKey = key;
+                    if (key === "current_consecutive") displayKey = "現在の連勤日数";
+                    else if (key === "max_allowed") displayKey = "最大許容日数";
+                    else if (key === "current_staff") displayKey = "現在の人数";
+                    else if (key === "min_required") displayKey = "最低必要人数";
+                    else if (key === "pair") displayKey = "ペア";
+                    else if (key === "missing_member") displayKey = "不足メンバー";
+                    else if (key === "present_member") displayKey = "勤務中メンバー";
+                    else if (key === "current_count") displayKey = "現在のカウント";
+                    else if (key === "required_count") displayKey = "要求カウント";
+                    else if (key === "date" && detailsObj.date) continue; // Already in title
+                    else if (key === "employee" && detailsObj.employee) continue;
+                    else if (key === "attribute" && detailsObj.attribute) continue;
+
+                    bodyContent += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
+                }
+                bodyContent += `</ul>`;
+            }
+            modalBodyEl.innerHTML = bodyContent;
           }
 
           if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
