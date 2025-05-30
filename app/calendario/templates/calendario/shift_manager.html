@@ -12,52 +12,42 @@
   .assignments span.assigned {
     display: block; margin-bottom: 3px; padding: 3px 5px;
     background-color: #e9ecef; border-radius: 3px; font-size: 0.9em;
-    cursor: pointer; /* Make assigned spans also look clickable for removal */
+    cursor: pointer; 
   }
   .shift-cell {
-    vertical-align: top; /* Align content to the top */
-    min-height: 80px; /* Ensure a minimum height for cells */
+    vertical-align: top; 
+    min-height: 80px; 
   }
   .violation-icons {
-    text-align: right; font-size: 0.9em; min-height: 1.2em; /* Adjusted for visibility */
+    text-align: right; font-size: 0.9em; min-height: 1.2em; 
     margin-top: 3px;
   }
   .violation-icon {
-    display: inline-block;
-    padding: 1px 4px;
-    margin-left: 2px;
-    border-radius: 3px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
+    display: inline-block; padding: 1px 4px; margin-left: 2px;
+    border-radius: 3px; font-weight: bold; color: white; cursor: pointer;
   }
-  .violation-icon.type-max_consecutive_days { background-color: #dc3545; /* Red */ }
-  .violation-icon.type-min_staff_per_day { background-color: #ffc107; color: #333; /* Amber */ }
-  .violation-icon.type-forbidden_pair { background-color: #fd7e14; /* Orange */ }
-  .violation-icon.type-required_pair { background-color: #6f42c1; /* Indigo */ }
-  .violation-icon.type-required_attribute_count { background-color: #0dcaf0; /* Info/Teal */ }
-  .violation-icon.type-placeholder_violation { background-color: #6c757d; /* Secondary/Grey */ }
+  .violation-icon.type-max_consecutive_days { background-color: #dc3545; }
+  .violation-icon.type-min_staff_per_day { background-color: #ffc107; color: #333; }
+  .violation-icon.type-forbidden_pair { background-color: #fd7e14; }
+  .violation-icon.type-required_pair { background-color: #6f42c1; }
+  .violation-icon.type-required_attribute_count { background-color: #0dcaf0; }
+  .violation-icon.type-placeholder_violation { background-color: #6c757d; }
+  .consecutive-day-count { font-size: 0.75em; color: #007bff; margin-left: 3px; }
 </style>
 
 <h1>{{ month.strftime('%Y-%m') }} シフト管理</h1>
 <div>
     {% if nav_prev_month %}
         <a href="{{ url_for('calendario.shift', month=nav_prev_month.strftime('%Y-%m')) }}">&lt; 前月</a>
-    {% else %}
-        <span class="text-muted">&lt; 前月</span>
-    {% endif %}
+    {% else %}<span class="text-muted">&lt; 前月</span>{% endif %}
     | <a href="{{ url_for('calendario.shift') }}">今月</a> |
     {% if nav_next_month %}
         <a href="{{ url_for('calendario.shift', month=nav_next_month.strftime('%Y-%m')) }}">次月 &gt;</a>
-    {% else %}
-        <span class="text-muted">次月 &gt;</span>
-    {% endif %}
+    {% else %}<span class="text-muted">次月 &gt;</span>{% endif %}
 </div>
 <div class="shift-users my-3">
     <strong>従業員リスト (ドラッグ＆ドロップまたはクリックでセルに追加):</strong><br>
-    {% for emp in employees %}
-        <div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>
-    {% endfor %}
+    {% for emp in employees %}<div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>{% endfor %}
 </div>
 
 <div class="employee-stats-summary card mb-3">
@@ -71,21 +61,15 @@
                     休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
                 </p>
             {% endfor %}
-        {% else %}
-            <p>表示する従業員がいません。</p>
-        {% endif %}
+        {% else %}<p>表示する従業員がいません。</p>{% endif %}
     </div>
 </div>
 
 <form method="post">
-    {{ form.hidden_tag() }} {# Replaced csrf_token() with Flask-WTF form hidden_tag #}
+    {{ form.hidden_tag() }} 
     <input type="hidden" name="action" value="complete" id="action-field">
     <table class="calendar table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th>
-            </tr>
-        </thead>
+        <thead class="table-light"><tr><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th></tr></thead>
         <tbody>
         {% for week in weeks %}
             <tr>
@@ -94,10 +78,10 @@
                     data-date="{{ d.isoformat() }}" 
                     style="{% if d.month != month.month %}background-color: #f8f9fa;{% endif %}">
                     <div class="day-number">{{ d.day }}</div>
-                    <div class="violation-icons"></div> {# Container for violation icons #}
+                    <div class="violation-icons"></div> 
                     <div class="assignments">
                         {% for emp in assignments.get(d.isoformat(), []) %}
-                            <span class="assigned">{{ emp }}</span>
+                            <span class="assigned" data-emp="{{ emp }}">{{ emp }}</span> {# Removed server-side count, added data-emp #}
                         {% endfor %}
                     </div>
                     <input type="hidden" name="d-{{ d.isoformat() }}" value="{{ ','.join(assignments.get(d.isoformat(), [])) }}">
@@ -110,7 +94,7 @@
     <div class="mt-3">
         <button type="submit" class="btn btn-success" onclick="document.getElementById('action-field').value='complete'">保存</button>
         <button type="submit" class="btn btn-info" onclick="document.getElementById('action-field').value='notify'">保存して通知</button>
-        <button type="button" class="btn btn-warning" id="checkViolationsBtn">ルールチェック</button> {# Added button #}
+        <button type="button" class="btn btn-warning" id="checkViolationsBtn">ルールチェック</button> 
     </div>
 </form>
 <p class="mt-3"><a href="{{ url_for('calendario.shift_rules') }}" class="btn btn-secondary btn-sm">シフト計算詳細設定</a></p>
@@ -120,27 +104,23 @@
 <div class="modal fade" id="violationDetailModal" tabindex="-1" aria-labelledby="violationDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="violationDetailModalTitle">違反詳細</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="violationDetailModalBody">
-        {# Violation details will be populated here by JavaScript #}
-        <p>詳細情報を読み込み中...</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-      </div>
+      <div class="modal-header"><h5 class="modal-title" id="violationDetailModalTitle">違反詳細</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body" id="violationDetailModalBody"><p>詳細情報を読み込み中...</p></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
     </div>
   </div>
 </div>
 
-{# Embed rules data for JavaScript #}
 <script>
   window.shiftRules = {{ rules_for_js|tojson|safe }};
   if (typeof window.shiftRules === 'undefined' || window.shiftRules === null) {
-    window.shiftRules = { rules: {}, defined_attributes: [] }; // Fallback
+    window.shiftRules = { rules: {}, defined_attributes: [] }; 
     console.warn("Shift rules data not loaded into window.shiftRules from template.");
+  }
+  window.consecutiveDaysData = {{ consecutive_days_data|tojson|safe }};
+  if (typeof window.consecutiveDaysData === 'undefined' || window.consecutiveDaysData === null) {
+    window.consecutiveDaysData = {};
+    console.warn("Consecutive days data not loaded into window.consecutiveDaysData from template.");
   }
 </script>
 <script src="{{ url_for('static', filename='js/shift_manager.js') }}" defer></script>
