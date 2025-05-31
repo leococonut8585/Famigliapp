@@ -57,12 +57,14 @@
                                     {{ ev.cleaned_title or ev.employee }}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
+                                    {% if ev.category != 'shift' %}
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ ev.id }}" data-title="{{ ev.cleaned_title or ev.employee }}"
                                             data-time="{{ ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
                                             data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
                                             data-category="{{ ev.category }}">詳細</button>
-                                    <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    {% endif %}
+                                    <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-custom-edit ms-1">編集</a>
                                 </div>
                             </div>
                         {% else %} {# Non-shift events #}
@@ -77,7 +79,7 @@
                                             data-time="{{ ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
                                             data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
                                             data-category="{{ ev.category }}">詳細</button>
-                                    <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-custom-edit ms-1">編集</a>
                                 </div>
                             </div>
                         {% endif %}

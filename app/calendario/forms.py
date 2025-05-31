@@ -8,6 +8,7 @@ from wtforms import (
     SubmitField,
     SelectField,
     SelectMultipleField,
+    widgets # widgets をインポート
 )
 from wtforms.validators import DataRequired, Optional
 import config
@@ -19,7 +20,6 @@ class EventForm(FlaskForm):
     date = DateField("日付", validators=[DataRequired()])
     title = StringField("タイトル", validators=[DataRequired()])
     description = TextAreaField("内容", validators=[Optional()])
-    employee = StringField("従業員", validators=[Optional()])
     category = SelectField(
         "種類",
         choices=[
@@ -31,13 +31,18 @@ class EventForm(FlaskForm):
             ("other", "その他"),
         ],
         validators=[DataRequired()],
+        # カテゴリ変更時にJavaScriptで対象者の表示/非表示を切り替えるための属性を追加
+        render_kw={'onchange': 'toggleParticipantsField(this.value)'}
     )
     participants = SelectMultipleField(
         "対象者",
         choices=[(u, u) for u in config.USERS if u not in config.EXCLUDED_USERS],
         validators=[Optional()],
+        widget=widgets.ListWidget(prefix_label=False), # チェックボックスリスト表示用ウィジェット
+        option_widget=widgets.CheckboxInput() # 個々の選択肢をチェックボックスとして表示
     )
     submit = SubmitField("保存")
+    delete = SubmitField("この予定を削除する", render_kw={'class': 'btn btn-danger'})
 
 
 class StatsForm(FlaskForm):

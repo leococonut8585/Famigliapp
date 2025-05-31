@@ -264,3 +264,19 @@ ul {
     font-weight: bold;
     margin-right: 0.3em; /* Space between time and title */
 }
+
+.btn-custom-edit {
+    background-color: navy !important; /* 紺色 */
+    color: white !important; /* 文字色 白 */
+    border: 1px solid navy !important; /* 紺色の枠 */
+    padding: 0.1rem 0.3rem;
+    font-size: 0.75em;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+.btn-custom-edit:hover {
+    background-color: darkblue !important;
+    border-color: darkblue !important;
+    color: white !important;
+}

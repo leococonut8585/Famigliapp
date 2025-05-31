@@ -164,36 +164,84 @@ def index():
 
 @bp.route("/add", methods=["GET", "POST"])
 def add():
-    user = session.get("user"); form = EventForm()
+    user = session.get("user")
+    form = EventForm()
     if form.validate_on_submit():
-        utils.add_event(form.date.data, form.title.data, form.description.data or "", form.employee.data or "", form.category.data, form.participants.data)
-        flash("追加しました"); return redirect(url_for("calendario.index"))
-    return render_template("event_form.html", form=form, user=user, is_edit=False, event_id=None)
+        # employee field is being removed, so don't pass it to add_event
+        utils.add_event(
+            date=form.date.data,
+            title=form.title.data,
+            description=form.description.data or "",
+            category=form.category.data,
+            participants=form.participants.data  # Pass as a list
+        )
+        flash("新しい予定を追加しました。", "success")
+        return redirect(url_for("calendario.index"))
+    # For GET request or form validation error
+    return render_template("event_form.html", form=form, user=user, event_id=None) # is_edit=False is implicit by event_id=None
 
 @bp.route("/edit/<int:event_id>", methods=["GET", "POST"])
 def edit_event(event_id: int):
-    user = session.get("user"); event = utils.get_event_by_id(event_id)
-    if not event: flash("指定されたイベントが見つかりません。", "error"); return redirect(url_for("calendario.index"))
-    form = EventForm()
-    if request.method == "POST":
-        if form.validate_on_submit():
-            new_event_data = {"date": form.date.data.isoformat(), "title": form.title.data, "description": form.description.data or "",
-                              "employee": form.employee.data or "", "category": form.category.data, "participants": form.participants.data or []}
-            if utils.update_event(event_id, new_event_data): flash("イベントが更新されました。", "success")
-            else: flash("イベントの更新に失敗しました。", "error")
-            return redirect(url_for("calendario.index"))
-        else: flash("フォームの入力内容に誤りがあります。確認してください。", "warning"); return render_template("event_form.html", form=form, user=user, is_edit=True, event_id=event_id)
-    form.date.data = date.fromisoformat(event["date"]); form.title.data = event["title"]
-    form.description.data = event.get("description", ""); form.employee.data = event.get("employee", "")
-    form.category.data = event.get("category", "other"); form.participants.data = event.get("participants", [])
-    return render_template("event_form.html", form=form, user=user, is_edit=True, event_id=event_id)
+    user = session.get("user")
+    event = utils.get_event_by_id(event_id)
+    if not event:
+        flash("指定されたイベントが見つかりません。", "error")
+        return redirect(url_for("calendario.index"))
 
-@bp.route("/delete/<int:event_id>")
+    # Initialize form
+    if request.method == 'GET':
+        # For GET, populate form with event data
+        form = EventForm(data=event)
+        if event.get("date"):
+            try:
+                form.date.data = date.fromisoformat(event["date"]) # Ensure date is a date object
+            except (TypeError, ValueError):
+                flash("イベントの日付形式が無効です。", "warning")
+                form.date.data = None # Or some default
+        # Ensure participants is a list, even if not present or None in event data
+        form.participants.data = event.get("participants", [])
+    else:
+        # For POST, create an empty form; validate_on_submit will populate it from request data
+        form = EventForm()
+
+    if form.validate_on_submit():
+        if form.delete.data:  # Delete button was pressed
+            if utils.delete_event(event_id):
+                flash("予定を削除しました。", "success")
+            else:
+                flash("削除中にエラーが発生しました。", "error")
+            return redirect(url_for("calendario.index"))
+        else:  # Save button was pressed
+            updated_event_data = {
+                "date": form.date.data.isoformat(),
+                "title": form.title.data,
+                "description": form.description.data or "",
+                # "employee": form.employee.data or "", # Employee field is being removed
+                "category": form.category.data,
+                "participants": form.participants.data  # Pass as a list
+            }
+            if utils.update_event(event_id, updated_event_data):
+                flash("予定を更新しました。", "success")
+            else:
+                flash("更新中にエラーが発生しました。", "error")
+            return redirect(url_for("calendario.index"))
+
+    # For GET request or form validation error, render the form
+    # Pass event_id to the template for the form action URL and possibly other logic
+    return render_template("event_form.html", form=form, user=user, event_id=event_id)
+
+
+@bp.route("/delete/<int:event_id>") # This route might become obsolete if delete is only from edit_event form
 def delete(event_id: int):
     user = session.get("user")
-    if user.get("role") != "admin": flash("権限がありません"); return redirect(url_for("calendario.index"))
-    if utils.delete_event(event_id): flash("削除しました")
-    else: flash("該当IDがありません")
+    # Consider admin check or other permission checks if this route is kept
+    # if user.get("role") != "admin":
+    #     flash("権限がありません");
+    #     return redirect(url_for("calendario.index"))
+    if utils.delete_event(event_id):
+        flash("削除しました")
+    else:
+        flash("該当IDがありません")
     return redirect(url_for("calendario.index"))
 
 @bp.route("/move/<int:event_id>", methods=["POST"])

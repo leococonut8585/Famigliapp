@@ -1,17 +1,55 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% if form.title.data and form.date.data %}
+<h1>予定編集</h1>
+{% else %}
 <h1>予定追加</h1>
+{% endif %}
 <form method="post">
     {{ form.hidden_tag() }}
     <p>{{ form.date.label }}<br>{{ form.date() }}</p>
     <p>{{ form.title.label }}<br>{{ form.title(size=30) }}</p>
     <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=40) }}</p>
-    <p>{{ form.employee.label }}<br>{{ form.employee(size=20) }}</p>
     <p>{{ form.category.label }}<br>{{ form.category() }}</p>
-    <p>{{ form.participants.label }}<br>{{ form.participants(size=10, multiple=True) }}</p>
-    <p>{{ form.submit() }}</p>
+
+    {# 対象者フィールドのコンテナ #}
+    <div id="participants-field-container">
+        <p>{{ form.participants.label }}<br>
+            {# チェックボックスがインラインで並ぶのを避けるために、ul/li構造を使うか、CSSで調整 #}
+            <ul class="list-unstyled"> {# Bootstrapのクラスで見栄えを調整 #}
+            {% for subfield in form.participants %}
+                <li>{{ subfield }} {{ subfield.label }}</li>
+            {% endfor %}
+            </ul>
+        </p>
+    </div>
+
+    <p>{{ form.submit() }}
+    {% if form.delete %}
+       {{ form.delete(class="btn btn-danger ms-2") }}
+    {% endif %}
+    </p>
 </form>
 <p><a href="{{ request.referrer or url_for('calendario.index') }}">戻る</a></p>
+
+<script>
+function toggleParticipantsField(selectedCategory) {
+    const participantsContainer = document.getElementById('participants-field-container');
+    if (selectedCategory === 'shift') {
+        participantsContainer.style.display = 'none';
+    } else {
+        participantsContainer.style.display = 'block';
+    }
+}
+
+// ページ読み込み時にも実行して、初期状態で正しく表示/非表示を制御
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryField = document.getElementById('category'); // form.category のidが 'category' であると仮定
+    if (categoryField) {
+        toggleParticipantsField(categoryField.value);
+    }
+});
+</script>
 {% endblock %}
 
