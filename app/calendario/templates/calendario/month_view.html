@@ -125,79 +125,171 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/calendar_event_details.js') }}" defer></script>
+
+<div id="dndConfirmationPopup" style="display: none; position: absolute; border: 1px solid #ccc; background-color: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001;">
+    <p style="margin-top: 0; margin-bottom: 10px;">この予定に対する操作を選択してください:</p>
+    <div style="display: flex; justify-content: space-around;">
+        <button type="button" id="dndConfirmMove" class="btn btn-primary btn-sm">移動</button>
+        <button type="button" id="dndConfirmCopy" class="btn btn-success btn-sm">コピー</button>
+        <button type="button" id="dndConfirmCancel" class="btn btn-secondary btn-sm">キャンセル</button>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const draggableItems = document.querySelectorAll('.event-grid-item, .shift-grid-item');
-    const dropTargets = document.querySelectorAll('td.calendar-day'); // Only current month days
+    let draggedElement = null;
+    let currentDropZone = null; // To store the drop target cell temporarily
 
-    draggableItems.forEach(item => {
+    const dndPopup = document.getElementById('dndConfirmationPopup');
+    const btnMove = document.getElementById('dndConfirmMove');
+    const btnCopy = document.getElementById('dndConfirmCopy');
+    const btnCancel = document.getElementById('dndConfirmCancel');
+
+    function addDragEventListeners(item) {
         item.addEventListener('dragstart', function(event) {
+            draggedElement = event.target;
             event.dataTransfer.setData('text/plain', event.target.dataset.eventId);
-            event.target.style.opacity = '0.5';
+            setTimeout(() => {
+                if(draggedElement) draggedElement.style.opacity = '0.5';
+            }, 0);
         });
 
         item.addEventListener('dragend', function(event) {
-            event.target.style.opacity = '1';
+            // If popup is not shown (e.g. drag cancelled by Esc, or dropped outside a valid target)
+            // or if an operation has been completed/cancelled via popup
+            if (dndPopup.style.display === 'none') {
+                if (draggedElement) {
+                    draggedElement.style.opacity = '1';
+                }
+                draggedElement = null;
+                currentDropZone = null;
+            }
         });
-    });
+    }
+
+    const draggableItems = document.querySelectorAll('.event-grid-item, .shift-grid-item');
+    draggableItems.forEach(addDragEventListeners);
+
+    const dropTargets = document.querySelectorAll('td.calendar-day');
 
     dropTargets.forEach(target => {
         target.addEventListener('dragover', function(event) {
-            event.preventDefault(); // Allow drop
-            target.style.backgroundColor = 'rgba(0,0,0,0.1)'; // Visual feedback
+            event.preventDefault();
+            target.style.backgroundColor = 'rgba(0,0,0,0.1)';
         });
 
         target.addEventListener('dragleave', function(event) {
-            target.style.backgroundColor = ''; // Reset visual feedback
+            target.style.backgroundColor = '';
         });
 
         target.addEventListener('drop', function(event) {
             event.preventDefault();
-            target.style.backgroundColor = ''; // Reset visual feedback
+            target.style.backgroundColor = '';
+            currentDropZone = event.currentTarget; // Store the drop zone
 
             const eventId = event.dataTransfer.getData('text/plain');
-            const newDate = event.currentTarget.dataset.date;
+            const newDate = currentDropZone.dataset.date;
 
-            if (!eventId || !newDate) {
-                console.error('Drag and drop failed: missing eventId or newDate.');
+            if (!eventId || !newDate || !draggedElement) {
+                console.error('Drag and drop failed: missing eventId, newDate, or draggedElement.');
+                if(draggedElement) draggedElement.style.opacity = '1';
+                draggedElement = null;
+                currentDropZone = null;
                 return;
             }
 
-            // Confirm with user: move or copy
-            // For a more polished UI, consider using a custom modal here instead of confirm().
-            const userAction = confirm(`予定を ${newDate} に移動しますか？\nOK = 移動, キャンセル = コピーとして作成`);
-            const operation = userAction ? "move" : "copy";
+            dndPopup.dataset.eventId = eventId;
+            dndPopup.dataset.newDate = newDate;
 
-            console.log(`Event ID: ${eventId}, New Date: ${newDate}, Operation: ${operation}`);
-
-            fetch("{{ url_for('calendario.api_event_drop') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // CSRFトークンが必要な場合はヘッダーに追加
-                    // 'X-CSRFToken': '{% raw %}{{ csrf_token() }}{% endraw %}' // CSRF保護が有効な場合
-                },
-                body: JSON.stringify({
-                    event_id: parseInt(eventId), // 文字列から数値に変換
-                    new_date: newDate,
-                    operation: operation
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message || '操作が完了しました。');
-                    location.reload(); // 成功したらページをリロードして変更を反映
-                } else {
-                    alert('エラー: ' + (data.error || '不明なエラーが発生しました。'));
-                    // エラー時はリロードしないか、必要に応じて対応
-                }
-            })
-            .catch(error => {
-                console.error('Drop API Error:', error);
-                alert('通信エラーが発生しました。コンソールで詳細を確認してください。');
-            });
+            // Position and show popup
+            dndPopup.style.left = event.pageX + 'px';
+            dndPopup.style.top = event.pageY + 'px';
+            dndPopup.style.display = 'block';
+            // Opacity of draggedElement remains 0.5 until an action is taken on the popup
         });
+    });
+
+    function handleDropOperation(operation) {
+        const eventId = dndPopup.dataset.eventId;
+        const newDate = dndPopup.dataset.newDate;
+        // draggedElement and currentDropZone are accessible from the outer scope
+
+        if (!eventId || !newDate || !draggedElement || !currentDropZone) {
+            console.error("Popup operation failed: missing data.");
+            if(draggedElement) draggedElement.style.opacity = '1';
+            dndPopup.style.display = 'none';
+            draggedElement = null;
+            currentDropZone = null;
+            return;
+        }
+
+        console.log(`Performing operation: ${operation} for Event ID: ${eventId} to New Date: ${newDate}`);
+
+        fetch("{{ url_for('calendario.api_event_drop') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // 'X-CSRFToken': '{% raw %}{{ csrf_token() }}{% endraw %}'
+            },
+            body: JSON.stringify({
+                event_id: parseInt(eventId),
+                new_date: newDate,
+                operation: operation
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (operation === "move" && draggedElement) {
+                    currentDropZone.appendChild(draggedElement);
+                } else if (operation === "copy" && draggedElement) {
+                    if (data.new_event_id) {
+                        const clonedElement = draggedElement.cloneNode(true);
+                        clonedElement.dataset.eventId = data.new_event_id;
+                        const editLink = clonedElement.querySelector('a.btn-custom-edit');
+                        if (editLink) {
+                            let href = editLink.getAttribute('href');
+                            if (href) editLink.setAttribute('href', href.substring(0, href.lastIndexOf('/') + 1) + data.new_event_id);
+                        }
+                        const detailsButton = clonedElement.querySelector('button.details-btn');
+                        if (detailsButton) detailsButton.dataset.eventId = data.new_event_id;
+
+                        currentDropZone.appendChild(clonedElement);
+                        addDragEventListeners(clonedElement);
+                        clonedElement.style.opacity = '1';
+                    } else {
+                        alert('エラー: コピー操作で新しいイベントIDが取得できませんでした。');
+                        location.reload(); // Fallback
+                    }
+                }
+                alert(data.message || '操作が完了しました。');
+            } else {
+                alert('エラー: ' + (data.error || '不明なエラーが発生しました。'));
+            }
+        })
+        .catch(error => {
+            console.error('Drop API Error:', error);
+            alert('通信エラーが発生しました。');
+        })
+        .finally(() => {
+            if (draggedElement) {
+                draggedElement.style.opacity = '1';
+            }
+            dndPopup.style.display = 'none';
+            draggedElement = null;
+            currentDropZone = null;
+        });
+    }
+
+    btnMove.addEventListener('click', function() { handleDropOperation("move"); });
+    btnCopy.addEventListener('click', function() { handleDropOperation("copy"); });
+    btnCancel.addEventListener('click', function() {
+        if (draggedElement) {
+            draggedElement.style.opacity = '1';
+        }
+        dndPopup.style.display = 'none';
+        draggedElement = null;
+        currentDropZone = null;
     });
 });
 </script>
