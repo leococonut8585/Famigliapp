@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% from 'macros.html' import format_datetime_field %} {# Assuming this macro might be used for event times if added #}
+{% from 'macros.html' import format_datetime_field %}
 
 {% block title %}カレンダー - {{ month.strftime('%Y-%m') }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4"> {# Added container for consistency #}
+<div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>{{ month.strftime('%Y-%m') }}</h1>
         <div>
@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <table class="calendar table table-bordered" style="table-layout: fixed;"> {# Added table-bordered and fixed layout #}
+    <table class="calendar table table-bordered" style="table-layout: fixed;">
         <thead class="table-light">
             <tr>
                 <th style="width: 14.28%;">月</th>
@@ -32,7 +32,7 @@
                 <th style="width: 14.28%;">木</th>
                 <th style="width: 14.28%;">金</th>
                 <th style="width: 14.28%;">土</th>
-                <th style="width: 14.28%;">日</th>
+                <th style.width: 14.28%;">日</th>
             </tr>
         </thead>
         <tbody>
@@ -40,24 +40,24 @@
             <tr>
                 {% for d in week %}
                 <td class="{% if d.month != month.month %}other-month text-muted bg-light{% else %}calendar-day{% endif %}"
-                    style="vertical-align: top; height: 120px; overflow-y: auto;"> {# Added height and overflow #}
+                    style="vertical-align: top; height: 120px; overflow-y: auto;">
                     <div class="day-number fw-bold" style="font-size: 0.9em;">{{ d.day }}</div>
 
                     <div class="event-grid-container">
                         {% for ev in events_by_date.get(d.isoformat(), []) %}
                             <div class="event-grid-item">
                                 <span class="calendar-event-text-compact">
-                                    {# Attempt to extract time if present in title, e.g., "10:00 Meeting" #}
-                                    {% set time_match = ev.title|regex_search('^(\\d{1,2}:\\d{2})\\s*(.*)$') %}
-                                    {% if time_match %}
-                                        <small class="text-muted">{{ time_match.group(1) }}</small> {{ time_match.group(2) }}
-                                    {% else %}
-                                        {{ ev.title }}
+                                    {% if ev.display_time %}
+                                        <span class="event-time" style="font-weight: bold;">{{ ev.display_time }}</span>&nbsp;
+                                    {% endif %}
+                                    <span class="event-title">{{ ev.cleaned_title }}</span>
+                                    {% if ev.employee and ev.category == 'shift' %}
+                                        <small class="text-muted ms-1">({{ ev.employee }})</small>
                                     {% endif %}
                                 </span>
-                                {# Example for edit button, adjust as needed #}
-                                {% if user.role == 'admin' or ev.author == user.username %} {# Basic permission example #}
-                                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom mt-1">編集</a>
+
+                                {% if user.role == 'admin' or ev.get('author') == user.username %} {# Assuming events might have an 'author' #}
+                                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
                                 {% endif %}
                             </div>
                         {% endfor %}

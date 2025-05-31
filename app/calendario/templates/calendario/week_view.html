@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% from 'macros.html' import format_datetime_field %} {# Assuming this might be used for event times #}
+{% from 'macros.html' import format_datetime_field %}
 
 {% block title %}{{ start.strftime('%Y-%m-%d') }} - {{ (start + timedelta(days=6)).strftime('%Y-%m-%d') }} 週カレンダー{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-3"> {# Use container-fluid for wider view #}
+<div class="container-fluid mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>{{ start.strftime('%Y-%m-%d') }} - {{ (start + timedelta(days=6)).strftime('%Y-%m-%d') }} 週</h1>
         <div>
@@ -26,7 +26,7 @@
     <table class="calendar-grid table table-bordered" style="table-layout: fixed;">
         <thead class="table-light">
             <tr>
-                <th class="time-col" style="width: 80px;">時間</th> {# Fixed width for time column #}
+                <th class="time-col" style="width: 80px;">時間</th>
                 {% for day in week_days %}
                 <th class="day-col {% if day.isoformat() == today_date %}table-info{% endif %}" style="width: calc((100% - 80px) / 7);">
                     {{ day.strftime('%a') }}<br>{{ day.strftime('%m/%d') }}
@@ -40,14 +40,20 @@
                 <td class="time-slot-label table-light">終日</td>
                 {% for day in week_days %}
                 <td class="calendar-cell all-day-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: auto; min-height: 60px; overflow-y: auto;">
-                    <div class="event-grid-container-week"> {# Applied class #}
+                    <div class="event-grid-container-week">
                         {% for event in structured_events.get(day.isoformat(), {}).get('all_day', []) %}
-                        <div class="event-grid-item"> {# Applied class #}
-                            <span class="calendar-event-text-compact"> {# Applied class #}
-                                {{ event.title }}
-                                {% if event.employee %}({{ event.employee }}){% endif %}
+                        <div class="event-grid-item">
+                            <span class="calendar-event-text-compact">
+                                {# Use pre-parsed fields #}
+                                {% if event.display_time %}
+                                    <span class="event-time" style="font-weight: bold;">{{ event.display_time }}</span>&nbsp;
+                                {% endif %}
+                                <span class="event-title">{{ event.cleaned_title }}</span>
+                                {% if event.employee and event.category == 'shift' %} {# Show employee only for shifts or as needed #}
+                                    <small class="text-muted ms-1">({{ event.employee }})</small>
+                                {% endif %}
                             </span>
-                            {% if user.role == 'admin' or event.author == user.username %} {# Basic permission example #}
+                            {% if user.role == 'admin' or event.get('author') == user.username %}
                                 <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
                             {% endif %}
                         </div>
@@ -63,14 +69,21 @@
                 <td class="time-slot-label table-light">{{ slot }}</td>
                 {% for day in week_days %}
                 <td class="calendar-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: 70px; overflow-y: auto;">
-                     <div class="event-grid-container-week"> {# Applied class #}
+                     <div class="event-grid-container-week">
                         {% for event in structured_events.get(day.isoformat(), {}).get(slot, []) %}
-                        <div class="event-grid-item"> {# Applied class #}
-                            <span class="calendar-event-text-compact"> {# Applied class #}
-                                {{ event.title }}
-                                {% if event.employee %}({{ event.employee }}){% endif %}
+                        <div class="event-grid-item">
+                            <span class="calendar-event-text-compact">
+                                {# Use pre-parsed fields. For timed events, display_time should typically exist if parsed from title. #}
+                                {# If not, it means the original title didn't have a time prefix. #}
+                                {% if event.display_time %}
+                                    <span class="event-time" style="font-weight: bold;">{{ event.display_time }}</span>&nbsp;
+                                {% endif %}
+                                <span class="event-title">{{ event.cleaned_title }}</span>
+                                {% if event.employee and event.category == 'shift' %}
+                                    <small class="text-muted ms-1">({{ event.employee }})</small>
+                                {% endif %}
                             </span>
-                             {% if user.role == 'admin' or event.author == user.username %} {# Basic permission example #}
+                             {% if user.role == 'admin' or event.get('author') == user.username %}
                                 <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
                             {% endif %}
                         </div>
@@ -92,7 +105,4 @@
     <p class="mt-3"><a href="{{ url_for('index') }}" class="btn btn-outline-secondary">メインページに戻る</a></p>
 </div>
 
-{# Remove inline styles, assuming they are in static/css/style.css or base.html #}
-{# The new classes .calendar-event-text-compact, .event-grid-container-week, .event-grid-item, .btn-xs-custom
-   are expected to be defined in the main style.css file. #}
 {% endblock %}
