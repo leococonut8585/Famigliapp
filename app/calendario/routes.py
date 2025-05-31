@@ -25,6 +25,14 @@ from collections import defaultdict
 # Regex for parsing time from event titles
 time_title_pattern = re.compile(r'^(\d{1,2}:\d{2})\s*(.*)$')
 
+EVENT_SORT_PRIORITY = {
+    "shucchou": 1,
+    "hug": 2,
+    "other_no_time": 3,
+    "shift": 4,
+    "other_with_time": 5,
+}
+
 @bp.before_request
 def require_login():
     if "user" not in session:
@@ -52,22 +60,49 @@ def index():
     week_start = week_start - timedelta(days=week_start.weekday()) # Ensure week_start is a Monday
 
     events = utils.load_events()
-    # Process all events once to add display_time and cleaned_title
-    for event_item in events: # Renamed 'e' to 'event_item' to avoid conflict
-        title_match = time_title_pattern.match(event_item.get('title', ''))
-        if title_match:
-            event_item['display_time'] = title_match.group(1)
-            event_item['cleaned_title'] = title_match.group(2).strip()
-        else:
-            event_item['display_time'] = None
-            event_item['cleaned_title'] = event_item.get('title', '')
 
-    events.sort(key=lambda e_sort: e_sort.get("date")) # Renamed 'e' to 'e_sort'
+    # 1. Add display_time and cleaned_title
+    for event in events:
+        title_match = time_title_pattern.match(event.get('title', ''))
+        if title_match:
+            event['display_time'] = title_match.group(1)
+            event['cleaned_title'] = title_match.group(2).strip()
+        else:
+            event['display_time'] = None
+            event['cleaned_title'] = event.get('title', '')
+
+    # 2. Add sort_priority and sort_time
+    for event in events:
+        category = event.get('category', 'other')
+        has_time = event.get('display_time') is not None
+
+        if category == 'shucchou':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['shucchou']
+            event['sort_time'] = "00:00"
+        elif category == 'hug':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['hug']
+            event['sort_time'] = "00:00" # Changed from "00:01" to match revised plan
+        elif category == 'shift':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['shift']
+            event['sort_time'] = "00:00"
+        elif category in ['lesson', 'kouza', 'other']:
+            if has_time:
+                event['sort_priority'] = EVENT_SORT_PRIORITY['other_with_time']
+                event['sort_time'] = event['display_time']
+            else: # Time not specified
+                event['sort_priority'] = EVENT_SORT_PRIORITY['other_no_time']
+                event['sort_time'] = "00:00" # Changed from "00:02"
+        else: # Fallback
+            event['sort_priority'] = 99
+            event['sort_time'] = "23:59"
+
+    # 3. Sort all events by date, then by new sort keys
+    events.sort(key=lambda e: (e.get("date", ""), e.get('sort_priority', 99), e.get('sort_time', '23:59')))
 
     stats = {}
     if events:
-        try: start_date_for_stats = date.fromisoformat(events[0].get("date")) # Renamed
-        except Exception: start_date_for_stats = None # Renamed
+        try: start_date_for_stats = date.fromisoformat(events[0].get("date"))
+        except Exception: start_date_for_stats = None
         stats = utils.compute_employee_stats(start_date_param=start_date_for_stats, end_date_param=date.today())
 
     if view == "week":
@@ -75,31 +110,26 @@ def index():
         week_days = [start_d + timedelta(days=i) for i in range(7)]; time_slots = []
         for hour in range(24): time_slots.append(f"{hour:02d}:00"); time_slots.append(f"{hour:02d}:30")
 
+        # Filter from the globally sorted and augmented 'events' list
         raw_week_events = []
-        for e_raw in events: # Renamed 'e' to 'e_raw'
+        for e_raw in events:
             try:
                 event_date_obj = date.fromisoformat(e_raw.get("date"))
                 if start_d <= event_date_obj <= end_d:
                     raw_week_events.append(e_raw)
-            except (ValueError, TypeError): # Catch errors if date is malformed or None
-                continue
+            except (ValueError, TypeError): continue
 
         structured_events = defaultdict(lambda: defaultdict(list))
-        # The time_regex for slot determination in week view is different from title parsing.
-        # The title parsing already happened. Here we use display_time if available.
-        for event_struct in raw_week_events: # Renamed 'event' to 'event_struct'
+        for event_struct in raw_week_events:
             event_date_iso = event_struct.get("date")
-            # Use pre-parsed display_time for slotting if available
             if event_struct.get('display_time'):
                 time_parts = event_struct['display_time'].split(':')
                 hour_val, minute_val = int(time_parts[0]), int(time_parts[1])
-                if 0 <= hour_val <= 23 and 0 <= minute_val <= 59: # Should always be true if display_time is valid
+                if 0 <= hour_val <= 23 and 0 <= minute_val <= 59:
                     slot_time = f"{hour_val:02d}:00" if minute_val < 30 else f"{hour_val:02d}:30"
                     structured_events[event_date_iso][slot_time].append(event_struct)
-                else: # Fallback for safety, or if display_time was not strictly HH:MM
-                    structured_events[event_date_iso]['all_day'].append(event_struct)
-            else: # No display_time means it's an all-day event or title had no time
-                structured_events[event_date_iso]['all_day'].append(event_struct)
+                else: structured_events[event_date_iso]['all_day'].append(event_struct)
+            else: structured_events[event_date_iso]['all_day'].append(event_struct)
 
         display_month_obj = start_d.replace(day=1)
         nav_prev_week = start_d - timedelta(days=7)
@@ -116,22 +146,21 @@ def index():
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
     else: # month view
         target_month_display = month
-        # Events are already processed with cleaned_title and display_time
-        events_month = [e_month for e_month in events if e_month.get("date", "").startswith(target_month_display.strftime("%Y-%m"))] # Renamed 'e'
+        # Filter from the globally sorted and augmented 'events' list
+        events_month = [e_month for e_month in events if e_month.get("date", "").startswith(target_month_display.strftime("%Y-%m"))]
         nav_prev_month_val = (target_month_display - timedelta(days=1)).replace(day=1)
         if nav_prev_month_val.replace(day=calendar.monthrange(nav_prev_month_val.year, nav_prev_month_val.month)[1]) < limit_past_date: nav_prev_month_val = None
         nav_next_month_val = (target_month_display + timedelta(days=31)).replace(day=1)
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
-        events_by_date = defaultdict(list) # Use defaultdict for cleaner append
+        events_by_date = defaultdict(list)
         for e_event_by_date in events_month:
             events_by_date[e_event_by_date["date"]].append(e_event_by_date)
         cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
         return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=target_month_display,
                                nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
 
-# ... (rest of the file remains the same: /add, /edit, /delete, /move, /assign, /shift, /shift_rules, /stats, and API routes) ...
-# For brevity, only the relevant index() function is shown fully modified.
-# The overwrite will include the full original content for other routes.
+# ... (rest of the file: /add, /edit, /delete, /move, /assign, /shift, /shift_rules, /stats, and API routes) ...
+# This overwrite will ensure the rest of the file remains the same.
 
 @bp.route("/add", methods=["GET", "POST"])
 def add():
