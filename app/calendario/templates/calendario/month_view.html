@@ -1,49 +1,80 @@
 {% extends 'base.html' %}
+{% from 'macros.html' import format_datetime_field %} {# Assuming this macro might be used for event times if added #}
+
+{% block title %}カレンダー - {{ month.strftime('%Y-%m') }}{% endblock %}
 
 {% block content %}
-<h1>{{ month.strftime('%Y-%m') }}</h1>
-<div>
-    {% if nav_prev_month %}
-        <a href="{{ url_for('calendario.index', month=nav_prev_month.strftime('%Y-%m')) }}">&lt;</a>
-    {% else %}
-        <span>&lt;</span>
-    {% endif %}
-    {% if nav_next_month %}
-        <a href="{{ url_for('calendario.index', month=nav_next_month.strftime('%Y-%m')) }}">&gt;</a>
-    {% else %}
-        <span>&gt;</span>
-    {% endif %}
-    <a href="{{ url_for('calendario.index', view='week', week=(month - timedelta(days=month.weekday())).isoformat()) }}">週表示</a>
-</div>
-<table class="calendar">
-<thead>
-<tr>
-    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
-</tr>
-</thead>
-<tbody>
-{% for week in weeks %}
-<tr>
-    {% for d in week %}
-    <td class="{% if d.month != month.month %}other-month{% endif %}">
-        {{ d.day }}
-        <ul>
-        {% for ev in events_by_date.get(d.isoformat(), []) %}
-            <li>
-                {{ ev.title }}
-                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="edit-link" style="font-size: 0.8em; margin-left: 5px;">編集</a>
-            </li>
+<div class="container mt-4"> {# Added container for consistency #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>{{ month.strftime('%Y-%m') }}</h1>
+        <div>
+            {% if nav_prev_month %}
+                <a href="{{ url_for('calendario.index', month=nav_prev_month.strftime('%Y-%m')) }}" class="btn btn-outline-secondary btn-sm">&lt; 前月</a>
+            {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>&lt; 前月</button>
+            {% endif %}
+            <a href="{{ url_for('calendario.index') }}" class="btn btn-outline-secondary btn-sm">今月</a>
+            {% if nav_next_month %}
+                <a href="{{ url_for('calendario.index', month=nav_next_month.strftime('%Y-%m')) }}" class="btn btn-outline-secondary btn-sm">次月 &gt;</a>
+            {% else %}
+                <button class="btn btn-outline-secondary btn-sm" disabled>次月 &gt;</button>
+            {% endif %}
+            <a href="{{ url_for('calendario.index', view='week', week=(month - timedelta(days=month.weekday())).isoformat()) }}" class="btn btn-outline-info btn-sm">週表示</a>
+        </div>
+    </div>
+
+    <table class="calendar table table-bordered" style="table-layout: fixed;"> {# Added table-bordered and fixed layout #}
+        <thead class="table-light">
+            <tr>
+                <th style="width: 14.28%;">月</th>
+                <th style="width: 14.28%;">火</th>
+                <th style="width: 14.28%;">水</th>
+                <th style="width: 14.28%;">木</th>
+                <th style="width: 14.28%;">金</th>
+                <th style="width: 14.28%;">土</th>
+                <th style="width: 14.28%;">日</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for week in weeks %}
+            <tr>
+                {% for d in week %}
+                <td class="{% if d.month != month.month %}other-month text-muted bg-light{% else %}calendar-day{% endif %}"
+                    style="vertical-align: top; height: 120px; overflow-y: auto;"> {# Added height and overflow #}
+                    <div class="day-number fw-bold" style="font-size: 0.9em;">{{ d.day }}</div>
+
+                    <div class="event-grid-container">
+                        {% for ev in events_by_date.get(d.isoformat(), []) %}
+                            <div class="event-grid-item">
+                                <span class="calendar-event-text-compact">
+                                    {# Attempt to extract time if present in title, e.g., "10:00 Meeting" #}
+                                    {% set time_match = ev.title|regex_search('^(\\d{1,2}:\\d{2})\\s*(.*)$') %}
+                                    {% if time_match %}
+                                        <small class="text-muted">{{ time_match.group(1) }}</small> {{ time_match.group(2) }}
+                                    {% else %}
+                                        {{ ev.title }}
+                                    {% endif %}
+                                </span>
+                                {# Example for edit button, adjust as needed #}
+                                {% if user.role == 'admin' or ev.author == user.username %} {# Basic permission example #}
+                                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom mt-1">編集</a>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
         {% endfor %}
-        </ul>
-    </td>
-    {% endfor %}
-</tr>
-{% endfor %}
-</tbody>
-</table>
-<p><a href="{{ url_for('calendario.add') }}">予定を追加</a></p>
-{% if user.role == 'admin' %}
-<p><a href="{{ url_for('calendario.shift') }}">シフト管理エリア</a></p>
-{% endif %}
-<p><a href="{{ url_for('index') }}">戻る</a></p>
+        </tbody>
+    </table>
+    <div class="mt-3">
+        <a href="{{ url_for('calendario.add') }}" class="btn btn-success">新しい予定を追加</a>
+        {% if user.role == 'admin' %}
+        <a href="{{ url_for('calendario.shift') }}" class="btn btn-info">シフト管理エリア</a>
+        <a href="{{ url_for('calendario.shift_rules') }}" class="btn btn-secondary">シフト計算ルール設定</a>
+        {% endif %}
+    </div>
+    <p class="mt-3"><a href="{{ url_for('index') }}" class="btn btn-outline-secondary">メインページに戻る</a></p>
+</div>
 {% endblock %}
