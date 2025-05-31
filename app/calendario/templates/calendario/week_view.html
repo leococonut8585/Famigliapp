@@ -42,19 +42,18 @@
                 <td class="calendar-cell all-day-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: auto; min-height: 60px; overflow-y: auto;">
                     <div class="event-grid-container-week">
                         {% for event in structured_events.get(day.isoformat(), {}).get('all_day', []) %}
-                        <div class="event-grid-item">
-                            <span class="calendar-event-text-compact">
-                                {# Use pre-parsed fields #}
+                        <div class="event-grid-item d-flex align-items-center justify-content-between">
+                            <span class="calendar-event-text-compact flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {% if event.display_time %}
                                     <span class="event-time" style="font-weight: bold;">{{ event.display_time }}</span>&nbsp;
                                 {% endif %}
                                 <span class="event-title">{{ event.cleaned_title }}</span>
-                                {% if event.employee and event.category == 'shift' %} {# Show employee only for shifts or as needed #}
+                                {% if event.employee and event.category == 'shift' %}
                                     <small class="text-muted ms-1">({{ event.employee }})</small>
                                 {% endif %}
                             </span>
                             {% if user.role == 'admin' or event.get('author') == user.username %}
-                                <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
+                                <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-2" style="padding: 0.1rem 0.2rem; font-size: 0.7em; white-space: nowrap;">編集</a>
                             {% endif %}
                         </div>
                         {% endfor %}
@@ -71,10 +70,8 @@
                 <td class="calendar-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: 70px; overflow-y: auto;">
                      <div class="event-grid-container-week">
                         {% for event in structured_events.get(day.isoformat(), {}).get(slot, []) %}
-                        <div class="event-grid-item">
-                            <span class="calendar-event-text-compact">
-                                {# Use pre-parsed fields. For timed events, display_time should typically exist if parsed from title. #}
-                                {# If not, it means the original title didn't have a time prefix. #}
+                        <div class="event-grid-item d-flex align-items-center justify-content-between">
+                            <span class="calendar-event-text-compact flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                 {% if event.display_time %}
                                     <span class="event-time" style="font-weight: bold;">{{ event.display_time }}</span>&nbsp;
                                 {% endif %}
@@ -84,7 +81,7 @@
                                 {% endif %}
                             </span>
                              {% if user.role == 'admin' or event.get('author') == user.username %}
-                                <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
+                                <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-2" style="padding: 0.1rem 0.2rem; font-size: 0.7em; white-space: nowrap;">編集</a>
                             {% endif %}
                         </div>
                         {% endfor %}
