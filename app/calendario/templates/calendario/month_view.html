@@ -32,7 +32,7 @@
                 <th style="width: 14.28%;">木</th>
                 <th style="width: 14.28%;">金</th>
                 <th style="width: 14.28%;">土</th>
-                <th style="width: 14.28%;">日</th> {# Corrected style attribute #}
+                <th style="width: 14.28%;">日</th>
             </tr>
         </thead>
         <tbody>
@@ -45,8 +45,8 @@
 
                     <div class="event-grid-container">
                         {% for ev in events_by_date.get(d.isoformat(), []) %}
-                            <div class="event-grid-item">
-                                <span class="calendar-event-text-compact">
+                            <div class="event-grid-item d-flex align-items-center justify-content-between">
+                                <span class="calendar-event-text-compact flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {% if ev.display_time %}
                                         <span class="event-time" style="font-weight: bold;">{{ ev.display_time }}</span>&nbsp;
                                     {% endif %}
@@ -56,8 +56,8 @@
                                     {% endif %}
                                 </span>
 
-                                {% if user.role == 'admin' or ev.get('author') == user.username %} {# Assuming events might have an 'author' #}
-                                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom mt-1" style="padding: 0.1rem 0.2rem; font-size: 0.7em;">編集</a>
+                                {% if user.role == 'admin' or ev.get('author') == user.username %}
+                                <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-primary btn-xs-custom ms-2" style="white-space: nowrap;">編集</a>
                                 {% endif %}
                             </div>
                         {% endfor %}
