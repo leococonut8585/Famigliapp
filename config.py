@@ -5,7 +5,7 @@ USERS = {
     "raito": {"password": "raitocetriolo851", "role": "user", "email": "raito@example.com"},
     "hitomi": {"password": "hitomioniku852", "role": "user", "email": "hitomi@example.com"},
     "sara": {"password": "sarapasta853", "role": "user", "email": "sara@example.com"},
-    "giun": {"password": "giunamazake854", "role": "user", "email": "giun@example.com"},
+    "jun": {"password": "giunamazake854", "role": "user", "email": "jun@example.com"},
     "nanchan": {"password": "shojigruto855", "role": "user", "email": "nanchan@example.com"},
     "hachi": {"password": "hachipakuchi856", "role": "user", "email": "hachi@example.com"},
     "kie": {"password": "kieriso857", "role": "user", "email": "kie@example.com"},

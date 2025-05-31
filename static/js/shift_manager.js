@@ -1,7 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
-  Array.from(document.querySelectorAll('.employee-box')).forEach(box => {
+  let selectedEmployees = [];
+  const employeeBoxes = Array.from(document.querySelectorAll('.employee-box'));
+
+  employeeBoxes.forEach(box => {
+    box.addEventListener('click', e => {
+      const empName = box.dataset.emp;
+      if (e.ctrlKey || e.metaKey) {
+        box.classList.toggle('emp-selected');
+        if (box.classList.contains('emp-selected')) {
+          if (!selectedEmployees.includes(empName)) {
+            selectedEmployees.push(empName);
+          }
+        } else {
+          selectedEmployees = selectedEmployees.filter(emp => emp !== empName);
+        }
+      } else {
+        employeeBoxes.forEach(otherBox => {
+          if (otherBox !== box) {
+            otherBox.classList.remove('emp-selected');
+          }
+        });
+        box.classList.add('emp-selected');
+        selectedEmployees = [empName];
+      }
+    });
+
     box.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', box.dataset.emp);
+      const empName = box.dataset.emp;
+      if (selectedEmployees.includes(empName) && selectedEmployees.length > 1) {
+        e.dataTransfer.setData('text/plain', selectedEmployees.join(','));
+      } else {
+        // If not part of current multi-selection or only one selected, drag only this one
+        // Ensure single selection if dragging an unselected item from the top list
+        if (!selectedEmployees.includes(empName)) {
+            employeeBoxes.forEach(otherBox => otherBox.classList.remove('emp-selected'));
+            box.classList.add('emp-selected');
+            selectedEmployees = [empName];
+        } else if (selectedEmployees.length === 1 && selectedEmployees[0] !== empName) {
+            // This case handles dragging a box that wasn't the primary selected one
+            // (e.g. clicked A, then Ctrl+clicked B, then dragged A - B should be deselected)
+            // However, the current click logic should already handle this by making A the sole selection.
+            // For safety, we ensure only the dragged item is considered selected.
+            employeeBoxes.forEach(otherBox => {
+              if(otherBox !== box) otherBox.classList.remove('emp-selected');
+            });
+            selectedEmployees = [empName];
+        }
+        e.dataTransfer.setData('text/plain', empName);
+      }
       e.dataTransfer.setData('text/from-cell', '');
       e.dataTransfer.effectAllowed = 'move';
     });
@@ -47,36 +93,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDrop(e) {
       e.preventDefault();
-      const empNameFromDrop = e.dataTransfer.getData('text/plain');
-      if (!empNameFromDrop) return;
+      const empNamesFromDropString = e.dataTransfer.getData('text/plain');
+      if (!empNamesFromDropString) return;
+      const droppedEmployeeNames = empNamesFromDropString.split(',');
       const originDate = e.dataTransfer.getData('text/from-cell');
-      let emps = input.value ? input.value.split(',') : [];
-      if (!emps.includes(empNameFromDrop)) {
-        emps.push(empNameFromDrop);
-        input.value = emps.join(',');
-        const newSpan = document.createElement('span');
-        newSpan.className = 'assigned';
-        newSpan.dataset.emp = empNameFromDrop;
-        newSpan.textContent = empNameFromDrop;
-        list.appendChild(newSpan);
-        addSpanEventListeners(newSpan);
-      }
-      if (originDate && originDate !== cell.dataset.date) {
-        const originCell = document.querySelector(`.shift-cell[data-date="${originDate}"]`);
-        if (originCell) {
-          const originInput = originCell.querySelector('input');
-          const originList = originCell.querySelector('.assignments');
-          let originEmps = originInput.value ? originInput.value.split(',') : [];
-          const idx = originEmps.indexOf(empNameFromDrop);
-          if (idx >= 0) {
-            originEmps.splice(idx, 1);
-            originInput.value = originEmps.join(',');
-            originList.querySelectorAll('.assigned').forEach(s => {
-              if (s.dataset.emp === empNameFromDrop) s.remove();
-            });
+      let empsInCell = input.value ? input.value.split(',') : [];
+
+      droppedEmployeeNames.forEach(empName => {
+        if (!empsInCell.includes(empName)) {
+          empsInCell.push(empName);
+          const newSpan = document.createElement('span');
+          newSpan.className = 'assigned';
+          newSpan.dataset.emp = empName;
+          newSpan.textContent = empName;
+          list.appendChild(newSpan);
+          addSpanEventListeners(newSpan);
+        }
+
+        if (originDate && originDate !== cell.dataset.date) {
+          const originCell = document.querySelector(`.shift-cell[data-date="${originDate}"]`);
+          if (originCell) {
+            const originInput = originCell.querySelector('input');
+            const originList = originCell.querySelector('.assignments');
+            let originEmps = originInput.value ? originInput.value.split(',') : [];
+            const idx = originEmps.indexOf(empName);
+            if (idx >= 0) {
+              originEmps.splice(idx, 1);
+              originInput.value = originEmps.join(',');
+              originList.querySelectorAll('.assigned').forEach(s => {
+                if (s.dataset.emp === empName) s.remove();
+              });
+            }
           }
         }
-      }
+      });
+      input.value = empsInCell.join(',');
+
+      // Clear selection after drop
+      selectedEmployees = [];
+      employeeBoxes.forEach(box => box.classList.remove('emp-selected'));
+      // Also clear selection from assigned spans if they were part of a drag
+      // This is more complex as assigned spans are not in employeeBoxes array.
+      // For now, focusing on clearing the top list selection.
+      // A more robust solution might involve a global list of all draggable items.
+
       updateShiftCounts().then(() => {
         triggerShiftViolationCheck();
       }).catch(error => console.error("Error updating counts/violations after drop:", error));
