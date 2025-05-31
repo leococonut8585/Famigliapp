@@ -4,6 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
     DateField,
+    TimeField,
     TextAreaField,
     SubmitField,
     SelectField,
@@ -32,8 +33,9 @@ class EventForm(FlaskForm):
         ],
         validators=[DataRequired()],
         # カテゴリ変更時にJavaScriptで対象者の表示/非表示を切り替えるための属性を追加
-        render_kw={'onchange': 'toggleParticipantsField(this.value)'}
+        render_kw={'onchange': 'toggleParticipantsField(this.value); toggleTimeField(this.value);'}
     )
+    time = TimeField("時間", validators=[Optional()], format='%H:%M', render_kw={'id': 'event_time'})
     participants = SelectMultipleField(
         "対象者",
         choices=[(u, u) for u in config.USERS if u not in config.EXCLUDED_USERS],

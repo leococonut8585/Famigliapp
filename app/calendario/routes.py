@@ -169,11 +169,12 @@ def add():
     if form.validate_on_submit():
         # employee field is being removed, so don't pass it to add_event
         utils.add_event(
-            date=form.date.data,
+            event_date_obj=form.date.data, # Renamed for clarity to match util function
             title=form.title.data,
             description=form.description.data or "",
             category=form.category.data,
-            participants=form.participants.data  # Pass as a list
+            participants=form.participants.data,  # Pass as a list
+            time=form.time.data # Add time field
         )
         flash("新しい予定を追加しました。", "success")
         return redirect(url_for("calendario.index"))
@@ -198,6 +199,12 @@ def edit_event(event_id: int):
             except (TypeError, ValueError):
                 flash("イベントの日付形式が無効です。", "warning")
                 form.date.data = None # Or some default
+        if event.get("time"):
+            try:
+                form.time.data = datetime.strptime(event["time"], '%H:%M').time() # Convert string to time object
+            except (TypeError, ValueError):
+                flash("イベントの時間形式が無効です。", "warning")
+                form.time.data = None # Or some default
         # Ensure participants is a list, even if not present or None in event data
         form.participants.data = event.get("participants", [])
     else:
@@ -218,7 +225,8 @@ def edit_event(event_id: int):
                 "description": form.description.data or "",
                 # "employee": form.employee.data or "", # Employee field is being removed
                 "category": form.category.data,
-                "participants": form.participants.data  # Pass as a list
+                "participants": form.participants.data,  # Pass as a list
+                "time": form.time.data.isoformat(timespec='minutes') if form.time.data else None
             }
             if utils.update_event(event_id, updated_event_data):
                 flash("予定を更新しました。", "success")
@@ -478,3 +486,63 @@ def check_shift_violations_api():
     violation_list = utils.get_shift_violations(current_assignments, rules, users_config)
     consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start)
     return jsonify({"success": True, "violations": violation_list, "consecutive_work_info": consecutive_info})
+
+@bp.route('/api/event/drop', methods=['POST'])
+def api_event_drop():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "無効なリクエストです。ペイロードがありません。"}), 400
+
+    event_id_str = data.get('event_id')
+    new_date_str = data.get('new_date')
+    operation = data.get('operation')
+
+    if not all([event_id_str, new_date_str, operation]):
+        return jsonify({"success": False, "error": "無効なリクエストです。必須フィールドがありません。"}), 400
+
+    try:
+        event_id = int(event_id_str)
+        new_date_obj = date.fromisoformat(new_date_str)
+    except ValueError:
+        return jsonify({"success": False, "error": "無効なリクエストです。event_idまたは日付の形式が正しくありません。"}), 400
+
+    original_event = utils.get_event_by_id(event_id)
+    if not original_event:
+        return jsonify({"success": False, "error": "指定されたイベントが見つかりません。"}), 404
+
+    try:
+        if operation == "move":
+            if utils.move_event(event_id, new_date_obj):
+                # move_event内で _notify_event と check_rules_and_notify が呼ばれる
+                return jsonify({"success": True, "message": "イベントが移動されました。"}), 200
+            else:
+                # move_event が False を返した場合 (内部でエラーがあった場合など)
+                return jsonify({"success": False, "error": "イベントの移動に失敗しました。"}), 500
+
+        elif operation == "copy":
+            events = utils.load_events()
+            next_id = max((e.get("id", 0) for e in events), default=0) + 1
+
+            copied_event = original_event.copy() # Shallow copy is enough for top-level keys
+            copied_event["id"] = next_id
+            copied_event["date"] = new_date_obj.isoformat()
+
+            # Ensure 'employee' key exists if it was missing, or handle as needed
+            # For example, if 'employee' might be missing and that's okay:
+            # copied_event.setdefault('employee', None)
+            # Or if it must exist (though get_event_by_id should return it if present):
+            # if 'employee' not in copied_event: copied_event['employee'] = "" # Or some default
+
+            events.append(copied_event)
+            utils.save_events(events)
+            utils._notify_event("add", copied_event) # Notify as a new event addition
+            utils.check_rules_and_notify()
+            return jsonify({"success": True, "message": "イベントがコピーされました。", "new_event_id": next_id}), 201
+
+        else:
+            return jsonify({"success": False, "error": "無効な操作です。"}), 400
+
+    except Exception as e:
+        # Log the exception e for debugging
+        print(f"Error during event drop operation: {e}")
+        return jsonify({"success": False, "error": "サーバー内部エラーが発生しました。"}), 500

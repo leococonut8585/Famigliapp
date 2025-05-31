@@ -40,6 +40,7 @@
             <tr>
                 {% for d in week %}
                 <td class="{% if d.month != month.month %}other-month text-muted bg-light{% else %}calendar-day{% endif %}"
+                    {% if d.month == month.month %}data-date="{{ d.isoformat() }}"{% endif %}
                     style="vertical-align: top; height: 120px; overflow-y: auto; padding: 2px;"> {# Reduced padding for more space #}
                     <div class="day-number fw-bold" style="font-size: 0.9em; margin-bottom: 2px;">{{ d.day }}</div>
 
@@ -52,7 +53,7 @@
                         {% endif %}
 
                         {% if ev.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between">
+                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ ev.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {{ ev.cleaned_title or ev.employee }}
                                 </span>
@@ -68,15 +69,15 @@
                                 </div>
                             </div>
                         {% else %} {# Non-shift events #}
-                            <div class="event-grid-item {{ 'event-' + (ev.category if ev.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1">
+                            <div class="event-grid-item {{ 'event-' + (ev.category if ev.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1" draggable="true" data-event-id="{{ ev.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {% if ev.display_time %}<span class="event-time">{{ ev.display_time }}</span>&nbsp;{% endif %}
+                                    {% if ev.time %}<span class="event-time">{{ ev.time }}</span>&nbsp;{% elif ev.display_time %}<span class="event-time">{{ ev.display_time }}</span>&nbsp;{% endif %}
                                     <span class="event-title">{{ ev.cleaned_title }}</span>
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ ev.id }}" data-title="{{ ev.cleaned_title }}"
-                                            data-time="{{ ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
+                                            data-time="{{ ev.time or ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
                                             data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
                                             data-category="{{ ev.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-custom-edit ms-1">編集</a>
@@ -124,4 +125,80 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/calendar_event_details.js') }}" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const draggableItems = document.querySelectorAll('.event-grid-item, .shift-grid-item');
+    const dropTargets = document.querySelectorAll('td.calendar-day'); // Only current month days
+
+    draggableItems.forEach(item => {
+        item.addEventListener('dragstart', function(event) {
+            event.dataTransfer.setData('text/plain', event.target.dataset.eventId);
+            event.target.style.opacity = '0.5';
+        });
+
+        item.addEventListener('dragend', function(event) {
+            event.target.style.opacity = '1';
+        });
+    });
+
+    dropTargets.forEach(target => {
+        target.addEventListener('dragover', function(event) {
+            event.preventDefault(); // Allow drop
+            target.style.backgroundColor = 'rgba(0,0,0,0.1)'; // Visual feedback
+        });
+
+        target.addEventListener('dragleave', function(event) {
+            target.style.backgroundColor = ''; // Reset visual feedback
+        });
+
+        target.addEventListener('drop', function(event) {
+            event.preventDefault();
+            target.style.backgroundColor = ''; // Reset visual feedback
+
+            const eventId = event.dataTransfer.getData('text/plain');
+            const newDate = event.currentTarget.dataset.date;
+
+            if (!eventId || !newDate) {
+                console.error('Drag and drop failed: missing eventId or newDate.');
+                return;
+            }
+
+            // Confirm with user: move or copy
+            // For a more polished UI, consider using a custom modal here instead of confirm().
+            const userAction = confirm(`予定を ${newDate} に移動しますか？\nOK = 移動, キャンセル = コピーとして作成`);
+            const operation = userAction ? "move" : "copy";
+
+            console.log(`Event ID: ${eventId}, New Date: ${newDate}, Operation: ${operation}`);
+
+            fetch("{{ url_for('calendario.api_event_drop') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // CSRFトークンが必要な場合はヘッダーに追加
+                    // 'X-CSRFToken': '{{ csrf_token() }}' // CSRF保護が有効な場合
+                },
+                body: JSON.stringify({
+                    event_id: parseInt(eventId), // 文字列から数値に変換
+                    new_date: newDate,
+                    operation: operation
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || '操作が完了しました。');
+                    location.reload(); // 成功したらページをリロードして変更を反映
+                } else {
+                    alert('エラー: ' + (data.error || '不明なエラーが発生しました。'));
+                    // エラー時はリロードしないか、必要に応じて対応
+                }
+            })
+            .catch(error => {
+                console.error('Drop API Error:', error);
+                alert('通信エラーが発生しました。コンソールで詳細を確認してください。');
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

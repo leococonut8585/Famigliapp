@@ -57,6 +57,7 @@ def get_event_by_id(event_id: int) -> Optional[Dict[str, Any]]:
 def add_event(
     event_date_obj: date, title: str, description: str, employee: str,
     category: str = "other", participants: Optional[Iterable[str]] = None,
+    time: Optional[datetime.time] = None,
 ) -> None:
     events = load_events()
     next_id = max((e.get("id", 0) for e in events), default=0) + 1
@@ -64,6 +65,7 @@ def add_event(
         "id": next_id, "date": event_date_obj.isoformat(), "title": title,
         "description": description, "employee": employee, "category": category,
         "participants": list(participants or []),
+        "time": time.isoformat(timespec='minutes') if time else None,
     }
     events.append(new_event); save_events(events); _notify_event("add", new_event)
     check_rules_and_notify()
@@ -79,6 +81,10 @@ def update_event(event_id: int, form_data: Dict[str, Any]) -> bool:
         current_event_id = events[event_idx]['id']; update_payload = form_data.copy()
         if 'date' in update_payload and isinstance(update_payload['date'], date):
             update_payload['date'] = update_payload['date'].isoformat()
+        if 'time' in update_payload and isinstance(update_payload['time'], datetime.time):
+            update_payload['time'] = update_payload['time'].isoformat(timespec='minutes')
+        elif 'time' in update_payload and update_payload['time'] is None: # Ensure None is stored if time is explicitly cleared
+            update_payload['time'] = None
         events[event_idx].update(update_payload); events[event_idx]['id'] = current_event_id
         updated_event_for_notification = events[event_idx].copy()
         save_events(events); _notify_event("update", updated_event_for_notification)

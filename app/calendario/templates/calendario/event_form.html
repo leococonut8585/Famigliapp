@@ -12,6 +12,8 @@
     <p>{{ form.title.label }}<br>{{ form.title(size=30) }}</p>
     <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=40) }}</p>
     <p>{{ form.category.label }}<br>{{ form.category() }}</p>
+    {# Time field added here #}
+    <p>{{ form.time.label }}<br>{{ form.time(id='event_time') }}</p>
 
     {# 対象者フィールドのコンテナ #}
     <div id="participants-field-container">
@@ -43,11 +45,36 @@ function toggleParticipantsField(selectedCategory) {
     }
 }
 
+function toggleTimeField(categoryValue) {
+    const timeField = document.getElementById('event_time');
+    const timeFieldLabel = document.querySelector('label[for="event_time"]');
+    if (!timeField || !timeFieldLabel) return;
+
+    // 親の p タグを取得して表示/非表示を切り替える
+    const timeFieldWrapper = timeField.closest('p');
+
+    if (categoryValue === 'kouza' || categoryValue === 'lesson' || categoryValue === 'other') {
+        if (timeFieldWrapper) timeFieldWrapper.style.display = '';
+        // Fallback if p tag is not found (should not happen with current structure)
+        else {
+            timeField.style.display = '';
+            timeFieldLabel.style.display = '';
+        }
+    } else {
+        if (timeFieldWrapper) timeFieldWrapper.style.display = 'none';
+        else {
+            timeField.style.display = 'none';
+            timeFieldLabel.style.display = 'none';
+        }
+    }
+}
+
 // ページ読み込み時にも実行して、初期状態で正しく表示/非表示を制御
 document.addEventListener('DOMContentLoaded', function() {
     const categoryField = document.getElementById('category'); // form.category のidが 'category' であると仮定
     if (categoryField) {
         toggleParticipantsField(categoryField.value);
+        toggleTimeField(categoryField.value); // Also toggle time field on load
     }
 });
 </script>

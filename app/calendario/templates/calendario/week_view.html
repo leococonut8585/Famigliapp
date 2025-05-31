@@ -56,7 +56,7 @@
                                 <div class="event-actions" style="white-space: nowrap;">
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title or event.employee }}"
-                                            data-time="{{ event.display_time or '' }}" data-description="{{ event.description or '' }}"
+                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
@@ -65,7 +65,7 @@
                         {% else %}
                             <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {% if event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
+                                    {% if event.time %}<span class="event-time">{{ event.time }}</span>&nbsp;{% elif event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
                                     <span class="event-title">{{ event.cleaned_title }}</span>
                                      {% if event.employee and event.category != 'shift' %}
                                         <small class="text-muted ms-1">({{ event.employee }})</small>
@@ -74,7 +74,7 @@
                                 <div class="event-actions" style="white-space: nowrap;">
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title }}"
-                                            data-time="{{ event.display_time or '' }}" data-description="{{ event.description or '' }}"
+                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
@@ -111,7 +111,7 @@
                                 <div class="event-actions" style="white-space: nowrap;">
                                      <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title or event.employee }}"
-                                            data-time="{{ event.display_time or '' }}" data-description="{{ event.description or '' }}"
+                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
@@ -120,7 +120,7 @@
                         {% else %}
                              <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {% if event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
+                                    {% if event.time %}<span class="event-time">{{ event.time }}</span>&nbsp;{% elif event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
                                     <span class="event-title">{{ event.cleaned_title }}</span>
                                      {% if event.employee and event.category != 'shift' %}
                                         <small class="text-muted ms-1">({{ event.employee }})</small>
@@ -129,7 +129,7 @@
                                 <div class="event-actions" style="white-space: nowrap;">
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title }}"
-                                            data-time="{{ event.display_time or '' }}" data-description="{{ event.description or '' }}"
+                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
