@@ -244,42 +244,111 @@ def shift():
         elif action == "complete": flash("保存しました")
         else: flash("変更が保存されました")
         return redirect(url_for("calendario.shift", month=target_month_display.strftime('%Y-%m')))
-    all_events = utils.load_events()
-    assignments_for_display: Dict[str, List[str]] = defaultdict(list)
-    for event in all_events:
+    all_events_raw = utils.load_events()
+
+    # Process all events (similar to index() route)
+    for event in all_events_raw:
+        title_match = time_title_pattern.match(event.get('title', ''))
+        if title_match:
+            event['display_time'] = title_match.group(1)
+            event['cleaned_title'] = title_match.group(2).strip()
+        else:
+            event['display_time'] = None
+            event['cleaned_title'] = event.get('title', '')
+
+        category = event.get('category', 'other')
+        has_time = event.get('display_time') is not None
+        if category == 'shucchou':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['shucchou']
+            event['sort_time'] = "00:00"
+        elif category == 'hug':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['hug']
+            event['sort_time'] = "00:00"
+        elif category == 'shift':
+            event['sort_priority'] = EVENT_SORT_PRIORITY['shift']
+            event['sort_time'] = "00:00" # Shifts are typically all-day in display sense or handled by specific UI
+        elif category in ['lesson', 'kouza', 'other']:
+            if has_time:
+                event['sort_priority'] = EVENT_SORT_PRIORITY['other_with_time']
+                event['sort_time'] = event['display_time']
+            else:
+                event['sort_priority'] = EVENT_SORT_PRIORITY['other_no_time']
+                event['sort_time'] = "00:00"
+        else: # Fallback
+            event['sort_priority'] = 99
+            event['sort_time'] = "23:59"
+
+    # Filter events for the date range of the shift manager view (actual_calendar_start_date to actual_calendar_end_date)
+    # And also for the extended range needed for consecutive calculation (fetch_data_start_date_for_calc to fetch_data_end_date_for_calc)
+
+    relevant_events_for_display = []
+    for event in all_events_raw:
+        try:
+            event_date_obj = date.fromisoformat(event.get("date", ""))
+            if actual_calendar_start_date <= event_date_obj <= actual_calendar_end_date:
+                relevant_events_for_display.append(event)
+        except ValueError:
+            continue
+
+    relevant_events_for_display.sort(key=lambda e: (e.get("date", ""), e.get('sort_priority', 99), e.get('sort_time', '23:59')))
+
+    all_events_by_date_for_shift_view = defaultdict(list)
+    for event in relevant_events_for_display:
+        all_events_by_date_for_shift_view[event["date"]].append(event)
+
+    # Prepare shift-specific assignments for form submission and counts (original logic)
+    assignments_for_form_submission: Dict[str, List[str]] = defaultdict(list)
+    for event in all_events_raw: # Use all_events_raw to capture all shifts for the month for form
         if event.get("category") == "shift":
             try:
+                # Check if event_date is within the visible calendar range for display consistency
                 event_date_obj = date.fromisoformat(event.get("date", ""))
                 if actual_calendar_start_date <= event_date_obj <= actual_calendar_end_date:
-                    assignments_for_display[event["date"]].append(event.get("employee", ""))
-            except ValueError: continue
+                     assignments_for_form_submission[event["date"]].append(event.get("employee", ""))
+            except ValueError:
+                continue
+
+    # For consecutive day calculations, use a wider range
     assignments_for_consecutive_calc: Dict[str, List[str]] = defaultdict(list)
-    for event in all_events:
+    for event in all_events_raw:
         if event.get("category") == "shift":
             try:
                 event_date_obj = date.fromisoformat(event.get("date", ""))
                 if fetch_data_start_date_for_calc <= event_date_obj <= fetch_data_end_date_for_calc:
                     assignments_for_consecutive_calc[event["date"]].append(event.get("employee", ""))
             except ValueError: continue
-    employees = [n for n, info_user in config.USERS.items() if info_user.get("role") != "admin"] 
-    target_month_assignments: Dict[str, List[str]] = { d: emps for d, emps in assignments_for_display.items() if d.startswith(target_month_display.strftime("%Y-%m")) }
-    counts = {emp: sum(emp in v for v in target_month_assignments.values()) for emp in employees}
+
+    employees = [n for n, info_user in config.USERS.items() if info_user.get("role") != "admin"]
+
+    # Counts should be based on the current target_month, not the entire display or calculation range
+    target_month_shifts_for_counts: Dict[str, List[str]] = defaultdict(list)
+    for event in all_events_raw:
+        if event.get("category") == "shift" and event.get("date", "").startswith(target_month_display.strftime("%Y-%m")):
+            target_month_shifts_for_counts[event["date"]].append(event.get("employee", ""))
+
+    counts = {emp: sum(emp in v for v in target_month_shifts_for_counts.values()) for emp in employees}
     days_in_target_month = calendar.monthrange(target_month_display.year, target_month_display.month)[1]
     off_counts = {emp: days_in_target_month - counts.get(emp, 0) for emp in employees}
+
     limit_past_date = today.replace(year=today.year - 2); limit_future_date = today.replace(year=today.year + 2)
     nav_prev_month_obj = (target_month_display - timedelta(days=1)).replace(day=1)
     if nav_prev_month_obj.replace(day=calendar.monthrange(nav_prev_month_obj.year, nav_prev_month_obj.month)[1]) < limit_past_date: nav_prev_month_obj = None
     nav_next_month_obj = (target_month_display + timedelta(days=31)).replace(day=1)
     if nav_next_month_obj > limit_future_date: nav_next_month_obj = None
+
     rules, defined_attributes = utils.load_rules(); rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
     csrf_form = ShiftManagementForm()
     consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments_for_consecutive_calc, target_month_display)
+
     return render_template("shift_manager.html", user=user, month=target_month_display,
                            rules_for_js=rules_data_for_js, form=csrf_form,
-                           weeks=weeks_for_display, employees=employees, assignments=assignments_for_display,
+                           weeks=weeks_for_display, employees=employees,
+                           assignments=assignments_for_form_submission, # For hidden inputs
+                           all_events_by_date=all_events_by_date_for_shift_view, # For display
                            counts=counts, off_counts=off_counts,
                            nav_prev_month=nav_prev_month_obj, nav_next_month=nav_next_month_obj,
-                           consecutive_days_data=consecutive_days_data)
+                           consecutive_days_data=consecutive_days_data,
+                           EVENT_SORT_PRIORITY=EVENT_SORT_PRIORITY) # Pass EVENT_SORT_PRIORITY if needed in template
 
 @bp.route("/shift_rules", methods=["GET", "POST"])
 def shift_rules():
