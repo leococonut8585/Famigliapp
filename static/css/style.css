@@ -176,37 +176,91 @@ ul {
 /* For the container of events within a calendar cell (month view) */
 .event-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Responsive columns, aims for ~3 items if cell is wide enough */
-    gap: 3px; /* Space between event items */
-    padding-top: 2px; /* Some padding at the top of the event group */
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 3px;
+    padding-top: 2px;
 }
 
-/* For the container of events within a calendar cell (week view - potentially wider cells) */
-/* If week view cells are significantly wider, this can be used, or media queries. */
-/* For now, month_view will use event-grid-container, week_view can also start with it and be adjusted later if needed. */
-.event-grid-container-week { /* Initially same as month, can be adjusted if week view cells are wider */
+.event-grid-container-week {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 3px;
     padding-top: 2px;
 }
 
-/* For individual event items within the grid container */
 .event-grid-item {
     padding: 2px 4px;
-    border: 1px solid #e0e0e0; /* Lighter border */
+    border: 1px solid #e0e0e0;
     border-radius: 3px;
-    background-color: #f9f9f9; /* Default background, will be overridden by specific event type colors later */
-    word-break: break-word; /* Break long words to prevent overflow */
-    overflow: hidden; /* Hide overflow if content is too long for the item size */
-    text-overflow: ellipsis; /* Show ellipsis for overflowed text (might need fixed height/width for best effect) */
-    /* For ellipsis to work well, often a fixed height or max-height and white-space: nowrap is also needed, */
-    /* but that might be too restrictive. word-break: break-word is a safer start. */
+    background-color: #f9f9f9; /* Default background */
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Custom small button style (if Bootstrap's .btn-sm is not small enough) */
 .btn-xs-custom {
     padding: 0.1rem 0.3rem;
-    font-size: 0.75em; /* Slightly larger than original thought for better readability */
+    font-size: 0.75em;
     line-height: 1.2;
+}
+
+/* === Decima Calendar Revamp - Event Display === */
+
+/* Shift-specific 4-column grid container */
+.shift-grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 3px; /* Gap between shift items */
+    padding-top: 2px;
+}
+
+/* Individual shift items within the shift grid */
+.shift-grid-item {
+    padding: 2px 4px;
+    border: 1px solid #777; /* Slightly darker border for shift items */
+    border-radius: 3px;
+    /* background-color and color will be set by .event-shift-item */
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
+}
+
+/* Category-specific styling for event items */
+/* These will be applied to .event-grid-item or .shift-grid-item */
+
+.event-shucchou {
+    background-color: orange;
+    color: white !important;
+}
+
+.event-hug {
+    background-color: blue;
+    color: white !important;
+}
+
+.event-lesson {
+    background-color: green;
+    color: white !important;
+}
+
+.event-kouza {
+    background-color: purple;
+    color: white !important;
+}
+
+.event-other {
+    background-color: pink;
+    color: black !important;
+}
+
+.event-shift-item { /* Specific for shift items, can be combined with .shift-grid-item */
+    background-color: gray;
+    color: white !important;
+}
+
+/* Styling for event time displayed before title */
+.event-time {
+    font-weight: bold;
+    margin-right: 0.3em; /* Space between time and title */
 }
