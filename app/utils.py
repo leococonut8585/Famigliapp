@@ -179,23 +179,33 @@ def send_email(subject: str, body: str, to: str) -> None:
                 sender=getattr(current_app.config, "MAIL_SENDER", "famigliapp@example.com"),
             )
             current_app.extensions["mail"].send(msg)
-        else:
+        else: # Fallback to smtplib
             msg = EmailMessage()
             msg["Subject"] = subject
             msg["From"] = getattr(config, "MAIL_SENDER", "famigliapp@example.com")
             msg["To"] = to
             msg.set_content(body)
-            with smtplib.SMTP(
-                getattr(config, "MAIL_SERVER", "localhost"),
-                getattr(config, "MAIL_PORT", 25),
-            ) as smtp:
+            # Ensure MAIL_SERVER and MAIL_PORT are defined in config or have defaults
+            mail_server = getattr(config, "MAIL_SERVER", "localhost")
+            mail_port = getattr(config, "MAIL_PORT", 25)
+            with smtplib.SMTP(mail_server, mail_port) as smtp:
+                # Add STARTTLS if supported by the server and configured
+                if getattr(config, "MAIL_USE_TLS", False): # Assuming a MAIL_USE_TLS config option
+                    smtp.starttls()
+                # Add login if username/password are configured
+                mail_username = getattr(config, "MAIL_USERNAME", None)
+                mail_password = getattr(config, "MAIL_PASSWORD", None)
+                if mail_username and mail_password:
+                    smtp.login(mail_username, mail_password)
                 smtp.send_message(msg)
-    except Exception as exc:  # pragma: no cover - log and continue
+    except Exception as exc:
+        log_message = f"Failed to send email (suppressed): {exc}"
         if current_app:
-            current_app.logger.warning(f"Failed to send email: {exc}")
+            current_app.logger.warning(log_message)
         else:
-            print(f"Failed to send email: {exc}")
+            print(log_message) # Print to console if no Flask app context
 
+    # These notifications will still be attempted even if email fails
     send_line_notify(f"{subject}\n{body}")
     send_pushbullet_notify(subject, body)
 

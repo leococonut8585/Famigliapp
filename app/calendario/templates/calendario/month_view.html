@@ -214,8 +214,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const newDate = dndPopup.dataset.newDate;
         // draggedElement and currentDropZone are accessible from the outer scope
 
+        console.log(`handleDropOperation called with: operation=${operation}, eventId=${eventId}, newDate=${newDate}`);
+        console.log('draggedElement:', draggedElement);
+        console.log('currentDropZone:', currentDropZone);
+
         if (!eventId || !newDate || !draggedElement || !currentDropZone) {
-            console.error("Popup operation failed: missing data.");
+            console.error("Popup operation failed: missing critical data. EventID:", eventId, "NewDate:", newDate, "DraggedElement:", draggedElement, "DropZone:", currentDropZone);
             if(draggedElement) draggedElement.style.opacity = '1';
             dndPopup.style.display = 'none';
             draggedElement = null;
@@ -237,8 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 operation: operation
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('API Response Status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('API Data:', data);
             if (data.success) {
                 if (operation === "move" && draggedElement) {
                     currentDropZone.appendChild(draggedElement);
@@ -272,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('通信エラーが発生しました。');
         })
         .finally(() => {
+            console.log('handleDropOperation finally block. draggedElement:', draggedElement);
             if (draggedElement) {
                 draggedElement.style.opacity = '1';
             }
@@ -281,8 +290,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    btnMove.addEventListener('click', function() { handleDropOperation("move"); });
-    btnCopy.addEventListener('click', function() { handleDropOperation("copy"); });
+    btnMove.addEventListener('click', function() {
+        console.log('Move button clicked. EventID from popup dataset:', dndPopup.dataset.eventId, 'NewDate from popup dataset:', dndPopup.dataset.newDate);
+        console.log('State before calling handleDropOperation (Move): draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
+        if (draggedElement && currentDropZone && dndPopup.dataset.eventId && dndPopup.dataset.newDate) {
+            handleDropOperation("move");
+        } else {
+            console.error('Move button: Pre-condition failed. draggedElement:', draggedElement, 'currentDropZone:', currentDropZone, 'EventID:', dndPopup.dataset.eventId, 'NewDate:', dndPopup.dataset.newDate);
+            // Restore UI state if something is wrong
+            if (draggedElement) draggedElement.style.opacity = '1';
+            dndPopup.style.display = 'none';
+            draggedElement = null;
+            currentDropZone = null;
+        }
+    });
+    btnCopy.addEventListener('click', function() {
+        console.log('Copy button clicked. EventID from popup dataset:', dndPopup.dataset.eventId, 'NewDate from popup dataset:', dndPopup.dataset.newDate);
+        console.log('State before calling handleDropOperation (Copy): draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
+        if (draggedElement && currentDropZone && dndPopup.dataset.eventId && dndPopup.dataset.newDate) {
+            handleDropOperation("copy");
+        } else {
+            console.error('Copy button: Pre-condition failed. draggedElement:', draggedElement, 'currentDropZone:', currentDropZone, 'EventID:', dndPopup.dataset.eventId, 'NewDate:', dndPopup.dataset.newDate);
+            // Restore UI state
+            if (draggedElement) draggedElement.style.opacity = '1';
+            dndPopup.style.display = 'none';
+            draggedElement = null;
+            currentDropZone = null;
+        }
+    });
     btnCancel.addEventListener('click', function() {
         if (draggedElement) {
             draggedElement.style.opacity = '1';
