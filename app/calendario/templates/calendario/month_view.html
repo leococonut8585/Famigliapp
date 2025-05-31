@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                     // CSRFトークンが必要な場合はヘッダーに追加
-                    // 'X-CSRFToken': '{{ csrf_token() }}' // CSRF保護が有効な場合
+                    // 'X-CSRFToken': '{% raw %}{{ csrf_token() }}{% endraw %}' // CSRF保護が有効な場合
                 },
                 body: JSON.stringify({
                     event_id: parseInt(eventId), // 文字列から数値に変換
