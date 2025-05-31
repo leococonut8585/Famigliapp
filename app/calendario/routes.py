@@ -22,6 +22,8 @@ from typing import Dict, List
 import re
 from collections import defaultdict
 
+# Regex for parsing time from event titles
+time_title_pattern = re.compile(r'^(\d{1,2}:\d{2})\s*(.*)$')
 
 @bp.before_request
 def require_login():
@@ -47,29 +49,59 @@ def index():
         try: week_start = datetime.fromisoformat(week_param).date()
         except Exception: week_start = today - timedelta(days=today.weekday())
     else: week_start = today - timedelta(days=today.weekday())
-    week_start = week_start - timedelta(days=week_start.weekday())
-    events = utils.load_events(); events.sort(key=lambda e: e.get("date")); stats = {}
+    week_start = week_start - timedelta(days=week_start.weekday()) # Ensure week_start is a Monday
+
+    events = utils.load_events()
+    # Process all events once to add display_time and cleaned_title
+    for event_item in events: # Renamed 'e' to 'event_item' to avoid conflict
+        title_match = time_title_pattern.match(event_item.get('title', ''))
+        if title_match:
+            event_item['display_time'] = title_match.group(1)
+            event_item['cleaned_title'] = title_match.group(2).strip()
+        else:
+            event_item['display_time'] = None
+            event_item['cleaned_title'] = event_item.get('title', '')
+
+    events.sort(key=lambda e_sort: e_sort.get("date")) # Renamed 'e' to 'e_sort'
+
+    stats = {}
     if events:
-        try: start_date = date.fromisoformat(events[0].get("date"))
-        except Exception: start_date = None
-        stats = utils.compute_employee_stats(start_date_param=start_date, end_date_param=date.today())
+        try: start_date_for_stats = date.fromisoformat(events[0].get("date")) # Renamed
+        except Exception: start_date_for_stats = None # Renamed
+        stats = utils.compute_employee_stats(start_date_param=start_date_for_stats, end_date_param=date.today())
+
     if view == "week":
         start_d = week_start; end_d = week_start + timedelta(days=6)
         week_days = [start_d + timedelta(days=i) for i in range(7)]; time_slots = []
         for hour in range(24): time_slots.append(f"{hour:02d}:00"); time_slots.append(f"{hour:02d}:30")
-        raw_week_events = [e for e in events if start_d <= date.fromisoformat(e.get("date")) <= end_d]
-        structured_events = defaultdict(lambda: defaultdict(list)); time_regex = re.compile(r"(\d{1,2}):(\d{2})")
-        for event in raw_week_events:
-            event_date_iso = event.get("date"); event_title = event.get("title", "")
-            match = time_regex.search(event_title)
-            if match:
-                hour_val, minute_val = int(match.group(1)), int(match.group(2))
-                if 0 <= hour_val <= 23 and 0 <= minute_val <= 59:
+
+        raw_week_events = []
+        for e_raw in events: # Renamed 'e' to 'e_raw'
+            try:
+                event_date_obj = date.fromisoformat(e_raw.get("date"))
+                if start_d <= event_date_obj <= end_d:
+                    raw_week_events.append(e_raw)
+            except (ValueError, TypeError): # Catch errors if date is malformed or None
+                continue
+
+        structured_events = defaultdict(lambda: defaultdict(list))
+        # The time_regex for slot determination in week view is different from title parsing.
+        # The title parsing already happened. Here we use display_time if available.
+        for event_struct in raw_week_events: # Renamed 'event' to 'event_struct'
+            event_date_iso = event_struct.get("date")
+            # Use pre-parsed display_time for slotting if available
+            if event_struct.get('display_time'):
+                time_parts = event_struct['display_time'].split(':')
+                hour_val, minute_val = int(time_parts[0]), int(time_parts[1])
+                if 0 <= hour_val <= 23 and 0 <= minute_val <= 59: # Should always be true if display_time is valid
                     slot_time = f"{hour_val:02d}:00" if minute_val < 30 else f"{hour_val:02d}:30"
-                    structured_events[event_date_iso][slot_time].append(event)
-                else: structured_events[event_date_iso]['all_day'].append(event)
-            else: structured_events[event_date_iso]['all_day'].append(event)
-        display_month_obj = start_d.replace(day=1) # Renamed month to display_month_obj for clarity
+                    structured_events[event_date_iso][slot_time].append(event_struct)
+                else: # Fallback for safety, or if display_time was not strictly HH:MM
+                    structured_events[event_date_iso]['all_day'].append(event_struct)
+            else: # No display_time means it's an all-day event or title had no time
+                structured_events[event_date_iso]['all_day'].append(event_struct)
+
+        display_month_obj = start_d.replace(day=1)
         nav_prev_week = start_d - timedelta(days=7)
         if nav_prev_week < limit_past_date: nav_prev_week = None
         nav_next_week = start_d + timedelta(days=7)
@@ -82,20 +114,24 @@ def index():
                                structured_events=structured_events, timedelta=timedelta, view=view, month=display_month_obj,
                                today_date=today.isoformat(), nav_prev_week=nav_prev_week, nav_next_week=nav_next_week,
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
-    else: # month view (target_month_display is the 'month' variable here)
-        # This is the original month view logic using calendar.monthdatescalendar
-        # It will be replaced by the 6-week view logic in the /shift route for consistency if desired,
-        # or kept as a distinct view. For now, /shift route gets the new logic.
-        target_month_display = month # month is already the first day of the target month
-        events_month = [e for e in events if e.get("date", "").startswith(target_month_display.strftime("%Y-%m"))]
+    else: # month view
+        target_month_display = month
+        # Events are already processed with cleaned_title and display_time
+        events_month = [e_month for e_month in events if e_month.get("date", "").startswith(target_month_display.strftime("%Y-%m"))] # Renamed 'e'
         nav_prev_month_val = (target_month_display - timedelta(days=1)).replace(day=1)
         if nav_prev_month_val.replace(day=calendar.monthrange(nav_prev_month_val.year, nav_prev_month_val.month)[1]) < limit_past_date: nav_prev_month_val = None
         nav_next_month_val = (target_month_display + timedelta(days=31)).replace(day=1)
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
-        events_by_date = {};_ = [events_by_date.setdefault(e_event_by_date["date"], []).append(e_event_by_date) for e_event_by_date in events_month]
+        events_by_date = defaultdict(list) # Use defaultdict for cleaner append
+        for e_event_by_date in events_month:
+            events_by_date[e_event_by_date["date"]].append(e_event_by_date)
         cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
         return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=target_month_display,
                                nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
+
+# ... (rest of the file remains the same: /add, /edit, /delete, /move, /assign, /shift, /shift_rules, /stats, and API routes) ...
+# For brevity, only the relevant index() function is shown fully modified.
+# The overwrite will include the full original content for other routes.
 
 @bp.route("/add", methods=["GET", "POST"])
 def add():
@@ -150,43 +186,28 @@ def assign(event_id: int):
 @bp.route("/shift", methods=["GET", "POST"])
 def shift():
     user = session.get("user"); month_param = request.args.get("month"); today = date.today()
-    # target_month_display is the first day of the month the user selected to view.
     if month_param:
         try: year, mon = map(int, month_param.split("-")); target_month_display = date(year, mon, 1)
         except Exception: target_month_display = date(today.year, today.month, 1)
     else: target_month_display = date(today.year, today.month, 1)
-
-    # Calculate actual_calendar_start_date (Monday of the week before the week containing month's 1st day)
-    weekday_of_first_day = target_month_display.weekday() # Monday is 0, Sunday is 6
+    weekday_of_first_day = target_month_display.weekday()
     start_of_first_week_in_target_month_view = target_month_display - timedelta(days=weekday_of_first_day)
     actual_calendar_start_date = start_of_first_week_in_target_month_view - timedelta(days=7)
-
-    # Generate the 6 weeks (42 days) for display
-    current_day_iterator = actual_calendar_start_date
-    weeks_for_display = []
-    for _week_num in range(6): # Generate 6 weeks
+    current_day_iterator = actual_calendar_start_date; weeks_for_display = []
+    for _week_num in range(6):
         week_row = []
-        for _day_in_week in range(7): # 7 days per week
-            week_row.append(current_day_iterator)
-            current_day_iterator += timedelta(days=1)
+        for _day_in_week in range(7): week_row.append(current_day_iterator); current_day_iterator += timedelta(days=1)
         weeks_for_display.append(week_row)
-
-    # Determine the actual end date of the 6-week display
     actual_calendar_end_date = weeks_for_display[-1][-1]
-
-    # For consecutive day calculation, fetch data from a bit before actual_calendar_start_date
-    # up to actual_calendar_end_date.
-    # Using a fixed buffer for now, can be refined with rules.get("max_consecutive_days", 7)
-    fetch_data_start_date_for_calc = actual_calendar_start_date - timedelta(days=14) # Wider buffer
+    fetch_data_start_date_for_calc = actual_calendar_start_date - timedelta(days=14)
     fetch_data_end_date_for_calc = actual_calendar_end_date
-
     if request.method == "POST":
         if not user or user.get("role") != "admin":
             flash("権限がありません (POST Auth)"); return redirect(url_for("calendario.index", month=target_month_display.strftime('%Y-%m')))
         action = request.form.get("action"); schedule: Dict[str, List[str]] = {}
         for key, val in request.form.items():
             if key.startswith("d-"): schedule[key[2:]] = [e for e in val.split(',') if e]
-        try: utils.set_shift_schedule(target_month_display, schedule) # set_shift_schedule uses target_month_display to clear old shifts
+        try: utils.set_shift_schedule(target_month_display, schedule)
         except Exception as e: flash(f"シフトの保存中にエラーが発生しました: {e}", "error"); return redirect(url_for("calendario.shift", month=target_month_display.strftime('%Y-%m')))
         if action == "notify":
             try: utils._notify_all("シフト更新", f"{target_month_display.strftime('%Y-%m')} のシフトが更新されました"); utils.check_rules_and_notify(send_notifications=True); flash("通知を送信しました")
@@ -194,10 +215,7 @@ def shift():
         elif action == "complete": flash("保存しました")
         else: flash("変更が保存されました")
         return redirect(url_for("calendario.shift", month=target_month_display.strftime('%Y-%m')))
-
     all_events = utils.load_events()
-
-    # Assignments for display (covering the 6-week displayed grid)
     assignments_for_display: Dict[str, List[str]] = defaultdict(list)
     for event in all_events:
         if event.get("category") == "shift":
@@ -206,8 +224,6 @@ def shift():
                 if actual_calendar_start_date <= event_date_obj <= actual_calendar_end_date:
                     assignments_for_display[event["date"]].append(event.get("employee", ""))
             except ValueError: continue
-
-    # Assignments for calculation (extended range for accuracy)
     assignments_for_consecutive_calc: Dict[str, List[str]] = defaultdict(list)
     for event in all_events:
         if event.get("category") == "shift":
@@ -216,36 +232,25 @@ def shift():
                 if fetch_data_start_date_for_calc <= event_date_obj <= fetch_data_end_date_for_calc:
                     assignments_for_consecutive_calc[event["date"]].append(event.get("employee", ""))
             except ValueError: continue
-
     employees = [n for n, info_user in config.USERS.items() if info_user.get("role") != "admin"] 
-    # Counts should still be for the target month for the summary display
-    target_month_assignments: Dict[str, List[str]] = {
-        d: emps for d, emps in assignments_for_display.items() if d.startswith(target_month_display.strftime("%Y-%m"))
-    }
+    target_month_assignments: Dict[str, List[str]] = { d: emps for d, emps in assignments_for_display.items() if d.startswith(target_month_display.strftime("%Y-%m")) }
     counts = {emp: sum(emp in v for v in target_month_assignments.values()) for emp in employees}
     days_in_target_month = calendar.monthrange(target_month_display.year, target_month_display.month)[1]
     off_counts = {emp: days_in_target_month - counts.get(emp, 0) for emp in employees}
-
     limit_past_date = today.replace(year=today.year - 2); limit_future_date = today.replace(year=today.year + 2)
-    nav_prev_month_obj = (target_month_display - timedelta(days=1)).replace(day=1) # Renamed for clarity
+    nav_prev_month_obj = (target_month_display - timedelta(days=1)).replace(day=1)
     if nav_prev_month_obj.replace(day=calendar.monthrange(nav_prev_month_obj.year, nav_prev_month_obj.month)[1]) < limit_past_date: nav_prev_month_obj = None
-    nav_next_month_obj = (target_month_display + timedelta(days=31)).replace(day=1) # Renamed for clarity
+    nav_next_month_obj = (target_month_display + timedelta(days=31)).replace(day=1)
     if nav_next_month_obj > limit_future_date: nav_next_month_obj = None
-
     rules, defined_attributes = utils.load_rules(); rules_data_for_js = {"rules": rules, "defined_attributes": defined_attributes}
     csrf_form = ShiftManagementForm()
-
     consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments_for_consecutive_calc, target_month_display)
-
-    return render_template("shift_manager.html", user=user, month=target_month_display, # Pass target_month_display as 'month'
+    return render_template("shift_manager.html", user=user, month=target_month_display,
                            rules_for_js=rules_data_for_js, form=csrf_form,
-                           weeks=weeks_for_display, # Use the new 6-week list
-                           employees=employees, assignments=assignments_for_display,
+                           weeks=weeks_for_display, employees=employees, assignments=assignments_for_display,
                            counts=counts, off_counts=off_counts,
-                           nav_prev_month=nav_prev_month_obj,
-                           nav_next_month=nav_next_month_obj,
-                           consecutive_days_data=consecutive_days_data
-                           )
+                           nav_prev_month=nav_prev_month_obj, nav_next_month=nav_next_month_obj,
+                           consecutive_days_data=consecutive_days_data)
 
 @bp.route("/shift_rules", methods=["GET", "POST"])
 def shift_rules():
@@ -325,5 +330,5 @@ def check_shift_violations_api():
     except ValueError: return jsonify({"success": False, "error": "Invalid month format. Please use YYYY-MM."}), 400
     rules, _ = utils.load_rules(); users_config = config.USERS
     violation_list = utils.get_shift_violations(current_assignments, rules, users_config)
-    consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start) # This now uses assignments from the API (current view)
+    consecutive_info = utils.calculate_consecutive_work_days_for_all(current_assignments, target_month_start)
     return jsonify({"success": True, "violations": violation_list, "consecutive_work_info": consecutive_info})
