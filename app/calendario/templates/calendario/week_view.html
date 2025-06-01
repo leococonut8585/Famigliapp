@@ -39,7 +39,7 @@
             <tr>
                 <td class="time-slot-label table-light">終日</td>
                 {% for day in week_days %}
-                <td class="calendar-cell all-day-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: auto; min-height: 60px; overflow-y: auto; padding: 2px;">
+                <td class="calendar-cell all-day-cell {% if day.isoformat() == today_date %}table-info{% endif %}" data-date="{{ day.isoformat() }}" style="height: auto; min-height: 60px; overflow-y: auto; padding: 2px;">
                     {% set daily_events = structured_events.get(day.isoformat(), {}).get('all_day', []) %}
                     {% for event in daily_events %}
                         {% if event.category == 'shift' and (loop.first or loop.previtem.category != 'shift') %}
@@ -49,21 +49,18 @@
                         {% endif %}
 
                         {% if event.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between">
+                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {{ event.cleaned_title or event.employee }}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
-                                    <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
-                                            data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title or event.employee }}"
-                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
-                                            data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
-                                            data-category="{{ event.category }}">詳細</button>
-                                    <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    {# Shift events: Copy, Move #}
+                                    <button type="button" class="btn btn-custom-copy btn-xs-custom ms-1" data-event-id="{{ event.id }}">コピー</button>
+                                    <button type="button" class="btn btn-custom-move btn-xs-custom ms-1" data-event-id="{{ event.id }}">移動</button>
                                 </div>
                             </div>
                         {% else %}
-                            <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1">
+                            <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {% if event.time %}<span class="event-time">{{ event.time }}</span>&nbsp;{% elif event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
                                     <span class="event-title">{{ event.cleaned_title }}</span>
@@ -72,12 +69,15 @@
                                     {% endif %}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
+                                    {# Non-shift events: Details, Edit, Copy, Move #}
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title }}"
                                             data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    <button type="button" class="btn btn-custom-copy btn-xs-custom ms-1" data-event-id="{{ event.id }}">コピー</button>
+                                    <button type="button" class="btn btn-custom-move btn-xs-custom ms-1" data-event-id="{{ event.id }}">移動</button>
                                 </div>
                             </div>
                         {% endif %}
@@ -94,7 +94,7 @@
             <tr>
                 <td class="time-slot-label table-light">{{ slot }}</td>
                 {% for day in week_days %}
-                <td class="calendar-cell {% if day.isoformat() == today_date %}table-info{% endif %}" style="height: 70px; overflow-y: auto; padding: 2px;">
+                <td class="calendar-cell {% if day.isoformat() == today_date %}table-info{% endif %}" data-date="{{ day.isoformat() }}" style="height: 70px; overflow-y: auto; padding: 2px;">
                     {% set slot_events = structured_events.get(day.isoformat(), {}).get(slot, []) %}
                     {% for event in slot_events %}
                         {% if event.category == 'shift' and (loop.first or loop.previtem.category != 'shift') %}
@@ -104,21 +104,18 @@
                         {% endif %}
 
                         {% if event.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between">
+                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {{ event.cleaned_title or event.employee }}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
-                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
-                                            data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title or event.employee }}"
-                                            data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
-                                            data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
-                                            data-category="{{ event.category }}">詳細</button>
-                                    <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    {# Shift events: Copy, Move #}
+                                    <button type="button" class="btn btn-custom-copy btn-xs-custom ms-1" data-event-id="{{ event.id }}">コピー</button>
+                                    <button type="button" class="btn btn-custom-move btn-xs-custom ms-1" data-event-id="{{ event.id }}">移動</button>
                                 </div>
                             </div>
                         {% else %}
-                             <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1">
+                             <div class="event-grid-item {{ 'event-' + (event.category if event.category else 'other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {% if event.time %}<span class="event-time">{{ event.time }}</span>&nbsp;{% elif event.display_time %}<span class="event-time">{{ event.display_time }}</span>&nbsp;{% endif %}
                                     <span class="event-title">{{ event.cleaned_title }}</span>
@@ -127,12 +124,15 @@
                                     {% endif %}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
+                                    {# Non-shift events: Details, Edit, Copy, Move #}
                                     <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
                                             data-event-id="{{ event.id }}" data-title="{{ event.cleaned_title }}"
                                             data-time="{{ event.time or event.display_time or '' }}" data-description="{{ event.description or '' }}"
                                             data-participants="{{ event.participants|join(', ') if event.participants else '' }}"
                                             data-category="{{ event.category }}">詳細</button>
                                     <a href="{{ url_for('calendario.edit_event', event_id=event.id) }}" class="btn btn-primary btn-xs-custom ms-1">編集</a>
+                                    <button type="button" class="btn btn-custom-copy btn-xs-custom ms-1" data-event-id="{{ event.id }}">コピー</button>
+                                    <button type="button" class="btn btn-custom-move btn-xs-custom ms-1" data-event-id="{{ event.id }}">移動</button>
                                 </div>
                             </div>
                         {% endif %}
@@ -156,6 +156,16 @@
     <p class="mt-3"><a href="{{ url_for('index') }}" class="btn btn-outline-secondary">メインページに戻る</a></p>
 </div>
 
+<!-- D&D Confirmation Popup -->
+<div id="dndConfirmationPopup" style="display: none; position: absolute; border: 1px solid #ccc; background-color: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001;">
+    <p style="margin-top: 0; margin-bottom: 10px;">この予定に対する操作を選択してください:</p>
+    <div style="display: flex; justify-content: space-around;">
+        <button type="button" id="dndConfirmMove" class="btn btn-primary btn-sm">移動</button>
+        <button type="button" id="dndConfirmCopy" class="btn btn-success btn-sm">コピー</button>
+        <button type="button" id="dndConfirmCancel" class="btn btn-secondary btn-sm">キャンセル</button>
+    </div>
+</div>
+
 <!-- Event Detail Modal -->
 <div class="modal fade" id="eventDetailModal" tabindex="-1" aria-labelledby="eventDetailModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable">
@@ -175,4 +185,9 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/calendar_event_details.js') }}" defer></script>
+<script>
+    // Provide the URL to the drag_drop script
+    var apiEventDropUrl = "{{ url_for('calendario.api_event_drop') }}";
+</script>
+<script src="{{ url_for('static', filename='js/calendar_drag_drop.js') }}" defer></script>
 {% endblock %}
