@@ -17,6 +17,7 @@ def _notify_all(subject: str, body: str) -> None:
         if email: send_email(subject, body, email)
 
 def _notify_event(action: str, event_data: Dict[str, Any], old_date_val: str = "") -> None:
+    print(f"LOG: {datetime.now()} - Entered _notify_event. Action: {action}, Event Title: {event_data.get('title')}")
     title = event_data.get("title", ""); date_str = event_data.get("date", "")
     body = ""
     if action == "add": body = f"{date_str} に '{title}' が追加されました。"
@@ -25,7 +26,14 @@ def _notify_event(action: str, event_data: Dict[str, Any], old_date_val: str = "
     elif action == "assign": body = f"{date_str} の '{title}' の担当が {event_data.get('employee', '')} に設定されました。"
     elif action == "update": body = f"{date_str} の '{title}' が更新されました。"
     else: body = f"イベント '{title}' ({date_str}) に関する通知: アクション '{action}'。"
-    if body: _notify_all("カレンダー更新", body)
+
+    if body:
+        print(f"LOG: {datetime.now()} - _notify_event: Calling _notify_all for action: {action}")
+        _notify_all("カレンダー更新", body)
+        print(f"LOG: {datetime.now()} - _notify_event: Returned from _notify_all for action: {action}")
+    else:
+        print(f"LOG: {datetime.now()} - _notify_event: No body generated for notification. Action: {action}")
+    print(f"LOG: {datetime.now()} - Exiting _notify_event. Action: {action}")
 
 DEFAULT_RULES: Dict[str, Any] = {
     "max_consecutive_days": 5, "min_staff_per_day": 1,
@@ -38,20 +46,33 @@ EVENTS_PATH = Path(getattr(config, "CALENDAR_FILE", "events.json"))
 RULES_PATH = Path(getattr(config, "CALENDAR_RULES_FILE", "calendar_rules.json"))
 
 def load_events() -> List[Dict[str, Any]]:
+    print(f"LOG: {datetime.now()} - Entered load_events")
     if EVENTS_PATH.exists():
         with open(EVENTS_PATH, "r", encoding="utf-8") as f:
-            try: return json.load(f)
-            except json.JSONDecodeError: return []
+            try:
+                events = json.load(f)
+                print(f"LOG: {datetime.now()} - Exiting load_events, loaded {len(events)} events")
+                return events
+            except json.JSONDecodeError:
+                print(f"LOG: {datetime.now()} - Exiting load_events, JSONDecodeError")
+                return []
+    print(f"LOG: {datetime.now()} - Exiting load_events, file not found")
     return []
 
 def save_events(events_list: List[Dict[str, Any]]) -> None:
+    print(f"LOG: {datetime.now()} - Entered save_events, saving {len(events_list)} events")
     with open(EVENTS_PATH, "w", encoding="utf-8") as f:
         json.dump(events_list, f, ensure_ascii=False, indent=2)
+    print(f"LOG: {datetime.now()} - Exiting save_events")
 
 def get_event_by_id(event_id: int) -> Optional[Dict[str, Any]]:
+    print(f"LOG: {datetime.now()} - Entered get_event_by_id for event_id: {event_id}")
     events = load_events()
     for event_item in events:
-        if event_item.get("id") == event_id: return event_item
+        if event_item.get("id") == event_id:
+            print(f"LOG: {datetime.now()} - Exiting get_event_by_id, event found.")
+            return event_item
+    print(f"LOG: {datetime.now()} - Exiting get_event_by_id, event not found.")
     return None
 
 def add_event(
@@ -132,12 +153,26 @@ def parse_kv_int(text: str) -> Dict[str, int]:
     return result
 
 def move_event(event_id: int, new_event_date: date) -> bool:
+    print(f"LOG: {datetime.now()} - Entered move_event for event_id: {event_id} to new_date: {new_event_date.isoformat()}")
     events = load_events(); updated = False; changed_event_copy = None; original_date_str = ""
     for ev_item in events:
         if ev_item.get("id") == event_id:
             original_date_str = ev_item.get("date", ""); ev_item["date"] = new_event_date.isoformat(); updated = True
             changed_event_copy = ev_item.copy(); break
-    if updated: save_events(events); _notify_event("move", changed_event_copy, original_date_str) if changed_event_copy else None; check_rules_and_notify()
+
+    if updated:
+        print(f"LOG: {datetime.now()} - Event {event_id} date updated in memory. Calling save_events.")
+        save_events(events)
+        print(f"LOG: {datetime.now()} - Returned from save_events for move. Calling _notify_event.")
+        if changed_event_copy:
+            _notify_event("move", changed_event_copy, original_date_str)
+        print(f"LOG: {datetime.now()} - Returned from _notify_event for move. Calling check_rules_and_notify.")
+        check_rules_and_notify()
+        print(f"LOG: {datetime.now()} - Returned from check_rules_and_notify for move.")
+    else:
+        print(f"LOG: {datetime.now()} - Event {event_id} not found for moving.")
+
+    print(f"LOG: {datetime.now()} - Exiting move_event. Updated: {updated}")
     return updated
 
 def assign_employee(event_id: int, employee_name: str) -> bool:
@@ -162,7 +197,12 @@ def get_admin_email_address() -> Optional[str]:
         if user_cfg.get("role") == "admin" and user_cfg.get("email"): return user_cfg["email"]
     return getattr(config, "ADMIN_EMAIL", None) 
 
-def check_rules_and_notify(send_notifications: bool = False) -> None: pass
+def check_rules_and_notify(send_notifications: bool = False) -> None:
+    print(f"LOG: {datetime.now()} - Entered check_rules_and_notify. send_notifications: {send_notifications}")
+    # Current implementation is pass, so nothing complex to log inside.
+    # If logic is added, log before/after significant steps.
+    print(f"LOG: {datetime.now()} - Exiting check_rules_and_notify")
+    pass
 
 def get_users_on_shift(target_date: date) -> List[str]:
     events = load_events(); users_on_shift_today: Set[str] = set(); target_date_iso = target_date.isoformat()

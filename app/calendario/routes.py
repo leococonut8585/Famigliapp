@@ -489,60 +489,77 @@ def check_shift_violations_api():
 
 @bp.route('/api/event/drop', methods=['POST'])
 def api_event_drop():
+    print(f"LOG: {datetime.now()} - Entered api_event_drop")
     data = request.get_json()
     if not data:
+        print(f"LOG: {datetime.now()} - Invalid request: No payload")
         return jsonify({"success": False, "error": "無効なリクエストです。ペイロードがありません。"}), 400
 
     event_id_str = data.get('event_id')
     new_date_str = data.get('new_date')
     operation = data.get('operation')
+    print(f"LOG: {datetime.now()} - Request data: event_id={event_id_str}, new_date={new_date_str}, operation={operation}")
 
     if not all([event_id_str, new_date_str, operation]):
+        print(f"LOG: {datetime.now()} - Invalid request: Missing required fields")
         return jsonify({"success": False, "error": "無効なリクエストです。必須フィールドがありません。"}), 400
 
     try:
         event_id = int(event_id_str)
         new_date_obj = date.fromisoformat(new_date_str)
     except ValueError:
+        print(f"LOG: {datetime.now()} - Invalid request: Incorrect event_id or date format")
         return jsonify({"success": False, "error": "無効なリクエストです。event_idまたは日付の形式が正しくありません。"}), 400
 
+    print(f"LOG: {datetime.now()} - Request data validated. Event ID: {event_id}, New Date: {new_date_obj}")
+
+    print(f"LOG: {datetime.now()} - Calling utils.get_event_by_id for event_id: {event_id}")
     original_event = utils.get_event_by_id(event_id)
+    print(f"LOG: {datetime.now()} - Returned from utils.get_event_by_id. Found: {'Yes' if original_event else 'No'}")
+
     if not original_event:
+        print(f"LOG: {datetime.now()} - Event not found for ID: {event_id}")
         return jsonify({"success": False, "error": "指定されたイベントが見つかりません。"}), 404
 
     try:
         if operation == "move":
-            if utils.move_event(event_id, new_date_obj):
-                # move_event内で _notify_event と check_rules_and_notify が呼ばれる
+            print(f"LOG: {datetime.now()} - Operation: move. Calling utils.move_event for event_id: {event_id}")
+            move_success = utils.move_event(event_id, new_date_obj)
+            print(f"LOG: {datetime.now()} - Returned from utils.move_event. Success: {move_success}")
+            if move_success:
+                print(f"LOG: {datetime.now()} - Move successful. Returning 200.")
                 return jsonify({"success": True, "message": "イベントが移動されました。"}), 200
             else:
-                # move_event が False を返した場合 (内部でエラーがあった場合など)
+                print(f"LOG: {datetime.now()} - Move failed. Returning 500.")
                 return jsonify({"success": False, "error": "イベントの移動に失敗しました。"}), 500
 
         elif operation == "copy":
+            print(f"LOG: {datetime.now()} - Operation: copy. Original event_id: {event_id}")
+            print(f"LOG: {datetime.now()} - Loading events for ID generation...")
             events = utils.load_events()
             next_id = max((e.get("id", 0) for e in events), default=0) + 1
+            print(f"LOG: {datetime.now()} - New event ID generated: {next_id}")
 
-            copied_event = original_event.copy() # Shallow copy is enough for top-level keys
+            copied_event = original_event.copy()
             copied_event["id"] = next_id
             copied_event["date"] = new_date_obj.isoformat()
 
-            # Ensure 'employee' key exists if it was missing, or handle as needed
-            # For example, if 'employee' might be missing and that's okay:
-            # copied_event.setdefault('employee', None)
-            # Or if it must exist (though get_event_by_id should return it if present):
-            # if 'employee' not in copied_event: copied_event['employee'] = "" # Or some default
-
             events.append(copied_event)
+            print(f"LOG: {datetime.now()} - Saving events with new copied event...")
             utils.save_events(events)
-            utils._notify_event("add", copied_event) # Notify as a new event addition
+            print(f"LOG: {datetime.now()} - Events saved. Notifying for copied event...")
+            utils._notify_event("add", copied_event)
+            print(f"LOG: {datetime.now()} - Notification sent. Checking rules...")
             utils.check_rules_and_notify()
+            print(f"LOG: {datetime.now()} - Rules checked. Copy successful. Returning 201.")
             return jsonify({"success": True, "message": "イベントがコピーされました。", "new_event_id": next_id}), 201
 
         else:
+            print(f"LOG: {datetime.now()} - Invalid operation: {operation}. Returning 400.")
             return jsonify({"success": False, "error": "無効な操作です。"}), 400
 
     except Exception as e:
+        print(f"LOG: {datetime.now()} - Error during event drop operation: {e}")
         # Log the exception e for debugging
-        print(f"Error during event drop operation: {e}")
+        print(f"Error during event drop operation: {e}") # This is existing log, fine to keep
         return jsonify({"success": False, "error": "サーバー内部エラーが発生しました。"}), 500
