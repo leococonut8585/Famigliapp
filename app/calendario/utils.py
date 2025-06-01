@@ -28,9 +28,13 @@ def _notify_event(action: str, event_data: Dict[str, Any], old_date_val: str = "
     else: body = f"イベント '{title}' ({date_str}) に関する通知: アクション '{action}'。"
 
     if body:
-        print(f"LOG: {datetime.now()} - _notify_event: Calling _notify_all for action: {action}")
-        _notify_all("カレンダー更新", body)
-        print(f"LOG: {datetime.now()} - _notify_event: Returned from _notify_all for action: {action}")
+        print(f"LOG: {datetime.now()} - _notify_event: Checking if mail is enabled before calling _notify_all for action: {action}")
+        if getattr(config, 'MAIL_ENABLED', True):
+            print(f"LOG: {datetime.now()} - _notify_event: Mail is enabled. Calling _notify_all for action: {action}")
+            _notify_all("カレンダー更新", body)
+            print(f"LOG: {datetime.now()} - _notify_event: Returned from _notify_all for action: {action}")
+        else:
+            print(f"LOG: {datetime.now()} - _notify_event: Mail is disabled by config.MAIL_ENABLED. Skipped _notify_all for action: {action}")
     else:
         print(f"LOG: {datetime.now()} - _notify_event: No body generated for notification. Action: {action}")
     print(f"LOG: {datetime.now()} - Exiting _notify_event. Action: {action}")
@@ -199,8 +203,14 @@ def get_admin_email_address() -> Optional[str]:
 
 def check_rules_and_notify(send_notifications: bool = False) -> None:
     print(f"LOG: {datetime.now()} - Entered check_rules_and_notify. send_notifications: {send_notifications}")
+    if not getattr(config, 'MAIL_ENABLED', True) and send_notifications:
+        print(f"LOG: {datetime.now()} - Mail notifications are disabled by config.MAIL_ENABLED. Skipping actual notifications in check_rules_and_notify.")
+        # If there were specific notification calls here, they would be skipped.
+        # Since it's just 'pass' for now, this log indicates intent.
+
     # Current implementation is pass, so nothing complex to log inside.
-    # If logic is added, log before/after significant steps.
+    # If logic for rule checking that *leads* to notifications is added,
+    # that logic might still run, but the notification *sending* part would be skipped.
     print(f"LOG: {datetime.now()} - Exiting check_rules_and_notify")
     pass
 

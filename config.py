@@ -47,3 +47,4 @@ MAIL_PORT = 25
 MAIL_SENDER = "famigliapp@example.com"
 LINE_NOTIFY_TOKEN = ""
 PUSHBULLET_TOKEN = ""
+MAIL_ENABLED = False
