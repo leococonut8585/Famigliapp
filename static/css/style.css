@@ -226,6 +226,11 @@ ul {
     /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
 }
 
+.shift-grid-item .event-actions {
+    flex-shrink: 0;
+    /* white-space: nowrap; is already applied inline in HTML, but good to have here if that's removed */
+}
+
 /* Category-specific styling for event items */
 /* These will be applied to .event-grid-item or .shift-grid-item */
 
@@ -278,5 +283,37 @@ ul {
 .btn-custom-edit:hover {
     background-color: darkblue !important;
     border-color: darkblue !important;
+    color: white !important;
+}
+
+.btn-custom-copy {
+    background-color: orange !important; /* オレンジ */
+    color: white !important; /* 文字色 白 */
+    border: 1px solid orange !important; /* オレンジの枠 */
+    padding: 0.1rem 0.3rem;
+    font-size: 0.75em;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+.btn-custom-copy:hover {
+    background-color: darkorange !important;
+    border-color: darkorange !important;
+    color: white !important;
+}
+
+.btn-custom-move {
+    background-color: brown !important; /* 茶色 */
+    color: white !important; /* 文字色 白 */
+    border: 1px solid brown !important; /* 茶色の枠 */
+    padding: 0.1rem 0.3rem;
+    font-size: 0.75em;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+.btn-custom-move:hover {
+    background-color: #A0522D !important; /* sienna (濃い茶色) */
+    border-color: #A0522D !important;
     color: white !important;
 }
