@@ -139,6 +139,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     let draggedElement = null;
     let currentDropZone = null;
+    let isOperationInProgress = false; // Flag to prevent concurrent operations
 
     const dndPopup = document.getElementById('dndConfirmationPopup');
     const btnMove = document.getElementById('dndConfirmMove');
@@ -152,14 +153,22 @@ document.addEventListener('DOMContentLoaded', function() {
         draggedElement = null;
         currentDropZone = null;
         // Clear dataset from popup as well to prevent stale data issues
-        if (dndPopup) {
-            delete dndPopup.dataset.eventId;
-            delete dndPopup.dataset.newDate;
+        if (dndPopup) { // Ensure dndPopup exists
+            dndPopup.dataset.eventId = ''; // Clear data from popup
+            dndPopup.dataset.newDate = '';
+            // dndPopup.style.display = 'none'; // Hide popup if not already hidden by caller
         }
+        isOperationInProgress = false; // Reset operation flag
+        console.log("Drag state cleared. isOperationInProgress:", isOperationInProgress);
     }
 
     function addDragEventListeners(item) {
         item.addEventListener('dragstart', function(event) {
+            if (isOperationInProgress) { // Prevent starting a new drag if an operation is pending (e.g. popup visible)
+                event.preventDefault();
+                console.log("Dragstart prevented: operation in progress.");
+                return;
+            }
             draggedElement = event.target; // Keep track of the currently dragged element
             event.dataTransfer.setData('text/plain', event.target.dataset.eventId);
             setTimeout(() => {
@@ -168,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         item.addEventListener('dragend', function(event) {
-            if (dndPopup.style.display === 'none') { // Only clear if popup isn't handling it
+            if (dndPopup.style.display === 'none' && !isOperationInProgress) {
                 clearDragState();
             }
         });
@@ -190,11 +199,17 @@ document.addEventListener('DOMContentLoaded', function() {
             event.preventDefault();
             target.style.backgroundColor = '';
 
-            // Check if the drop target is the same as the origin
-            if (event.target === draggedElement || event.target.contains(draggedElement) || (draggedElement && event.target === draggedElement.parentElement)) {
-                 // If dropped on itself or its direct parent (the cell it's already in), do nothing or just reset opacity.
+            if (isOperationInProgress) {
+                console.log("Drop ignored: operation already in progress.");
+                // Optionally, reset draggedElement's opacity if it was made semi-transparent
                 if (draggedElement) draggedElement.style.opacity = '1';
-                draggedElement = null; // Clear draggedElement
+                draggedElement = null; // Clear to prevent unintended state
+                return;
+            }
+
+            if (event.target === draggedElement || (draggedElement && event.target.contains(draggedElement)) || (draggedElement && event.target === draggedElement.parentElement)) {
+                if (draggedElement) draggedElement.style.opacity = '1';
+                draggedElement = null;
                 return;
             }
 
@@ -219,101 +234,122 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners for popup buttons are set only once
     btnMove.addEventListener('click', function() {
-        const eventId = dndPopup.dataset.eventId;
-        const newDate = dndPopup.dataset.newDate;
-        console.log('Move button clicked. EventID:', eventId, 'NewDate:', newDate);
-        console.log('State before calling handleDropOperation (Move): draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
-        if (eventId && newDate && draggedElement && currentDropZone) {
-            handleDropOperation("move", parseInt(eventId), newDate, draggedElement, currentDropZone);
-        } else {
-            console.error('Move Pre-condition failed. EventID:', eventId, 'NewDate:', newDate, 'draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
+        if (isOperationInProgress) {
+            console.log("Move operation already in progress.");
+            return;
+        }
+        const eventIdStr = dndPopup.dataset.eventId;
+        const newDateStr = dndPopup.dataset.newDate;
+
+        if (!eventIdStr || !newDateStr || !draggedElement || !currentDropZone) {
+            console.error('Move Pre-condition failed. EventID:', eventIdStr, 'NewDate:', newDateStr, 'DE:', draggedElement, 'CDZ:', currentDropZone);
             dndPopup.style.display = 'none';
             clearDragState();
+            return;
         }
+
+        isOperationInProgress = true;
+        dndPopup.style.display = 'none';
+        console.log('Move button clicked. EventID:', eventIdStr, 'NewDate:', newDateStr);
+        handleDropOperation("move", parseInt(eventIdStr), newDateStr, draggedElement, currentDropZone);
     });
 
     btnCopy.addEventListener('click', function() {
-        const eventId = dndPopup.dataset.eventId;
-        const newDate = dndPopup.dataset.newDate;
-        console.log('Copy button clicked. EventID:', eventId, 'NewDate:', newDate);
-        console.log('State before calling handleDropOperation (Copy): draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
-        if (eventId && newDate && draggedElement && currentDropZone) {
-            handleDropOperation("copy", parseInt(eventId), newDate, draggedElement, currentDropZone);
-        } else {
-            console.error('Copy Pre-condition failed. EventID:', eventId, 'NewDate:', newDate, 'draggedElement:', draggedElement, 'currentDropZone:', currentDropZone);
+        if (isOperationInProgress) {
+            console.log("Copy operation already in progress.");
+            return;
+        }
+        const eventIdStr = dndPopup.dataset.eventId;
+        const newDateStr = dndPopup.dataset.newDate;
+
+        if (!eventIdStr || !newDateStr || !draggedElement || !currentDropZone) {
+            console.error('Copy Pre-condition failed. EventID:', eventIdStr, 'NewDate:', newDateStr, 'DE:', draggedElement, 'CDZ:', currentDropZone);
             dndPopup.style.display = 'none';
             clearDragState();
+            return;
         }
+        isOperationInProgress = true;
+        dndPopup.style.display = 'none';
+        console.log('Copy button clicked. EventID:', eventIdStr, 'NewDate:', newDateStr);
+        handleDropOperation("copy", parseInt(eventIdStr), newDateStr, draggedElement, currentDropZone);
     });
 
     btnCancel.addEventListener('click', function() {
-        console.log('Cancel button clicked.');
+        console.log('Cancel button clicked. isOperationInProgress:', isOperationInProgress);
         dndPopup.style.display = 'none';
+        // If an operation was technically "in progress" (e.g. popup was visible),
+        // but no async action (like fetch) has started, this is fine.
+        // If fetch had started, it won't be aborted by this, but UI is reset.
         clearDragState();
     });
 
-    // handleDropOperation now takes all necessary data as arguments
-    function handleDropOperation(operation, eventId, newDate, elementToProcess, targetDropZone) {
-        console.log(`handleDropOperation: op=${operation}, eid=${eventId}, date=${newDate}`);
+    async function handleDropOperation(operation, eventId, newDate, elementToProcess, targetDropZone) {
+        console.log(`handleDropOperation: op=${operation}, eid=${eventId}, date=${newDate}. isOperationInProgress: ${isOperationInProgress}`);
         console.log('elementToProcess:', elementToProcess);
         console.log('targetDropZone:', targetDropZone);
 
+        // Pre-condition check, though mostly handled by callers now
         if (!elementToProcess || !targetDropZone) {
-             console.error("handleDropOperation failed: elementToProcess or targetDropZone is null.");
-             clearDragState(); // Clear global state
-             dndPopup.style.display = 'none'; // Ensure popup is hidden
+             console.error("handleDropOperation critical error: elementToProcess or targetDropZone is null.");
+             clearDragState();
              return;
         }
 
-        fetch("{{ url_for('calendario.api_event_drop') }}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event_id: eventId, new_date: newDate, operation: operation })
-        })
-        .then(response => {
-            console.log('API Response Status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('API Data:', data);
-            if (data.success) {
-                if (operation === "move") {
-                    targetDropZone.appendChild(elementToProcess);
-                } else if (operation === "copy") {
-                    if (data.new_event_id) {
-                        const clonedElement = elementToProcess.cloneNode(true);
-                        clonedElement.dataset.eventId = data.new_event_id;
-                        const editLink = clonedElement.querySelector('a.btn-custom-edit');
-                        if (editLink) {
-                            let href = editLink.getAttribute('href');
-                            if (href) editLink.setAttribute('href', href.substring(0, href.lastIndexOf('/') + 1) + data.new_event_id);
-                        }
-                        const detailsButton = clonedElement.querySelector('button.details-btn');
-                        if (detailsButton) detailsButton.dataset.eventId = data.new_event_id;
+        try {
+            const response = await fetch("{{ url_for('calendario.api_event_drop') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: eventId, new_date: newDate, operation: operation })
+            });
+            const data = await response.json();
+            console.log('API Response Status:', response.status, 'API Data:', data);
 
-                        targetDropZone.appendChild(clonedElement);
-                        addDragEventListeners(clonedElement); // Important: make the clone draggable
-                        clonedElement.style.opacity = '1';
-                    } else {
-                        alert('エラー: コピー操作で新しいイベントIDが取得できませんでした。');
-                        location.reload(); // Fallback
-                    }
+            if (!isOperationInProgress && operation !== "cancel_after_fetch_started_scenario") {
+                // This check is tricky. If user cancelled *while* fetch was ongoing.
+                // For now, we assume if user cancelled, clearDragState already set isOperationInProgress to false.
+                // And the DOM element (elementToProcess) might be out of sync or opacity restored.
+                console.log("Operation was cancelled or finished before fetch completed. Aborting DOM update.");
+                // Ensure element's opacity is restored if it's still the one we were dragging
+                if (elementToProcess && elementToProcess.style.opacity !== '1') {
+                     // elementToProcess.style.opacity = '1'; // This is now handled by clearDragState
+                }
+                return; // Don't proceed with DOM updates if operation flag was reset by cancel.
+            }
+
+            if (data.success) {
+                if (operation === 'move') {
+                    targetDropZone.appendChild(elementToProcess);
+                    // Opacity is handled by clearDragState via finally
+                } else if (operation === 'copy' && data.new_event_id) {
+                    const clonedElement = elementToProcess.cloneNode(true);
+                    clonedElement.dataset.eventId = data.new_event_id;
+                    const editLink = clonedElement.querySelector('a.btn-custom-edit');
+                    if (editLink) editLink.href = `{{ url_for('calendario.edit_event', event_id=0) }}`.replace('/0', '/' + data.new_event_id);
+                    const detailsButton = clonedElement.querySelector('button.details-btn');
+                    if (detailsButton) detailsButton.dataset.eventId = data.new_event_id;
+
+                    targetDropZone.appendChild(clonedElement);
+                    addDragEventListeners(clonedElement);
+                    clonedElement.style.opacity = '1'; // Ensure clone is visible
+                } else if (operation === 'copy' && !data.new_event_id) {
+                     alert('エラー: コピー操作で新しいイベントIDが取得できませんでした。');
+                     location.reload(); // Fallback for this specific error
+                     return; // Important to return to avoid finally block double-clearing or errors
                 }
                 alert(data.message || '操作が完了しました。');
             } else {
                 alert('エラー: ' + (data.error || '不明なエラーが発生しました。'));
+                // If API call failed, restore opacity of the original dragged element
+                if (elementToProcess) elementToProcess.style.opacity = '1';
             }
-        })
-        .catch(error => {
-            console.error('Drop API Error inside handleDropOperation:', error);
+        } catch (error) {
+            console.error('Error in handleDropOperation:', error);
             alert('通信エラーが発生しました。');
-        })
-        .finally(() => {
-            console.log('handleDropOperation finally block. elementToProcess:', elementToProcess);
-            // Opacity and other cleanup is now handled by clearDragState, called by button listeners
-            dndPopup.style.display = 'none'; // Ensure popup is hidden
-            clearDragState(); // Clear global state after operation
-        });
+            if (elementToProcess) elementToProcess.style.opacity = '1';
+        } finally {
+            console.log('handleDropOperation finally block. Clearing state.');
+            clearDragState();
+        }
     }
 });
 </script>
