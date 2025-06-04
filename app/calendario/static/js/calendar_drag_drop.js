@@ -227,21 +227,24 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentOperationForModal = null;
 
     function showDateSelectionModal(eventId, operation) {
+        console.log('[showDateSelectionModal] eventId:', eventId, 'operation:', operation); // DEBUG
         currentEventIdForModal = eventId;
         currentOperationForModal = operation;
         dateSelectionInput.value = ''; // Clear previous date
         const operationText = operation === 'copy' ? 'コピー' : '移動';
         dateSelectionModalTitle.textContent = `${operationText}先の日付を選択してください`;
         if (dateSelectionModal) { // Check if modal exists on the page
-            dateSelectionModal.style.display = 'flex'; // Show modal
+            dateSelectionModal.style.display = 'flex'; // Show modal (using flex as per existing centering styles)
+            console.log('[showDateSelectionModal] Modal display set to flex'); // DEBUG
         } else {
-            console.error('Date selection modal not found on this page.');
+            console.error('[showDateSelectionModal] Date selection modal not found on this page.');
         }
     }
 
     function hideDateSelectionModal() {
         if (dateSelectionModal) {
             dateSelectionModal.style.display = 'none'; // Hide modal
+            console.log('[hideDateSelectionModal] Modal display set to none'); // DEBUG
         }
         currentEventIdForModal = null;
         currentOperationForModal = null;
@@ -251,10 +254,11 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function(event) {
             const eventId = this.dataset.eventId;
             const operation = this.classList.contains('btn-custom-copy') ? 'copy' : 'move';
+            console.log('[Button Click] eventId:', eventId, 'operation:', operation); // DEBUG
             if (eventId) {
                 showDateSelectionModal(parseInt(eventId), operation);
             } else {
-                console.error('Event ID not found on button.');
+                console.error('[Button Click] Event ID not found on button.');
             }
         });
     });
@@ -262,12 +266,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dateSelectionConfirmBtn) {
         dateSelectionConfirmBtn.addEventListener('click', async function() {
             const newDate = dateSelectionInput.value;
+            console.log('[Modal Confirm Click] newDate:', newDate, 'currentEventIdForModal:', currentEventIdForModal, 'currentOperationForModal:', currentOperationForModal); // DEBUG
             if (!newDate) {
                 alert('日付を選択してください。');
                 return;
             }
             if (!currentEventIdForModal || !currentOperationForModal) {
-                console.error('Event ID or operation type for modal is missing.');
+                console.error('[Modal Confirm Click] Event ID or operation type for modal is missing.');
                 hideDateSelectionModal();
                 return;
             }
@@ -277,20 +282,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // This assumes 'elementToProcess' and 'targetDropZone' are not strictly needed for API
             // or that the API can handle their absence for this type of operation.
 
-            console.log(`Modal Confirm: op=${currentOperationForModal}, eid=${currentEventIdForModal}, date=${newDate}`);
+            const fetchBody = {
+                event_id: currentEventIdForModal,
+                new_date: newDate,
+                operation: currentOperationForModal
+            };
+            console.log('[Modal Confirm Click] Fetching API. URL:', apiEventDropUrl, 'Body:', JSON.stringify(fetchBody)); // DEBUG
 
             try {
                 const response = await fetch(apiEventDropUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        event_id: currentEventIdForModal,
-                        new_date: newDate,
-                        operation: currentOperationForModal
-                    })
+                    body: JSON.stringify(fetchBody)
                 });
                 const data = await response.json();
-                console.log('API Response Status:', response.status, 'API Data:', data);
+                console.log('[Modal Confirm Click] API Response Status:', response.status, 'API Data:', data); // DEBUG
 
                 if (data.success) {
                     alert(data.message || `${currentOperationForModal === 'copy' ? 'コピー' : '移動'}が完了しました。`);
