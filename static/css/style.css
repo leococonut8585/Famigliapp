@@ -88,6 +88,13 @@ table { /* General table styling */
     /* For now, no specific removal, assuming they don't exist or aren't problematic */
 }
 
+/* General calendar cell min-width */
+.calendar td.calendar-day,
+.calendar td.shift-cell { /* month_view と shift_manager の両方のカレンダーセルを対象とする */
+    min-width: 150px;
+    /* vertical-align: top; や padding: 2px; などは既存のスタイルを維持 */
+}
+
 table { /* This is a duplicate, ensure it's merged or organized if needed */
     width: 100%;
     border-collapse: collapse;
@@ -183,9 +190,10 @@ ul {
     cursor: pointer;
     /* Adding properties from shift-grid-item for consistency in shift manager grid */
     border: 1px solid #777;
-    word-break: break-word; /* Or 'break-all' if preferred */
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-all; /* Changed from break-word */
+    overflow: hidden; /* Keep hidden to manage overflow with multi-line */
+    /* text-overflow: ellipsis; */ /* Removed for multi-line */
+    white-space: normal; /* Added to allow wrapping */
     /* display: block; is already here, which is fine for grid items taking full cell width if not further styled */
 }
 
@@ -251,10 +259,11 @@ ul {
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    word-break: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word; /* This was not changed in the previous step for this specific class, only for .flex-grow-1 children */
+    overflow: hidden; /* This was not changed in the previous step for this specific class */
+    text-overflow: ellipsis; /* This was not changed in the previous step for this specific class */
     /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
+    min-width: 140px; /* 追加 */
 }
 
 /* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
@@ -267,9 +276,10 @@ ul {
 /* Ensure title/text part in both shift and general events truncates properly */
 .event-grid-item > .flex-grow-1, /* Targets the span that should truncate in general events */
 .shift-grid-item > .flex-grow-1 { /* Targets the span that should truncate in shift events */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; /* Ensures text is on a single line for ellipsis to work */
+    overflow: hidden; /* Keep hidden to manage overflow with multi-line */
+    /* text-overflow: ellipsis; */ /* Removed for multi-line */
+    white-space: normal; /* Changed from nowrap */
+    word-break: break-all; /* Added for better CJK wrapping */
     min-width: 0;     /* Crucial for text-overflow in flex items */
 }
 
@@ -382,7 +392,7 @@ ul {
 .user-summary-hitomi { border-color: #0000FF; } /* Vivid Blue */
 .user-summary-sara { border-color: #FFA500; } /* Vivid Orange */
 .user-summary-jun { border-color: #800020; } /* Burgundy */
-.user-summary-nanchan { border-color: #808000; } /* Khaki */
+.user-summary-nanchan { border-color: #228B22; } /* Khaki */
 .user-summary-hachi { border-color: #40E0D0; } /* Light Turquoise */
 .user-summary-kie { border-color: #ffd700; } /* Dark Yellow (Amber) */
 .user-summary-gumi { border-color: #C71585; } /* Dark Pink (MediumVioletRed) */
@@ -392,7 +402,13 @@ ul {
 .initial-text-hitomi { color: #0000FF !important; } /* Vivid Blue */
 .initial-text-sara { color: #FFA500 !important; } /* Vivid Orange */
 .initial-text-jun { color: #800020 !important; } /* Burgundy */
-.initial-text-nanchan { color: #808000 !important; } /* Khaki */
+.initial-text-nanchan { color: #228B22 !important; } /* Khaki */
 .initial-text-hachi { color: #40E0D0 !important; } /* Light Turquoise */
 .initial-text-kie { color: #ffd700 !important; } /* Gold (consistent with border change) */
 .initial-text-gumi { color: #C71585 !important; } /* Dark Pink (MediumVioletRed) */
+
+.calendar-scroll-container {
+    overflow-x: auto; /* 水平スクロールを有効化 */
+    overflow-y: auto; /* 垂直スクロールを有効化 */
+    max-height: 75vh; /* ビューポートの高さの75%。この値は調整可能。 */
+}

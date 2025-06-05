@@ -23,16 +23,17 @@
         </div>
     </div>
 
-    <table class="calendar table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th style="width: 14.28%;">月</th>
-                <th style="width: 14.28%;">火</th>
-                <th style="width: 14.28%;">水</th>
-                <th style="width: 14.28%;">木</th>
-                <th style="width: 14.28%;">金</th>
-                <th style="width: 14.28%;">土</th>
-                <th style="width: 14.28%;">日</th>
+    <div class="calendar-scroll-container">
+        <table class="calendar table table-bordered">
+            <thead class="table-light">
+                <tr>
+                <th>月</th>
+                <th>火</th>
+                <th>水</th>
+                <th>木</th>
+                <th>金</th>
+                <th>土</th>
+                <th>日</th>
             </tr>
         </thead>
         <tbody>
@@ -92,8 +93,9 @@
                 {% endfor %}
             </tr>
         {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
     <div class="mt-3">
         <a href="{{ url_for('calendario.add') }}" class="btn btn-success">新しい予定を追加</a>
         {% if user.role == 'admin' %}
