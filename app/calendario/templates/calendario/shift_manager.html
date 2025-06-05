@@ -54,13 +54,17 @@
     <div class="card-header">今月の集計</div>
     <div class="card-body" data-current-month="{{ month.strftime('%Y-%m') }}">
         {% if employees %}
-            {% for emp in employees %}
-                <p style="margin: 5px 0;">
-                    {{ emp }}:
-                    勤務日数 <span class="work-count" data-emp="{{ emp }}">{{ counts.get(emp, 0) }}</span>日,
-                    休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
-                </p>
-            {% endfor %}
+                <div class="employee-summary-grid"> {# New grid container #}
+                    {% for emp in employees %}
+                        <div class="employee-summary-item user-summary-{{ emp|lower }}"> {# New grid item for each employee #}
+                            <p style="margin: 5px 0;">
+                                {{ emp }}:<br> {# Added <br> for better readability if text wraps #}
+                                勤務日数 <span class="work-count" data-emp="{{ emp }}">{{ counts.get(emp, 0) }}</span>日,<br>
+                                休日数 <span class="off-count" data-emp="{{ emp }}">{{ off_counts.get(emp, 0) }}</span>日
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
         {% else %}<p>表示する従業員がいません。</p>{% endif %}
     </div>
 </div>

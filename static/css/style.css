@@ -307,12 +307,14 @@ ul {
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
+    text-decoration: none !important;
 }
 
 .btn-custom-edit:hover {
     background-color: darkblue !important;
     border-color: darkblue !important;
     color: white !important;
+    text-decoration: none !important;
 }
 
 .btn-custom-copy {
@@ -346,3 +348,28 @@ ul {
     border-color: #A0522D !important;
     color: white !important;
 }
+
+.employee-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 10px; /* Adjust gap as needed */
+}
+
+.employee-summary-item {
+    padding: 10px; /* Added/Adjusted padding */
+    border-width: 2px;
+    border-style: solid;
+    /* Default border color if a specific user class isn't matched, or remove if not needed */
+    border-color: #ccc; /* Light grey default, can be overridden */
+    margin-bottom: 5px; /* Add some space between items if the gap isn't enough vertically */
+}
+
+/* User-specific borders */
+.user-summary-raito { border-color: #f0f0f0; } /* Light Grey for 'raito' as white might be invisible */
+.user-summary-hitomi { border-color: #0000FF; } /* Vivid Blue */
+.user-summary-sara { border-color: #FFA500; } /* Vivid Orange */
+.user-summary-jun { border-color: #800020; } /* Burgundy */
+.user-summary-nanchan { border-color: #808000; } /* Khaki */
+.user-summary-hachi { border-color: #40E0D0; } /* Light Turquoise */
+.user-summary-kie { border-color: #FFC107; } /* Dark Yellow (Amber) */
+.user-summary-gumi { border-color: #C71585; } /* Dark Pink (MediumVioletRed) */
