@@ -346,3 +346,10 @@ def calculate_consecutive_work_days_for_all(
                 all_consecutive_info[employee][current_work_date.isoformat()] = consecutive_days_count
                 
     return dict(all_consecutive_info) # Convert defaultdict to dict for return if preferred
+
+def another_initials_filter_for_japanese_names(name):
+    if not name:
+        return ""
+    # For Japanese names like '山田太郎', just take the first character.
+    # For romaji names like 'raito', it will also take the first char 'R'.
+    return name[0].upper()

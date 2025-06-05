@@ -47,7 +47,7 @@
 </div>
 <div class="shift-users my-3">
     <strong>従業員リスト (ドラッグ＆ドロップまたはクリックでセルに追加):</strong><br>
-    {% for emp in employees %}<div class="employee-box" draggable="true" data-emp="{{ emp }}">{{ emp }}</div>{% endfor %}
+    {% for emp in employees %}<div class="employee-box initial-text-{{ emp|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ emp }}">{{ emp | initials }}</div>{% endfor %}
 </div>
 
 <div class="employee-stats-summary card mb-3">
@@ -89,7 +89,7 @@
                         {% for ev in all_events_by_date.get(d.isoformat(), []) %}
                             {% if ev.category == 'shift' %}
                                 {# Shifts are draggable and clickable for management #}
-                                <span class="assigned event-shift-item" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee }}</span>
+                                <span class="assigned event-shift-item initial-text-{{ ev.employee|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee | initials }}</span>
                             {% else %}
                                 {# Other events are for display only, not draggable in shift manager #}
                                 <div class="event-grid-item event-{{ ev.category }}" title="{{ ev.cleaned_title }}{% if ev.employee %} ({{ev.employee}}){% endif %}">
