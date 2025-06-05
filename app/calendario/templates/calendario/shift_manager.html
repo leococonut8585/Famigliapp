@@ -84,7 +84,7 @@
                     <div class="day-number">{{ d.day }}</div>
                     <div class="violation-icons"></div>
                     {# This div will now contain all events, including shifts and other event types #}
-                    <div class="assignments">
+                    <div class="assignments shift-manager-assignment-grid">
                         {# Iterate through all events for the day from the new variable #}
                         {% for ev in all_events_by_date.get(d.isoformat(), []) %}
                             {% if ev.category == 'shift' %}
