@@ -275,7 +275,7 @@ ul {
 }
 
 .event-grid-item {
-    padding: 2px 4px !important; /* Adjusted padding and ensured !important */
+    padding: 2px 4px !important; /* Ensured */
     border: 1px solid #e0e0e0;
     border-radius: 3px;
     background-color: #f9f9f9; /* Default background */
@@ -283,11 +283,12 @@ ul {
     word-break: normal !important; /* Ensured */
     overflow: hidden !important; /* Ensured */
     text-overflow: ellipsis !important; /* Ensured */
-    width: 200px !important; /* Adjusted width */
-    min-width: 200px !important; /* Adjusted min-width */
-    max-width: 200px !important; /* Adjusted max-width */
+    width: 165px !important; /* Adjusted width */
+    min-width: 165px !important; /* Adjusted min-width */
+    max-width: 165px !important; /* Adjusted max-width */
     height: auto !important; /* Maintained */
-    line-height: 1.2 !important; /* Adjusted line-height */
+    line-height: 1.2 !important; /* Ensured */
+    font-size: 0.85em !important; /* Adjusted font size */
     box-sizing: border-box; /* Maintained */
     flex-shrink: 0; /* Maintained */
 }
@@ -331,8 +332,12 @@ ul {
 /* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
 .event-grid-item .event-actions,
 .shift-grid-item .event-actions {
-    flex-shrink: 0;
-    white-space: nowrap; /* Ensures buttons stay in a single line */
+    display: flex; /* Added */
+    flex-wrap: nowrap; /* Added (consistent with white-space: nowrap) */
+    justify-content: space-between; /* Added to space out buttons */
+    gap: 2px; /* Added for spacing between buttons */
+    flex-shrink: 0; /* Maintained */
+    white-space: nowrap; /* Maintained: Ensures buttons stay in a single line if flex properties are not fully supported or overridden */
 }
 
 /* Ensure title/text part in both shift and general events truncates properly */
