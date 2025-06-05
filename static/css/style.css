@@ -202,18 +202,18 @@ ul {
     display: block;
     background: #bbdefb;
     margin: 2px 0;
-    padding: 2px 1px; /* Maintained from previous adjustment */
+    padding: 2px 1px !important; /* Padding reverted for shift items */
     border-radius: 4px;
     cursor: pointer;
     border: 1px solid #777;
-    overflow: hidden !important; /* Restored */
-    white-space: nowrap !important; /* Restored */
-    text-overflow: ellipsis !important; /* Restored */
+    overflow: hidden !important; /* Ensured */
+    white-space: nowrap !important; /* Ensured */
+    text-overflow: ellipsis !important; /* Ensured */
     height: auto !important; /* Maintained */
-    line-height: 1.3; /* Maintained */
-    width: 125px !important; /* Restored fixed width */
-    min-width: 125px !important; /* Restored fixed min-width */
-    max-width: 125px !important; /* Restored fixed max-width */
+    line-height: 1.2 !important; /* Adjusted line-height */
+    width: 125px !important; /* Verified fixed width */
+    min-width: 125px !important; /* Verified fixed min-width */
+    max-width: 125px !important; /* Verified fixed max-width */
     box-sizing: border-box; /* Maintained */
     flex-shrink: 0; /* Maintained */
     word-break: normal !important; /* Restored from break-word */
@@ -275,18 +275,19 @@ ul {
 }
 
 .event-grid-item {
-    padding: 2px 4px;
+    padding: 2px 4px !important; /* Adjusted padding and ensured !important */
     border: 1px solid #e0e0e0;
     border-radius: 3px;
     background-color: #f9f9f9; /* Default background */
-    white-space: nowrap !important; /* Restored */
-    word-break: normal !important; /* Restored from break-word */
-    overflow: hidden !important; /* Restored */
-    text-overflow: ellipsis !important; /* Restored */
-    width: 313px !important; /* Restored fixed width */
-    min-width: 313px !important; /* Restored fixed min-width */
-    max-width: 313px !important; /* Restored fixed max-width */
+    white-space: nowrap !important; /* Ensured */
+    word-break: normal !important; /* Ensured */
+    overflow: hidden !important; /* Ensured */
+    text-overflow: ellipsis !important; /* Ensured */
+    width: 200px !important; /* Adjusted width */
+    min-width: 200px !important; /* Adjusted min-width */
+    max-width: 200px !important; /* Adjusted max-width */
     height: auto !important; /* Maintained */
+    line-height: 1.2 !important; /* Adjusted line-height */
     box-sizing: border-box; /* Maintained */
     flex-shrink: 0; /* Maintained */
 }
@@ -310,18 +311,19 @@ ul {
 
 /* Individual shift items within the shift grid */
 .shift-grid-item {
-    padding: 2px 1px; /* Maintained from previous adjustment */
+    padding: 2px 1px !important; /* Padding reverted for shift items */
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    white-space: nowrap !important; /* Restored */
-    word-break: normal !important; /* Restored from break-word */
-    overflow: hidden !important; /* Restored */
-    text-overflow: ellipsis !important; /* Restored */
-    width: 125px !important; /* Restored fixed width */
-    min-width: 125px !important; /* Restored fixed min-width */
-    max-width: 125px !important; /* Restored fixed max-width */
+    white-space: nowrap !important; /* Ensured */
+    word-break: normal !important; /* Ensured */
+    overflow: hidden !important; /* Ensured */
+    text-overflow: ellipsis !important; /* Ensured */
+    width: 125px !important; /* Verified fixed width */
+    min-width: 125px !important; /* Verified fixed min-width */
+    max-width: 125px !important; /* Verified fixed max-width */
     height: auto !important; /* Maintained */
+    line-height: 1.2 !important; /* Adjusted line-height */
     box-sizing: border-box; /* Maintained */
     flex-shrink: 0; /* Maintained */
 }
