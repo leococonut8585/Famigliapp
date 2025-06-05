@@ -72,9 +72,10 @@
 <form method="post">
     {{ form.hidden_tag() }}
     <input type="hidden" name="action" value="complete" id="action-field">
-    <table class="calendar table table-bordered">
-        <thead class="table-light"><tr><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th></tr></thead>
-        <tbody>
+    <div class="calendar-scroll-container">
+        <table class="calendar table table-bordered">
+            <thead class="table-light"><tr><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th></tr></thead>
+            <tbody>
         {% for week in weeks %}
             <tr>
             {% for d in week %}
@@ -109,8 +110,9 @@
             {% endfor %}
             </tr>
         {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
     <div class="mt-3">
         <button type="submit" class="btn btn-success" onclick="document.getElementById('action-field').value='complete'">保存</button>
         <button type="submit" class="btn btn-info" onclick="document.getElementById('action-field').value='notify'">保存して通知</button>
