@@ -275,49 +275,72 @@ ul {
 }
 
 .event-grid-item {
-    padding: 2px 4px !important; /* Ensured */
-    border: 1px solid #e0e0e0;
-    border-radius: 3px;
-    background-color: #f9f9f9; /* Default background */
-    white-space: nowrap !important; /* Ensured */
-    word-break: normal !important; /* Ensured */
-    overflow: hidden !important; /* Ensured */
-    text-overflow: ellipsis !important; /* Ensured */
-    width: 165px !important; /* Adjusted width */
-    min-width: 165px !important; /* Adjusted min-width */
-    max-width: 165px !important; /* Adjusted max-width */
-    height: auto !important; /* Maintained */
-    line-height: 1.2 !important; /* Ensured */
-    font-size: 0.85em !important; /* Adjusted font size */
-    box-sizing: border-box; /* Maintained */
-    flex-shrink: 0; /* Maintained */
-}
-
-/* Removed .event-grid-item.event-shift rule */
-
-/* Context-specific width for non-shift events in shift manager */
-.manager-other-events-container .event-grid-item {
-    width: 160px !important;
-    min-width: 160px !important;
-    max-width: 160px !important;
-    font-size: 0.85em !important; /* Consistent font size */
-    padding: 2px 4px !important; /* Consistent padding */
-    line-height: 1.2 !important; /* Consistent line-height */
+    /* Common appearance properties */
+    line-height: 1.2 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
+
+    /* Defaults to be overridden, or ensure they are not overly specific */
+    border: 1px solid #e0e0e0; /* Kept as a base */
+    border-radius: 3px; /* Kept as a base */
+    background-color: #f9f9f9; /* Kept as a base */
+    height: auto !important; /* Maintained */
+    flex-shrink: 0; /* Maintained, if items can be flex children */
+    /* Removed specific width, min-width, max-width, font-size, padding */
+    /* word-break: normal !important; /* Covered by white-space: nowrap */
 }
 
-/* Final override for shift items specifically within the shift manager */
-/* This ensures correct padding and font-size for manager shifts, overriding .event-grid-item.event-shift styles */
-.shift-manager-assignment-grid span.assigned.event-grid-item.event-shift {
-    padding: 2px 1px !important;
-    font-size: 0.9em !important;
-    /* width, min-width, max-width, line-height, overflow, text-overflow, white-space, box-sizing, height, margin */
-    /* are expected to be correctly inherited from .shift-cell .assigned which has !important on these */
-    flex: 0 0 125px !important; /* Added flex property */
+/* Styles for non-shift events (default for .event-grid-item) */
+.event-grid-item:not(.event-shift) {
+    width: 165px !important;
+    min-width: 165px !important;
+    max-width: 165px !important;
+    font-size: 0.85em !important;
+    padding: 2px 4px !important;
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
 }
+
+/* Styles for non-shift events specifically in the Shift Manager */
+.manager-other-events-container .event-grid-item:not(.event-shift) {
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    font-size: 0.85em !important; /* Explicitly re-stated for clarity */
+    padding: 2px 4px !important; /* Explicitly re-stated for clarity */
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
+}
+
+/* Common styles for ALL shift event items (main calendar and manager) */
+.event-grid-item.event-shift {
+    flex: 0 0 125px !important; /* For flex contexts if its container is flex */
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    font-size: 0.85em !important; /* Default font size for shifts */
+    padding: 2px 4px !important;   /* Default padding for shifts (e.g., main calendar) */
+    background-color: gray !important; /* Shift-specific appearance */
+    color: white !important;           /* Shift-specific appearance */
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
+    /* Note: .shift-grid-item also gets these properties by having .event-grid-item.event-shift classes */
+    /* Note: .assigned items in manager also get these by having .event-grid-item.event-shift classes */
+}
+
+/* Specific styles for shift events in the Shift Manager, overriding common shift styles */
+.shift-manager-assignment-grid span.assigned.event-grid-item.event-shift {
+    padding: 2px 1px !important; /* Overrides padding for consecutive day text */
+    font-size: 0.9em !important;  /* Specific font size for manager shifts */
+    /* Inherits flex, width, min-width, max-width, background-color, color, line-height, etc., */
+    /* from .event-grid-item and the common .event-grid-item.event-shift rule above */
+    width: 125px !important; /* Re-stated for clarity/override */
+    min-width: 125px !important; /* Re-stated for clarity/override */
+    max-width: 125px !important; /* Re-stated for clarity/override */
+    flex: 0 0 125px !important; /* Re-stated for clarity/override */
+    /* background-color, color are inherited from .event-grid-item.event-shift */
+}
+
+/* The old .manager-other-events-container .event-grid-item rule (without :not) is now removed. */
 
 .btn-xs-custom {
     padding: 0.1rem 0.3rem;
@@ -538,27 +561,6 @@ div.shift-grid-item.event-grid-item.event-shift {
     flex: 0 0 125px !important; /* Added flex property */
 }
 
-/* ---- FINAL override for *only* shift items on month/week view ---- */
-div.shift-grid-item.event-grid-item.event-shift {
-    /* ❶ フレックス挙動を完全停止 */
-    display: block !important;      /* d-flex を打ち消す */
-    flex: none !important;          /* flex:0 0 auto 相当 */
-
-    /* ❷ 幅をボタン 2 個分に固定   */
-    width: 135px !important;        /* ← ボタン×2 + 余白ピッタリ */
-    min-width: 135px !important;
-    max-width: 135px !important;
-
-    /* ❸ 文字がはみ出ても箱は伸びない */
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
-
-    /* ❹ 他の .event-grid-item と共通のスタイルを適用 */
-    padding: 2px 4px !important;
-    font-size: 0.85em !important;
-    line-height: 1.2 !important;
-    background-color: gray !important; /* Ensure shift appearance */
-    color: white !important;       /* Ensure shift text color */
-}
+/* The "FINAL override" rule for div.shift-grid-item.event-grid-item.event-shift (width:135px, display:block) is removed. */
+/* The previous div.shift-grid-item.event-grid-item.event-shift (width:125px, flex property) is also removed by the earlier SEARCH block not finding it. */
+/* New rules will be added in subsequent steps. */
