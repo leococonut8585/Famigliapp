@@ -77,28 +77,36 @@ table { /* General table styling */
 
 /* Calendar specific table layouts */
 .calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
-    table-layout: fixed; /* Preserved */
-    width: auto; /* Changed from 100% */
-    max-width: fit-content; /* Added */
-    margin: 0 auto; /* Added for centering */
+    table-layout: fixed; /* Ensured */
+    width: 980px !important; /* Set fixed width */
+    margin: 0 auto; /* Ensured for centering */
+    /* max-width: fit-content; and width: auto; removed */
 }
 
-/* Styles for calendar cells */
+/* Styles for calendar th and td cells */
+.calendar th,
+.calendar td.calendar-day,
+.calendar td.shift-cell {
+    width: 140px !important;       /* Strict width for all calendar cells */
+    min-width: 140px !important;   /* Strict width */
+    max-width: 140px !important;   /* Strict width */
+    vertical-align: top;         /* Ensured for td, good default for th */
+    border: 1px solid #ddd;      /* Ensured */
+}
+
+/* Specific overrides for td cells if needed, grouped for common properties */
 .calendar td.calendar-day,
 .calendar td.shift-cell {
     height: 150px;       /* Fixed height for cells (Preserved) */
-    padding: 0;          /* Padding will be handled by cell-content-wrapper (Preserved) */
-    vertical-align: top; /* Preserved */
-    border: 1px solid #ddd; /* Copied from general th, td rule as specific override (Preserved) */
-    max-width: 330px;    /* Added max-width constraint for cells */
-    min-width: 135px;    /* Added min-width constraint for cells (wrapper 125px + 2*5px padding) */
+    padding: 0;          /* Padding reset for td cells */
+    /* Previous min-width/max-width specific to td removed in favor of the common rule above */
 }
 
+/* Specific overrides for th cells if needed (padding comes from general th rule or can be set here) */
 .calendar th {
-    /* background: #f9f9f9; /* from general th, td rule */
-    /* border: 1px solid #ddd; /* from general th, td rule */
-    /* padding: 8px; /* from general th, td rule */
-    /* width: calc(100% / 7); /* Removed to allow flexible column widths */
+    /* background: #f9f9f9; /* from general th rule */
+    /* padding: 8px; /* from general th rule, or set specific if 0 is not desired from common rule if it was applied there */
+    /* width calc removed, now uses 140px !important from common rule */
 }
 
 
@@ -194,30 +202,30 @@ ul {
     display: block;
     background: #bbdefb;
     margin: 2px 0;
-    padding: 2px 1px; /* Further adjusted padding for text visibility */
+    padding: 2px 1px; /* Maintained from previous adjustment */
     border-radius: 4px;
     cursor: pointer;
-    /* Adding properties from shift-grid-item for consistency in shift manager grid */
     border: 1px solid #777;
-    overflow: hidden; /* Ensured */
-    white-space: nowrap; /* Ensured */
-    text-overflow: ellipsis; /* Added for consistency */
-    height: auto; /* Added to fit content */
-    line-height: 1.3; /* Added to minimize vertical scrollbars */
-    width: 125px !important; /* Strict width */
-    min-width: 125px !important; /* Strict width */
-    max-width: 125px !important; /* Strict width */
-    box-sizing: border-box; /* Ensured */
-    flex-shrink: 0; /* Ensured */
+    overflow: hidden !important; /* Restored */
+    white-space: nowrap !important; /* Restored */
+    text-overflow: ellipsis !important; /* Restored */
+    height: auto !important; /* Maintained */
+    line-height: 1.3; /* Maintained */
+    width: 125px !important; /* Restored fixed width */
+    min-width: 125px !important; /* Restored fixed min-width */
+    max-width: 125px !important; /* Restored fixed max-width */
+    box-sizing: border-box; /* Maintained */
+    flex-shrink: 0; /* Maintained */
+    word-break: normal !important; /* Restored from break-word */
 }
 
 .shift-manager-assignment-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 125px); /* Strict 4x125px columns */
-    gap: 3px; /* アイテム間の隙間 (ensured) */
-    padding-top: 2px; /* 上部のパディング */
-    justify-content: start; /* Ensured */
-    margin-top: 5px; /* Added margin for separation */
+    display: grid !important; /* Restored grid display */
+    grid-template-columns: repeat(4, 125px) !important; /* Restored grid columns */
+    gap: 3px !important; /* Restored gap */
+    justify-content: start !important; /* Restored justify-content */
+    padding-top: 2px; /* Maintained */
+    margin-top: 5px; /* Maintained */
 }
 
 /* .shift-manager-assignment-grid .event-grid-item rule is removed as non-shift events are now in their own container. */
@@ -271,14 +279,16 @@ ul {
     border: 1px solid #e0e0e0;
     border-radius: 3px;
     background-color: #f9f9f9; /* Default background */
-    word-break: break-word; /* This might conflict with white-space: nowrap if that were added; not requested here */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 313px !important; /* Strict width, was 313px */
-    min-width: 313px !important; /* Strict width */
-    max-width: 313px !important; /* Strict width */
-    box-sizing: border-box; /* Ensured */
-    flex-shrink: 0; /* Ensured */
+    white-space: nowrap !important; /* Restored */
+    word-break: normal !important; /* Restored from break-word */
+    overflow: hidden !important; /* Restored */
+    text-overflow: ellipsis !important; /* Restored */
+    width: 313px !important; /* Restored fixed width */
+    min-width: 313px !important; /* Restored fixed min-width */
+    max-width: 313px !important; /* Restored fixed max-width */
+    height: auto !important; /* Maintained */
+    box-sizing: border-box; /* Maintained */
+    flex-shrink: 0; /* Maintained */
 }
 
 .btn-xs-custom {
@@ -291,29 +301,29 @@ ul {
 
 /* Shift-specific 4-column grid container */
 .shift-grid-container {
-    display: grid;
-    grid-template-columns: repeat(4, 125px); /* 4 columns, each strictly 125px wide */
-    gap: 3px; /* Gap between shift items (ensured) */
-    padding-top: 2px;
-    justify-content: start; /* Align grid items to the start if fewer than 4 items */
+    display: grid !important; /* Restored grid display */
+    grid-template-columns: repeat(4, 125px) !important; /* Restored grid columns */
+    gap: 3px !important; /* Restored gap */
+    justify-content: start !important; /* Restored justify-content */
+    padding-top: 2px; /* Maintained */
 }
 
 /* Individual shift items within the shift grid */
 .shift-grid-item {
-    padding: 2px 4px;
+    padding: 2px 1px; /* Maintained from previous adjustment */
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    /* word-break: break-word; */ /* Removed to favor white-space: nowrap */
-    overflow: hidden; /* Ensured */
-    white-space: nowrap; /* Ensured */
-    text-overflow: ellipsis; /* Ensured */
-    width: 125px !important; /* Strict width, was 125px */
-    min-width: 125px !important; /* Strict width */
-    max-width: 125px !important; /* Strict width */
-    box-sizing: border-box; /* Ensured */
-    flex-shrink: 0; /* Ensured */
-    padding: 2px 1px; /* Further adjusted padding for text visibility */
+    white-space: nowrap !important; /* Restored */
+    word-break: normal !important; /* Restored from break-word */
+    overflow: hidden !important; /* Restored */
+    text-overflow: ellipsis !important; /* Restored */
+    width: 125px !important; /* Restored fixed width */
+    min-width: 125px !important; /* Restored fixed min-width */
+    max-width: 125px !important; /* Restored fixed max-width */
+    height: auto !important; /* Maintained */
+    box-sizing: border-box; /* Maintained */
+    flex-shrink: 0; /* Maintained */
 }
 
 /* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
@@ -379,14 +389,13 @@ ul {
 }
 
 .cell-content-wrapper {
-    width: auto; /* Changed from 100% */
-    max-width: 313px; /* Added to align with single non-shift event item width */
-    min-width: 125px; /* Added to accommodate at least one shift item */
+    width: 100%; /* Maintained */
     height: 100%; /* Preserved */
-    overflow-x: auto; /* Ensured for horizontal scrolling */
+    overflow-x: auto; /* Changed back from hidden */
     overflow-y: auto; /* Preserved */
     padding: 5px; /* Preserved */
     box-sizing: border-box; /* Preserved */
+    /* max-width, min-width for cell-content-wrapper were removed in a previous step, this is correct. */
 }
 
 .btn-custom-edit {
@@ -474,10 +483,9 @@ ul {
 .initial-text-kie { color: #ffd700 !important; } /* Gold (consistent with border change) */
 .initial-text-gumi { color: #C71585 !important; } /* Dark Pink (MediumVioletRed) */
 
-/*
 .calendar-scroll-container {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: 75vh;
+    overflow-x: auto; /* Ensured */
+    max-width: 100%;  /* Added */
+    padding-bottom: 1rem; /* Added */
+    /* overflow-y and max-height from old rule removed as not specified */
 }
-*/
