@@ -81,31 +81,33 @@
             {% for d in week %}
                 <td class="{% if d.month != month.month %}other-month text-muted{% else %}shift-cell{% endif %}"
                     data-date="{{ d.isoformat() }}"
-                    style="{% if d.month != month.month %}background-color: #f8f9fa;{% endif %}">
-                    <div class="day-number">{{ d.day }}</div>
-                    <div class="violation-icons"></div>
-                    {# This div will now contain all events, including shifts and other event types #}
-                    <div class="assignments shift-manager-assignment-grid">
-                        {# Iterate through all events for the day from the new variable #}
-                        {% for ev in all_events_by_date.get(d.isoformat(), []) %}
-                            {% if ev.category == 'shift' %}
-                                {# Shifts are draggable and clickable for management #}
-                                <span class="assigned event-shift-item initial-text-{{ ev.employee|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee | initials }}</span>
-                            {% else %}
-                                {# Other events are for display only, not draggable in shift manager #}
-                                <div class="event-grid-item event-{{ ev.category }}" title="{{ ev.cleaned_title }}{% if ev.employee %} ({{ev.employee}}){% endif %}">
-                                    {% if ev.display_time %}<span class="event-time">{{ ev.display_time }}</span>{% endif %}
-                                    {{ ev.cleaned_title }}
-                                    {% if ev.employee and ev.category != 'shift' %}
-                                        <small class="event-employee"> ({{ ev.employee }})</small>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    {# The hidden input still needs to be populated ONLY with shift employees #}
-                    {# The 'assignments' variable passed to the template now specifically holds shift employees for form submission #}
-                    <input type="hidden" name="d-{{ d.isoformat() }}" value="{{ ','.join(assignments.get(d.isoformat(), [])) }}">
+                    {% if d.month != month.month %}style="background-color: #f8f9fa;"{% endif %}> {# Keep conditional background style #}
+                    <div class="cell-content-wrapper">
+                        <div class="day-number">{{ d.day }}</div>
+                        <div class="violation-icons"></div>
+                        {# This div will now contain all events, including shifts and other event types #}
+                        <div class="assignments shift-manager-assignment-grid">
+                            {# Iterate through all events for the day from the new variable #}
+                            {% for ev in all_events_by_date.get(d.isoformat(), []) %}
+                                {% if ev.category == 'shift' %}
+                                    {# Shifts are draggable and clickable for management #}
+                                    <span class="assigned event-shift-item initial-text-{{ ev.employee|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee | initials }}</span>
+                                {% else %}
+                                    {# Other events are for display only, not draggable in shift manager #}
+                                    <div class="event-grid-item event-{{ ev.category }}" title="{{ ev.cleaned_title }}{% if ev.employee %} ({{ev.employee}}){% endif %}">
+                                        {% if ev.display_time %}<span class="event-time">{{ ev.display_time }}</span>{% endif %}
+                                        {{ ev.cleaned_title }}
+                                        {% if ev.employee and ev.category != 'shift' %}
+                                            <small class="event-employee"> ({{ ev.employee }})</small>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {# The hidden input still needs to be populated ONLY with shift employees #}
+                        {# The 'assignments' variable passed to the template now specifically holds shift employees for form submission #}
+                        <input type="hidden" name="d-{{ d.isoformat() }}" value="{{ ','.join(assignments.get(d.isoformat(), [])) }}">
+                    </div> {# Close cell-content-wrapper #}
                 </td>
             {% endfor %}
             </tr>
