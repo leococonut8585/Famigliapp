@@ -12,6 +12,7 @@ from datetime import date
 from app import create_app
 from app import utils as app_utils
 from app.calendario import utils
+from app.calendario.utils import another_initials_filter_for_japanese_names
 
 
 def setup_module(module):
@@ -361,3 +362,14 @@ def test_recalculate_shift_counts_unauthenticated():
         assert "auth/login" in res.headers["Location"]
 
 
+def test_another_initials_filter():
+    assert another_initials_filter_for_japanese_names("山田太郎") == "山"
+    assert another_initials_filter_for_japanese_names("Yamada Taro") == "Y" # Assuming it takes the first char of the whole string
+    assert another_initials_filter_for_japanese_names("raito") == "R"
+    assert another_initials_filter_for_japanese_names(" hitomi") == " " # Leading space
+    assert another_initials_filter_for_japanese_names("　sara") == "　" # Leading full-width space
+    assert another_initials_filter_for_japanese_names("") == ""
+    assert another_initials_filter_for_japanese_names(None) == ""
+    # Add more test cases as needed, e.g., single character names
+    assert another_initials_filter_for_japanese_names("J") == "J"
+    assert another_initials_filter_for_japanese_names("あ") == "あ"

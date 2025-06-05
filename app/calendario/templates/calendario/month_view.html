@@ -54,8 +54,8 @@
 
                         {% if ev.category == 'shift' %}
                             <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ ev.id }}">
-                                <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {{ ev.cleaned_title or ev.employee }}
+                                <span class="flex-grow-1 initial-text-{{ (ev.employee or ev.cleaned_title)|lower|replace(' ', '_') }}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ (ev.cleaned_title or ev.employee) | initials }}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
                                     {# Shift events: Copy, Move #}

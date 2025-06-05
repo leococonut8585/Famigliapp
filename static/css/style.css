@@ -357,7 +357,7 @@ ul {
 
 .employee-summary-item {
     padding: 10px; /* Added/Adjusted padding */
-    border-width: 2px;
+    border-width: 4px;
     border-style: solid;
     /* Default border color if a specific user class isn't matched, or remove if not needed */
     border-color: #ccc; /* Light grey default, can be overridden */
@@ -365,11 +365,21 @@ ul {
 }
 
 /* User-specific borders */
-.user-summary-raito { border-color: #f0f0f0; } /* Light Grey for 'raito' as white might be invisible */
+.user-summary-raito { border-color: #e0e0e0; } /* Light Grey for 'raito' as white might be invisible */
 .user-summary-hitomi { border-color: #0000FF; } /* Vivid Blue */
 .user-summary-sara { border-color: #FFA500; } /* Vivid Orange */
 .user-summary-jun { border-color: #800020; } /* Burgundy */
 .user-summary-nanchan { border-color: #808000; } /* Khaki */
 .user-summary-hachi { border-color: #40E0D0; } /* Light Turquoise */
-.user-summary-kie { border-color: #FFC107; } /* Dark Yellow (Amber) */
+.user-summary-kie { border-color: #ffd700; } /* Dark Yellow (Amber) */
 .user-summary-gumi { border-color: #C71585; } /* Dark Pink (MediumVioletRed) */
+
+/* User-specific initial colors */
+.initial-text-raito { color: #FFFFFF !important; } /* White */
+.initial-text-hitomi { color: #0000FF !important; } /* Vivid Blue */
+.initial-text-sara { color: #FFA500 !important; } /* Vivid Orange */
+.initial-text-jun { color: #800020 !important; } /* Burgundy */
+.initial-text-nanchan { color: #808000 !important; } /* Khaki */
+.initial-text-hachi { color: #40E0D0 !important; } /* Light Turquoise */
+.initial-text-kie { color: #ffd700 !important; } /* Gold (consistent with border change) */
+.initial-text-gumi { color: #C71585 !important; } /* Dark Pink (MediumVioletRed) */
