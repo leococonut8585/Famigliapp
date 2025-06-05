@@ -316,6 +316,7 @@ ul {
     font-size: 0.9em !important;
     /* width, min-width, max-width, line-height, overflow, text-overflow, white-space, box-sizing, height, margin */
     /* are expected to be correctly inherited from .shift-cell .assigned which has !important on these */
+    flex: 0 0 125px !important; /* Added flex property */
 }
 
 .btn-xs-custom {
@@ -534,4 +535,5 @@ div.shift-grid-item.event-grid-item.event-shift {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     box-sizing: border-box !important;
+    flex: 0 0 125px !important; /* Added flex property */
 }
