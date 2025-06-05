@@ -23,7 +23,7 @@ body {
 }
 
 .container {
-    max-width: 960px;
+    max-width: 1140px;
     margin: 20px auto;
     padding: 20px;
     background: #fff;
@@ -181,6 +181,19 @@ ul {
     padding: 2px 4px;
     border-radius: 4px;
     cursor: pointer;
+    /* Adding properties from shift-grid-item for consistency in shift manager grid */
+    border: 1px solid #777;
+    word-break: break-word; /* Or 'break-all' if preferred */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* display: block; is already here, which is fine for grid items taking full cell width if not further styled */
+}
+
+.shift-manager-assignment-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4列グリッド */
+    gap: 3px; /* アイテム間の隙間 */
+    padding-top: 2px; /* 上部のパディング */
 }
 
 /* For compact calendar event text */
@@ -321,7 +334,7 @@ ul {
     background-color: orange !important; /* オレンジ */
     color: white !important; /* 文字色 白 */
     border: 1px solid orange !important; /* オレンジの枠 */
-    padding: 0.1rem 0.3rem;
+    padding: 0.1rem 0.25rem;
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
@@ -365,7 +378,7 @@ ul {
 }
 
 /* User-specific borders */
-.user-summary-raito { border-color: #e0e0e0; } /* Light Grey for 'raito' as white might be invisible */
+.user-summary-raito { border-color: #000000; } /* Light Grey for 'raito' as white might be invisible */
 .user-summary-hitomi { border-color: #0000FF; } /* Vivid Blue */
 .user-summary-sara { border-color: #FFA500; } /* Vivid Orange */
 .user-summary-jun { border-color: #800020; } /* Burgundy */
@@ -375,7 +388,7 @@ ul {
 .user-summary-gumi { border-color: #C71585; } /* Dark Pink (MediumVioletRed) */
 
 /* User-specific initial colors */
-.initial-text-raito { color: #FFFFFF !important; } /* White */
+.initial-text-raito { color: #000000 !important; } /* Black, was White */
 .initial-text-hitomi { color: #0000FF !important; } /* Vivid Blue */
 .initial-text-sara { color: #FFA500 !important; } /* Vivid Orange */
 .initial-text-jun { color: #800020 !important; } /* Burgundy */
