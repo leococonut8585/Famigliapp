@@ -176,7 +176,9 @@ ul {
     background: #e3f2fd;
     padding: 4px 8px;
     margin: 2px;
-    display: inline-block;
+    display: inline-flex; /* Changed from inline-block */
+    align-items: center; /* Added */
+    white-space: nowrap; /* Added */
     border-radius: 4px;
     cursor: move;
 }
@@ -189,15 +191,17 @@ ul {
     display: block;
     background: #bbdefb;
     margin: 2px 0;
-    padding: 2px 4px;
+    padding: 2px 4px; /* Padding is already 2px 4px */
     border-radius: 4px;
     cursor: pointer;
     /* Adding properties from shift-grid-item for consistency in shift manager grid */
     border: 1px solid #777;
-    word-break: break-all !important; /* Changed from break-word, added !important */
+    /* word-break: break-all !important; */ /* Allowing initials to break is not desired */
     overflow: hidden; /* Keep hidden to manage overflow with multi-line */
     /* text-overflow: ellipsis; */ /* Removed for multi-line */
-    white-space: normal !important; /* Added to allow wrapping, added !important */
+    white-space: nowrap; /* Changed from normal !important to prevent wrapping of initials */
+    height: auto; /* Added to fit content */
+    line-height: 1.3; /* Added to minimize vertical scrollbars */
     /* display: block; is already here, which is fine for grid items taking full cell width if not further styled */
 }
 
@@ -239,7 +243,7 @@ ul {
     word-break: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 245px; /* Add - initial estimate for 4.5 buttons */
+    width: 313px; /* Changed from 245px - estimate for 5 buttons */
 }
 
 .btn-xs-custom {
