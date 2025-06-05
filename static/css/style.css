@@ -295,20 +295,6 @@ ul {
 
 /* Removed .event-grid-item.event-shift rule */
 
-/* New rule for shift events on main calendar with increased specificity */
-div.shift-grid-item.event-grid-item.event-shift {
-    width: 125px !important;
-    min-width: 125px !important;
-    max-width: 125px !important;
-    padding: 2px 4px !important;
-    font-size: 0.85em !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
-}
-
 /* Context-specific width for non-shift events in shift manager */
 .manager-other-events-container .event-grid-item {
     width: 160px !important;
@@ -534,4 +520,18 @@ div.shift-grid-item.event-grid-item.event-shift {
     max-width: 100%;  /* Added */
     padding-bottom: 1rem; /* Added */
     /* overflow-y and max-height from old rule removed as not specified */
+}
+
+/* New rule for shift events on main calendar with increased specificity */
+div.shift-grid-item.event-grid-item.event-shift {
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    padding: 2px 4px !important;
+    font-size: 0.85em !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
 }
