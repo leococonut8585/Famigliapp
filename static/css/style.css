@@ -537,3 +537,28 @@ div.shift-grid-item.event-grid-item.event-shift {
     box-sizing: border-box !important;
     flex: 0 0 125px !important; /* Added flex property */
 }
+
+/* ---- FINAL override for *only* shift items on month/week view ---- */
+div.shift-grid-item.event-grid-item.event-shift {
+    /* ❶ フレックス挙動を完全停止 */
+    display: block !important;      /* d-flex を打ち消す */
+    flex: none !important;          /* flex:0 0 auto 相当 */
+
+    /* ❷ 幅をボタン 2 個分に固定   */
+    width: 135px !important;        /* ← ボタン×2 + 余白ピッタリ */
+    min-width: 135px !important;
+    max-width: 135px !important;
+
+    /* ❸ 文字がはみ出ても箱は伸びない */
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+
+    /* ❹ 他の .event-grid-item と共通のスタイルを適用 */
+    padding: 2px 4px !important;
+    font-size: 0.85em !important;
+    line-height: 1.2 !important;
+    background-color: gray !important; /* Ensure shift appearance */
+    color: white !important;       /* Ensure shift text color */
+}
