@@ -41,12 +41,12 @@
             <tr>
                 {% for d in week %}
                 <td class="{% if d.month != month.month %}other-month text-muted bg-light{% else %}calendar-day{% endif %}"
-                    {% if d.month == month.month %}data-date="{{ d.isoformat() }}"{% endif %}
-                    style="vertical-align: top; height: 120px; overflow-y: auto; padding: 2px;"> {# Reduced padding for more space #}
-                    <div class="day-number fw-bold" style="font-size: 0.9em; margin-bottom: 2px;">{{ d.day }}</div>
+                    {% if d.month == month.month %}data-date="{{ d.isoformat() }}"{% endif %}>
+                    <div class="cell-content-wrapper">
+                        <div class="day-number fw-bold">{{ d.day }}</div>
 
-                    {# Removed the all-encompassing event-grid-container #}
-                    {% set events_for_day = events_by_date.get(d.isoformat(), []) %}
+                        {# Removed the all-encompassing event-grid-container #}
+                        {% set events_for_day = events_by_date.get(d.isoformat(), []) %}
                     {% for ev in events_for_day %}
                         {# Logic to open shift-grid-container #}
                         {% if ev.category == 'shift' and (loop.first or loop.previtem.category != 'shift') %}
@@ -89,6 +89,7 @@
                         </div> {# Close shift-grid-container #}
                         {% endif %}
                     {% endfor %}
+                    </div> {# Close cell-content-wrapper #}
                 </td>
                 {% endfor %}
             </tr>
