@@ -70,7 +70,25 @@ input[type="submit"]:hover, button:hover {
     background: #1976D2;
 }
 
-table {
+table { /* General table styling */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Calendar specific table layouts */
+.calendar, .calendar-grid {
+    table-layout: auto;
+    width: 100%; /* Ensure it's still 100% */
+}
+
+/* Remove word-break from calendar cells if item content itself handles truncation */
+.calendar td.calendar-day,
+.calendar-grid td.calendar-cell {
+    /* If there were word-break: break-all; or overflow-wrap: break-word; here, consider removing */
+    /* For now, no specific removal, assuming they don't exist or aren't problematic */
+}
+
+table { /* This is a duplicate, ensure it's merged or organized if needed */
     width: 100%;
     border-collapse: collapse;
     margin-top: 1em;
@@ -226,9 +244,20 @@ ul {
     /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
 }
 
+/* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
+.event-grid-item .event-actions,
 .shift-grid-item .event-actions {
     flex-shrink: 0;
-    /* white-space: nowrap; is already applied inline in HTML, but good to have here if that's removed */
+    white-space: nowrap; /* Ensures buttons stay in a single line */
+}
+
+/* Ensure title/text part in both shift and general events truncates properly */
+.event-grid-item > .flex-grow-1, /* Targets the span that should truncate in general events */
+.shift-grid-item > .flex-grow-1 { /* Targets the span that should truncate in shift events */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Ensures text is on a single line for ellipsis to work */
+    min-width: 0;     /* Crucial for text-overflow in flex items */
 }
 
 /* Category-specific styling for event items */
