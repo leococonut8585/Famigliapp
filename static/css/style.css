@@ -293,18 +293,20 @@ ul {
     flex-shrink: 0; /* Maintained */
 }
 
-/* Context-specific width for shift events on main calendar, styled as event-grid-item */
-.event-grid-item.event-shift {
+/* Removed .event-grid-item.event-shift rule */
+
+/* New rule for shift events on main calendar with increased specificity */
+div.shift-grid-item.event-grid-item.event-shift {
     width: 125px !important;
     min-width: 125px !important;
     max-width: 125px !important;
-    font-size: 0.85em !important; /* Consistent font size */
-    padding: 2px 4px !important; /* Consistent padding */
-    line-height: 1.2 !important; /* Consistent line-height */
+    padding: 2px 4px !important;
+    font-size: 0.85em !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
 }
 
 /* Context-specific width for non-shift events in shift manager */
