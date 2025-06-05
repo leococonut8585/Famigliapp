@@ -191,45 +191,48 @@ ul {
     display: block;
     background: #bbdefb;
     margin: 2px 0;
-    padding: 2px 4px; /* Padding is already 2px 4px */
+    padding: 2px 1px; /* Further adjusted padding for text visibility */
     border-radius: 4px;
     cursor: pointer;
     /* Adding properties from shift-grid-item for consistency in shift manager grid */
     border: 1px solid #777;
-    /* word-break: break-all !important; */ /* Allowing initials to break is not desired */
-    overflow: hidden; /* Keep hidden to manage overflow with multi-line */
-    /* text-overflow: ellipsis; */ /* Removed for multi-line */
-    white-space: nowrap; /* Changed from normal !important to prevent wrapping of initials */
+    overflow: hidden; /* Ensured */
+    white-space: nowrap; /* Ensured */
+    text-overflow: ellipsis; /* Added for consistency */
     height: auto; /* Added to fit content */
     line-height: 1.3; /* Added to minimize vertical scrollbars */
-    /* display: block; is already here, which is fine for grid items taking full cell width if not further styled */
+    width: 125px !important; /* Strict width */
+    min-width: 125px !important; /* Strict width */
+    max-width: 125px !important; /* Strict width */
+    box-sizing: border-box; /* Ensured */
+    flex-shrink: 0; /* Ensured */
 }
 
 .shift-manager-assignment-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(70px, 1fr)); /* Changed from repeat(4, 1fr) */
-    gap: 3px; /* アイテム間の隙間 */
+    grid-template-columns: repeat(4, 125px); /* Strict 4x125px columns */
+    gap: 3px; /* アイテム間の隙間 (ensured) */
     padding-top: 2px; /* 上部のパディング */
+    justify-content: start; /* Ensured */
+    margin-top: 5px; /* Added margin for separation */
 }
 
-/* Adjust display of non-shift events within shift manager */
-.shift-manager-assignment-grid .event-grid-item {
-    grid-column: 1 / -1; /* Span all columns */
-    margin-bottom: 3px; /* Maintain spacing, similar to grid gap */
-    /* width: 313px; is inherited from .event-grid-item */
-    /* Consider justify-self: start; if alignment issues arise */
+/* .shift-manager-assignment-grid .event-grid-item rule is removed as non-shift events are now in their own container. */
+
+/* New container for non-shift events in manager view */
+.manager-other-events-container {
+    margin-bottom: 5px; /* Space between non-shift events and shift grid */
 }
 
 /* Adjust display of shift items within shift manager */
 .shift-manager-assignment-grid > .assigned {
-    min-width: 70px;          /* Ensure content like "R (4日目)" is visible (kept for robustness) */
-    overflow: hidden;         /* Changed back from visible, now that grid ensures min column width */
-    white-space: nowrap;      /* Ensure text like "R (4日目)" does not wrap */
-    text-overflow: ellipsis;  /* Added for better visual feedback on truncation */
-    height: auto;             /* Ensure height fits content (as per previous changes) */
-    line-height: 1.3;         /* Adjust line height (as per previous changes) */
-    /* This rule is specific to .assigned items within the shift manager grid. */
-    /* It assumes basic styling like background, padding, border might come from a general .assigned or .event-shift-item rule. */
+    /* Base styling (width, overflow, etc.) is inherited from .shift-cell .assigned !important rules */
+    /* padding: 2px 3px; /* Removed to inherit 2px 1px from .shift-cell .assigned */
+    line-height: 1.3; /* Verified specific line-height */
+    height: auto; /* Verified specific height */
+    min-height: unset; /* Crucial override for this context */
+    margin: 2px 0; /* Verified margin (consistent with .shift-cell .assigned) */
+    /* text-overflow, white-space, etc. are inherited from .shift-cell .assigned */
 }
 
 /* For compact calendar event text */
@@ -260,10 +263,14 @@ ul {
     border: 1px solid #e0e0e0;
     border-radius: 3px;
     background-color: #f9f9f9; /* Default background */
-    word-break: break-word;
+    word-break: break-word; /* This might conflict with white-space: nowrap if that were added; not requested here */
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 313px; /* Changed from 245px - estimate for 5 buttons */
+    width: 313px !important; /* Strict width, was 313px */
+    min-width: 313px !important; /* Strict width */
+    max-width: 313px !important; /* Strict width */
+    box-sizing: border-box; /* Ensured */
+    flex-shrink: 0; /* Ensured */
 }
 
 .btn-xs-custom {
@@ -277,9 +284,10 @@ ul {
 /* Shift-specific 4-column grid container */
 .shift-grid-container {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
-    gap: 3px; /* Gap between shift items */
+    grid-template-columns: repeat(4, 125px); /* 4 columns, each strictly 125px wide */
+    gap: 3px; /* Gap between shift items (ensured) */
     padding-top: 2px;
+    justify-content: start; /* Align grid items to the start if fewer than 4 items */
 }
 
 /* Individual shift items within the shift grid */
@@ -288,12 +296,16 @@ ul {
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    word-break: break-word; /* This was not changed in the previous step for this specific class, only for .flex-grow-1 children */
-    overflow: hidden; /* This was not changed in the previous step for this specific class */
-    text-overflow: ellipsis; /* This was not changed in the previous step for this specific class */
-    /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
-    /* min-width: 140px; */ /* Remove or comment out */
-    width: 125px; /* Add - initial estimate for 2 buttons */
+    /* word-break: break-word; */ /* Removed to favor white-space: nowrap */
+    overflow: hidden; /* Ensured */
+    white-space: nowrap; /* Ensured */
+    text-overflow: ellipsis; /* Ensured */
+    width: 125px !important; /* Strict width, was 125px */
+    min-width: 125px !important; /* Strict width */
+    max-width: 125px !important; /* Strict width */
+    box-sizing: border-box; /* Ensured */
+    flex-shrink: 0; /* Ensured */
+    padding: 2px 1px; /* Further adjusted padding for text visibility */
 }
 
 /* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
