@@ -221,7 +221,11 @@ ul {
 
 /* New container for non-shift events in manager view */
 .manager-other-events-container {
-    margin-bottom: 5px; /* Space between non-shift events and shift grid */
+    display: grid; /* Added */
+    grid-template-columns: 1fr; /* Added for single column layout */
+    justify-items: start; /* Added to align items to the left */
+    gap: 3px; /* Added for spacing between items, consistent with other grids */
+    margin-bottom: 5px; /* Space between non-shift events and shift grid (verified) */
 }
 
 /* Adjust display of shift items within shift manager */
@@ -246,9 +250,10 @@ ul {
 /* For the container of events within a calendar cell (month view) */
 .event-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 3px;
-    padding-top: 2px;
+    grid-template-columns: 1fr; /* Changed to a single column layout */
+    gap: 3px; /* Verified */
+    padding-top: 2px; /* Verified */
+    justify-items: start; /* Align items to the start of the column */
 }
 
 .event-grid-container-week {
