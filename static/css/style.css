@@ -207,9 +207,29 @@ ul {
 
 .shift-manager-assignment-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4列グリッド */
+    grid-template-columns: repeat(4, minmax(70px, 1fr)); /* Changed from repeat(4, 1fr) */
     gap: 3px; /* アイテム間の隙間 */
     padding-top: 2px; /* 上部のパディング */
+}
+
+/* Adjust display of non-shift events within shift manager */
+.shift-manager-assignment-grid .event-grid-item {
+    grid-column: 1 / -1; /* Span all columns */
+    margin-bottom: 3px; /* Maintain spacing, similar to grid gap */
+    /* width: 313px; is inherited from .event-grid-item */
+    /* Consider justify-self: start; if alignment issues arise */
+}
+
+/* Adjust display of shift items within shift manager */
+.shift-manager-assignment-grid > .assigned {
+    min-width: 70px;          /* Ensure content like "R (4日目)" is visible (kept for robustness) */
+    overflow: hidden;         /* Changed back from visible, now that grid ensures min column width */
+    white-space: nowrap;      /* Ensure text like "R (4日目)" does not wrap */
+    text-overflow: ellipsis;  /* Added for better visual feedback on truncation */
+    height: auto;             /* Ensure height fits content (as per previous changes) */
+    line-height: 1.3;         /* Adjust line height (as per previous changes) */
+    /* This rule is specific to .assigned items within the shift manager grid. */
+    /* It assumes basic styling like background, padding, border might come from a general .assigned or .event-shift-item rule. */
 }
 
 /* For compact calendar event text */
