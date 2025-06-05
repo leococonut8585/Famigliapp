@@ -77,25 +77,28 @@ table { /* General table styling */
 
 /* Calendar specific table layouts */
 .calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
-    table-layout: fixed; /* Changed from auto */
-    width: 100%;
+    table-layout: fixed; /* Preserved */
+    width: auto; /* Changed from 100% */
+    max-width: fit-content; /* Added */
+    margin: 0 auto; /* Added for centering */
 }
 
 /* Styles for calendar cells */
 .calendar td.calendar-day,
 .calendar td.shift-cell {
-    height: 150px;       /* Fixed height for cells */
-    padding: 0;          /* Padding will be handled by cell-content-wrapper */
-    vertical-align: top;
-    border: 1px solid #ddd; /* Copied from general th, td rule as specific override */
-    /* min-width: 150px; /* No longer needed due to table-layout:fixed and th width setting */
+    height: 150px;       /* Fixed height for cells (Preserved) */
+    padding: 0;          /* Padding will be handled by cell-content-wrapper (Preserved) */
+    vertical-align: top; /* Preserved */
+    border: 1px solid #ddd; /* Copied from general th, td rule as specific override (Preserved) */
+    max-width: 330px;    /* Added max-width constraint for cells */
+    min-width: 135px;    /* Added min-width constraint for cells (wrapper 125px + 2*5px padding) */
 }
 
 .calendar th {
     /* background: #f9f9f9; /* from general th, td rule */
     /* border: 1px solid #ddd; /* from general th, td rule */
     /* padding: 8px; /* from general th, td rule */
-    width: calc(100% / 7); /* Equal width for 7 day columns */
+    /* width: calc(100% / 7); /* Removed to allow flexible column widths */
 }
 
 
@@ -376,12 +379,14 @@ ul {
 }
 
 .cell-content-wrapper {
-    width: 100%;
-    height: 100%;
-    overflow-x: auto;
-    overflow-y: auto;
-    padding: 5px;
-    box-sizing: border-box;
+    width: auto; /* Changed from 100% */
+    max-width: 313px; /* Added to align with single non-shift event item width */
+    min-width: 125px; /* Added to accommodate at least one shift item */
+    height: 100%; /* Preserved */
+    overflow-x: auto; /* Ensured for horizontal scrolling */
+    overflow-y: auto; /* Preserved */
+    padding: 5px; /* Preserved */
+    box-sizing: border-box; /* Preserved */
 }
 
 .btn-custom-edit {
