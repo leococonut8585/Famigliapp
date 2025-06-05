@@ -106,7 +106,7 @@
                             {% for ev in all_events_by_date.get(d.isoformat(), []) %}
                                 {% if ev.category == 'shift' %}
                                     {# Shifts are draggable and clickable for management #}
-                                    <span class="assigned event-shift-item initial-text-{{ ev.employee|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee | initials }}</span>
+                                    <span class="assigned event-grid-item event-shift event-shift-item initial-text-{{ ev.employee|lower|replace(' ', '_') }}" draggable="true" data-emp="{{ ev.employee }}">{{ ev.employee | initials }}</span>
                                 {% endif %}
                             {% endfor %}
                         </div>

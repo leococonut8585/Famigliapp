@@ -242,8 +242,8 @@ ul {
 /* Adjust display of shift items within shift manager */
 .shift-manager-assignment-grid > .assigned {
     /* Base styling (width, overflow, etc.) is inherited from .shift-cell .assigned !important rules */
-    /* padding: 2px 3px; /* Removed to inherit 2px 1px from .shift-cell .assigned */
-    line-height: 1.3; /* Verified specific line-height */
+    /* padding is handled by the more specific rule below or inherited from .shift-cell .assigned */
+    /* line-height: 1.3; /* This is overridden by .shift-cell .assigned's 1.2 !important or the specific rule below */
     height: auto; /* Verified specific height */
     min-height: unset; /* Crucial override for this context */
     margin: 2px 0; /* Verified margin (consistent with .shift-cell .assigned) */
@@ -319,6 +319,15 @@ ul {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     box-sizing: border-box;
+}
+
+/* Final override for shift items specifically within the shift manager */
+/* This ensures correct padding and font-size for manager shifts, overriding .event-grid-item.event-shift styles */
+.shift-manager-assignment-grid span.assigned.event-grid-item.event-shift {
+    padding: 2px 1px !important;
+    font-size: 0.9em !important;
+    /* width, min-width, max-width, line-height, overflow, text-overflow, white-space, box-sizing, height, margin */
+    /* are expected to be correctly inherited from .shift-cell .assigned which has !important on these */
 }
 
 .btn-xs-custom {

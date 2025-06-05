@@ -49,7 +49,7 @@
                         {% endif %}
 
                         {% if event.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
+                            <div class="shift-grid-item event-grid-item event-shift event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {{ event.cleaned_title or event.employee }}
                                 </span>
@@ -104,7 +104,7 @@
                         {% endif %}
 
                         {% if event.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
+                            <div class="shift-grid-item event-grid-item event-shift event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ event.id }}">
                                 <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     {{ event.cleaned_title or event.employee }}
                                 </span>
