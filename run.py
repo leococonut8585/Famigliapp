@@ -24,6 +24,9 @@ from app.monsignore import utils as monsignore_utils
 from app.calendario import utils as calendario_utils
 from app.invites import utils as invite_utils
 
+from app import create_app
+
+app = create_app()
 
 def display_menu(user: Dict[str, str]):
     while True:
