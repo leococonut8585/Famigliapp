@@ -321,7 +321,7 @@ ul {
     font-size: 0.85em !important; /* Default font size for shifts */
     padding: 2px 4px !important;   /* Default padding for shifts (e.g., main calendar) */
     background-color: gray !important; /* Shift-specific appearance */
-    color: white !important;           /* Shift-specific appearance */
+    /* color: white !important; /* Removed as per subtask - color should be from initial-text-* or event-shift-item */
     /* Inherits line-height, text handling etc. from base .event-grid-item */
     /* Note: .shift-grid-item also gets these properties by having .event-grid-item.event-shift classes */
     /* Note: .assigned items in manager also get these by having .event-grid-item.event-shift classes */
