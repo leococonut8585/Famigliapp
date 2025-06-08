@@ -233,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
       "forbidden_pair": { text: "禁止P", titlePrefix: "禁止ペア" },
       "required_pair": { text: "必須P", titlePrefix: "必須ペア不足" },
       "required_attribute_count": { text: "属性", titlePrefix: "属性人数不足" },
+      "specialized_requirement_missing": { text: "専門", titlePrefix: "専門担当不足" }, // 新しい違反タイプ
       "placeholder_violation_from_api": {text: "!", titlePrefix: "API警告"}
     };
     violationsList.forEach(violation => {
@@ -292,6 +293,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (key === "date" && detailsObj.date) continue; // Already in title
                     else if (key === "employee" && detailsObj.employee) continue;
                     else if (key === "attribute" && detailsObj.attribute) continue;
+                    else if (key === "category" && detailsObj.category) { // details.category を表示
+                        displayKey = "対象カテゴリ";
+                    } else if (key === "required_staff" && Array.isArray(detailsObj.details[key])) {
+                        displayKey = "必須担当者";
+                        detailsObj.details[key] = detailsObj.details[key].join(', ');
+                    } else if (key === "assigned_staff" && Array.isArray(detailsObj.details[key])) {
+                        displayKey = "現在担当者";
+                        detailsObj.details[key] = detailsObj.details[key].join(', ') || '(なし)';
+                    }
+
 
                     bodyContent += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
                 }

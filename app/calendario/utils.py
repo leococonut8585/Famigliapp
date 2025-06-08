@@ -43,6 +43,7 @@ DEFAULT_RULES: Dict[str, Any] = {
     "max_consecutive_days": 5, "min_staff_per_day": 1,
     "forbidden_pairs": [], "required_pairs": [],
     "required_attributes": {}, "employee_attributes": {},
+    "specialized_requirements": {} # 追加
 }
 DEFAULT_DEFINED_ATTRIBUTES = ["Dog", "Lady", "Man", "Kaji", "Massage"]
 
@@ -128,19 +129,54 @@ def delete_event(event_id: int) -> bool:
     return deleted
 
 def load_rules() -> tuple[Dict[str, Any], List[str]]:
-    rules_dict = DEFAULT_RULES.copy()
+    rules_dict = DEFAULT_RULES.copy() # specialized_requirements もコピーされる
     if RULES_PATH.exists():
         with open(RULES_PATH, "r", encoding="utf-8") as f:
-            try: rules_dict.update(json.load(f))
-            except json.JSONDecodeError: pass
+            try:
+                loaded_from_file = json.load(f)
+                # 既存のキーのみを上書きし、新しいキー(specialized_requirementsなど)はデフォルトを維持
+                for key in DEFAULT_RULES.keys(): # Iterate over keys in DEFAULT_RULES to ensure all are present
+                    if key in loaded_from_file:
+                        rules_dict[key] = loaded_from_file[key]
+                    # If a key from DEFAULT_RULES is not in loaded_from_file, it keeps its default value from rules_dict = DEFAULT_RULES.copy()
+                # Handle defined_attributes separately if it's stored outside DEFAULT_RULES structure in JSON but managed by it
+                if "defined_attributes" in loaded_from_file:
+                     rules_dict["defined_attributes"] = loaded_from_file["defined_attributes"]
+
+            except json.JSONDecodeError:
+                pass # デフォルトルールを使用
+
     defined_attributes = rules_dict.get("defined_attributes", DEFAULT_DEFINED_ATTRIBUTES[:])
     if not (isinstance(defined_attributes, list) and all(isinstance(attr, str) for attr in defined_attributes)):
         defined_attributes = DEFAULT_DEFINED_ATTRIBUTES[:]
-    rules_dict["defined_attributes"] = defined_attributes
+    # Ensure defined_attributes is part of the main rules_dict for consistency if other parts of the app expect it there,
+    # but it's returned separately as per function signature.
+    # rules_dict["defined_attributes"] = defined_attributes # This line is a bit redundant if defined_attributes are loaded correctly into rules_dict
+
+    # specialized_requirements がファイルにない場合や、読み込み時にキーが欠落した場合にデフォルトを保証
+    # Also ensure it's a dictionary
+    if "specialized_requirements" not in rules_dict or not isinstance(rules_dict.get("specialized_requirements"), dict):
+        rules_dict["specialized_requirements"] = DEFAULT_RULES["specialized_requirements"].copy()
+
+    # Remove defined_attributes from the returned rules_dict as it's returned separately
+    # However, if other parts of the code expect it IN rules_dict, this might need adjustment.
+    # For now, assuming routes.py and other consumers use the returned 'defined_attributes' list directly.
+    # The `rules_for_js` in routes.py gets `rules.copy()`, so `defined_attributes` will be in there if present in `rules_dict`.
+    # Let's keep `defined_attributes` within `rules_dict` for `rules_for_js` and general access,
+    # while still returning it separately as per the function signature for direct use.
+    # So, no need to `del rules_dict["defined_attributes"]`.
+
     return rules_dict, defined_attributes
 
-def save_rules(rules_data: Dict[str, Any], defined_attributes: List[str]) -> None:
-    rules_to_save = rules_data.copy(); rules_to_save["defined_attributes"] = defined_attributes
+def save_rules(
+    rules_data: Dict[str, Any],
+    defined_attributes: List[str],
+    specialized_requirements_data: Dict[str, List[str]] # 新しい引数
+) -> None:
+    rules_to_save = rules_data.copy()
+    # Ensure 'defined_attributes' from the argument list is authoritative
+    rules_to_save["defined_attributes"] = defined_attributes
+    rules_to_save["specialized_requirements"] = specialized_requirements_data # 専門予定データを追加
     with open(RULES_PATH, "w", encoding="utf-8") as f:
         json.dump(rules_to_save, f, ensure_ascii=False, indent=2)
 
@@ -295,6 +331,64 @@ def get_shift_violations(assignments: Dict[str, List[str]], rules: Dict[str, Any
         for req_attr_name, req_count_any in required_attributes_map.items():
             req_count = int(req_count_any); current_attr_count = daily_attribute_counts.get(req_attr_name, 0)
             if current_attr_count < req_count: detected_violations.append({"date": target_date_iso_str, "rule_type": "required_attribute_count", "attribute": req_attr_name, "description": f"{target_date_iso_str}には属性'{req_attr_name}'が最低{req_count}人必要ですが、現在{current_attr_count}人です", "details": {"current_count": current_attr_count, "required_count": req_count, "attribute": req_attr_name, "date": target_date_iso_str}})
+
+    # 専門予定のチェック
+    # Ensure 'specialized_requirements' key exists and is a dict, even if it's empty
+    specialized_requirements = rules.get("specialized_requirements", {})
+    if not isinstance(specialized_requirements, dict): # Should not happen if load_rules is correct
+        specialized_requirements = {}
+
+    if specialized_requirements:
+        all_events = load_events() # 全イベントをロード
+        events_by_date: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for event in all_events:
+            event_date_str = event.get("date")
+            if event_date_str: # Ensure date exists
+                events_by_date[event_date_str].append(event)
+
+        for target_date_iso_str, assigned_emps_on_day in assignments.items():
+            # その日のイベントを取得
+            day_events = events_by_date.get(target_date_iso_str, [])
+
+            for event_category_key, required_staff_list in specialized_requirements.items():
+                # event_category_key は "mummy", "tattoo" など
+                # required_staff_list は ["sara", "hitomi"] など
+
+                if not required_staff_list: # Skip if no staff are required for this category
+                    continue
+
+                # その日に専門予定カテゴリのイベントがあるかチェック
+                category_event_exists_on_day = any(
+                    ev.get("category") == event_category_key for ev in day_events
+                )
+
+                if category_event_exists_on_day:
+                    # 必須担当者が割り当てられているかチェック
+                    is_required_staff_assigned = any(
+                        emp in assigned_emps_on_day for emp in required_staff_list
+                    )
+
+                    if not is_required_staff_assigned:
+                        # 警告メッセージの担当者リスト部分を作成
+                        required_staff_str = "または".join(required_staff_list)
+                        # カテゴリ表示名 (実際のアプリケーションでは、キーから表示名へのマッピングが望ましい)
+                        # 例: category_display_names = {"mummy": "マミー系", "tattoo": "タトゥー"}
+                        # category_display_name = category_display_names.get(event_category_key, event_category_key)
+                        category_display_name = event_category_key # For now, use key
+
+                        description = f"{category_display_name}の予定がある日({target_date_iso_str})に{required_staff_str}が割り当てられていません"
+                        detected_violations.append({
+                            "date": target_date_iso_str,
+                            "rule_type": "specialized_requirement_missing",
+                            "category": event_category_key,
+                            "description": description,
+                            "details": {
+                                "required_staff": required_staff_list,
+                                "assigned_staff": assigned_emps_on_day,
+                                "category": event_category_key,
+                                "date": target_date_iso_str
+                            }
+                        })
     return detected_violations
 
 # --- New function for Step 1 of this subtask ---

@@ -1,0 +1,16 @@
+{
+  "specialized_requirements": {},
+  "max_consecutive_days": 5,
+  "min_staff_per_day": 1,
+  "forbidden_pairs": [],
+  "required_pairs": [],
+  "required_attributes": {},
+  "employee_attributes": {},
+  "defined_attributes": [
+    "Dog",
+    "Lady",
+    "Man",
+    "Kaji",
+    "Massage"
+  ]
+}

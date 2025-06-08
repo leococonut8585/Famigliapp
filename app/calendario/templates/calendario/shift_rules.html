@@ -9,6 +9,7 @@
         <input type="hidden" name="employee_attributes" id="employee_attributes_hidden" value="{{ form.employee_attributes.data or '' }}">
         <input type="hidden" name="required_attributes" id="required_attributes_hidden" value="{{ form.required_attributes.data or '' }}">
         <input type="hidden" name="defined_attributes_json_str" id="defined_attributes_json_str">
+        <input type="hidden" name="specialized_requirements_json_str" id="specialized_requirements_json_str">
 
         <div class="card mb-3">
             <div class="card-header">基本設定</div>
@@ -120,8 +121,44 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header">専門予定設定</div>
+            <div class="card-body">
+                <div class="input-group input-group-sm mb-3">
+                    <select id="specialized_category_select" class="form-select">
+                        <option value="lesson">レッスン</option>
+                        <option value="kouza">講座</option>
+                        <option value="other">その他</option>
+                        <option value="mummy">マミー系</option>
+                        <option value="tattoo">タトゥー</option>
+                    </select>
+                    <select id="specialized_employee_select" class="form-select">
+                        {% for emp in employees %}
+                            <option value="{{ emp }}">{{ emp }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" id="add_specialized_requirement_button" class="btn btn-outline-primary">追加</button>
+                </div>
+                <label class="form-label">設定済み専門予定 (このセクションでの追加/削除は即時反映され、下の「現在設定されているルール詳細」に表示されます。最終的な保存はページ下部の「保存」ボタンで行います):</label>
+                <ul id="specialized_requirements_list_display" class="list-unstyled">
+                    <!-- JavaScriptによって動的に内容が追加されます -->
+                    <!-- 例: <li>マミー系: sara, hitomi <button class="btn btn-sm btn-danger remove-specialized-btn" data-category="mummy" data-employee="sara">sara削除</button> <button class="btn btn-sm btn-danger remove-specialized-btn" data-category="mummy" data-employee="hitomi">hitomi削除</button></li> -->
+                </ul>
+            </div>
+        </div>
+
         <hr class="my-4">
         <h2>現在設定されているルール詳細</h2>
+
+        <div class="card mb-3"> <!-- このカードを追加 -->
+            <div class="card-header">専門予定一覧</div>
+            <div class="card-body">
+                <ul id="current_specialized_requirements_display_summary" class="list-unstyled">
+                    <!-- JavaScriptによって詳細が表示されます -->
+                    <!-- 例: <li>マミー系: sara, hitomi</li> -->
+                </ul>
+            </div>
+        </div>
 
         <div class="card mb-3">
             <div class="card-header">定義済み属性名一覧</div>

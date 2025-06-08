@@ -31,6 +31,8 @@ EVENT_SORT_PRIORITY = {
     "other_no_time": 3,
     "shift": 4,
     "other_with_time": 5,
+    "mummy": 5, # 追加
+    "tattoo": 5, # 追加
 }
 
 @bp.before_request
@@ -85,7 +87,7 @@ def index():
         elif category == 'shift':
             event['sort_priority'] = EVENT_SORT_PRIORITY['shift']
             event['sort_time'] = "00:00"
-        elif category in ['lesson', 'kouza', 'other']:
+        elif category in ['lesson', 'kouza', 'other', 'mummy', 'tattoo']:
             if has_time:
                 event['sort_priority'] = EVENT_SORT_PRIORITY['other_with_time']
                 event['sort_time'] = event['display_time']
@@ -146,18 +148,42 @@ def index():
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
     else: # month view
         target_month_display = month
-        # Filter from the globally sorted and augmented 'events' list
-        events_month = [e_month for e_month in events if e_month.get("date", "").startswith(target_month_display.strftime("%Y-%m"))]
+
+        # カレンダー表示のための週データを取得 (既存のcalインスタンス作成をここに移動)
+        cal = calendar.Calendar(firstweekday=0) # firstweekday=0 は月曜日始まり
+        weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
+
+        display_start_date = None
+        display_end_date = None
+        if weeks_data:
+            display_start_date = weeks_data[0][0]
+            display_end_date = weeks_data[-1][-1]
+
+        # イベントのフィルタリング範囲を拡張
+        events_for_display_period = []
+        if display_start_date and display_end_date:
+            for e_event in events: # 'events' は既にソート済みの全イベントリスト
+                try:
+                    event_date_obj = date.fromisoformat(e_event.get("date", ""))
+                    if display_start_date <= event_date_obj <= display_end_date:
+                        events_for_display_period.append(e_event)
+                except ValueError:
+                    continue # 不正な日付フォーマットのイベントはスキップ
+
+        # flash(f"表示期間: {display_start_date} - {display_end_date}, イベント数: {len(events_for_display_period)}") # デバッグ用
+
         nav_prev_month_val = (target_month_display - timedelta(days=1)).replace(day=1)
         if nav_prev_month_val.replace(day=calendar.monthrange(nav_prev_month_val.year, nav_prev_month_val.month)[1]) < limit_past_date: nav_prev_month_val = None
         nav_next_month_val = (target_month_display + timedelta(days=31)).replace(day=1)
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
+
         events_by_date = defaultdict(list)
-        for e_event_by_date in events_month:
+        for e_event_by_date in events_for_display_period: # 修正: events_month から events_for_display_period に変更
             events_by_date[e_event_by_date["date"]].append(e_event_by_date)
-        cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
+
         return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=target_month_display,
-                               nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
+                               nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta,
+                               current_month_number=target_month_display.month) # current_month_number を追加
 
 # ... (rest of the file: /add, /edit, /delete, /move, /assign, /shift, /shift_rules, /stats, and API routes) ...
 # This overwrite will ensure the rest of the file remains the same.
@@ -323,7 +349,7 @@ def shift():
         elif category == 'shift':
             event['sort_priority'] = EVENT_SORT_PRIORITY['shift']
             event['sort_time'] = "00:00" # Shifts are typically all-day in display sense or handled by specific UI
-        elif category in ['lesson', 'kouza', 'other']:
+        elif category in ['lesson', 'kouza', 'other', 'mummy', 'tattoo']:
             if has_time:
                 event['sort_priority'] = EVENT_SORT_PRIORITY['other_with_time']
                 event['sort_time'] = event['display_time']
@@ -410,8 +436,10 @@ def shift():
 def shift_rules():
     user = session.get("user")
     if user.get("role") != "admin": flash("権限がありません"); return redirect(url_for("calendario.index"))
+    # utils.load_rules() が rules辞書と defined_attributes リストを返すと想定
+    # rules辞書の中に specialized_requirements が含まれるように utils.py で修正する
     rules, defined_attributes = utils.load_rules(); form = ShiftRulesForm()
-    form_employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS] 
+    form_employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS]
     if request.method == "GET":
         form.max_consecutive_days.data = str(rules.get("max_consecutive_days", "")); form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
         form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", [])); form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
@@ -419,10 +447,12 @@ def shift_rules():
         form.employee_attributes.data = ",".join(emp_attrs_items)
         req_attrs_items = [];_ = [req_attrs_items.append(f"{k}:{v_int}") for k, v_int in rules.get("required_attributes", {}).items()]
         form.required_attributes.data = ",".join(req_attrs_items)
+        # specialized_requirements_json_str はGET時には設定不要（JSがinitialShiftRulesから読み込む）
     if form.validate_on_submit():
         rules_to_save = {"max_consecutive_days": int(form.max_consecutive_days.data or 0), "min_staff_per_day": int(form.min_staff_per_day.data or 0),
                          "forbidden_pairs": utils.parse_pairs(form.forbidden_pairs.data or ""), "required_pairs": utils.parse_pairs(form.required_pairs.data or ""),
                          "employee_attributes": utils.parse_kv(form.employee_attributes.data or ""), "required_attributes": utils.parse_kv_int(form.required_attributes.data or "")}
+
         defined_attributes_json_str = request.form.get("defined_attributes_json_str", "[]")
         try:
             submitted_defined_attributes = json.loads(defined_attributes_json_str)
@@ -431,8 +461,34 @@ def shift_rules():
             elif not submitted_defined_attributes: 
                  flash("属性リストは空にできません。デフォルトに戻します。", "warning"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
         except json.JSONDecodeError: flash("属性リストのJSON解析に失敗しました。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
-        utils.save_rules(rules_to_save, submitted_defined_attributes); flash("保存しました"); return redirect(url_for("calendario.shift_rules"))
-    return render_template("shift_rules.html", form=form, user=user, employees=form_employees, attributes=defined_attributes)
+
+        specialized_requirements_to_save = {}
+        specialized_json_str = form.specialized_requirements_json_str.data
+        if specialized_json_str:
+            try:
+                specialized_requirements_to_save = json.loads(specialized_json_str)
+                if not isinstance(specialized_requirements_to_save, dict):
+                    flash("専門予定データの形式が不正です。既存の設定値を維持します。", "error")
+                    # エラー時は既存値を維持する
+                    loaded_rules_for_error, _ = utils.load_rules()
+                    specialized_requirements_to_save = loaded_rules_for_error.get("specialized_requirements", {})
+            except json.JSONDecodeError:
+                flash("専門予定データのJSON解析に失敗しました。既存の設定値を維持します。", "error")
+                loaded_rules_for_error, _ = utils.load_rules()
+                specialized_requirements_to_save = loaded_rules_for_error.get("specialized_requirements", {})
+
+        # utils.save_rules に specialized_requirements_to_save も渡す
+        # utils.save_rules のシグネチャ変更を後続で行う: save_rules(rules_data, defined_attributes, specialized_requirements_data)
+        utils.save_rules(rules_to_save, submitted_defined_attributes, specialized_requirements_to_save)
+        flash("保存しました"); return redirect(url_for("calendario.shift_rules"))
+
+    # JavaScriptに渡すルールデータ
+    # rules_for_js の中の rules オブジェクトに specialized_requirements も含まれるようにする
+    rules_for_js_payload = rules.copy() # これで specialized_requirements もコピーされる想定
+
+    return render_template("shift_rules.html", form=form, user=user, employees=form_employees,
+                           attributes=defined_attributes,
+                           rules_for_js={"rules": rules_for_js_payload, "defined_attributes": defined_attributes })
 
 @bp.route("/stats", methods=["GET", "POST"])
 def stats():

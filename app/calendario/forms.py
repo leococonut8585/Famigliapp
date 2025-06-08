@@ -28,6 +28,8 @@ class EventForm(FlaskForm):
             ("lesson", "レッスン"),
             ("hug", "ハグの日"),
             ('kouza', '講座'),
+            ('mummy', 'マミー系'),
+            ('tattoo', 'タトゥー'),
             ('shucchou', '出張'),
             ("other", "その他"),
         ],
@@ -64,6 +66,10 @@ class ShiftRulesForm(FlaskForm):
     required_pairs = StringField("必須組み合わせ", validators=[Optional()])
     employee_attributes = StringField("従業員属性", validators=[Optional()])
     required_attributes = StringField("属性ごとの必要人数", validators=[Optional()])
+
+    # 新しく追加するフィールド
+    specialized_requirements_json_str = StringField("専門予定JSON", validators=[Optional()])
+
     submit = SubmitField("保存")
 
 
