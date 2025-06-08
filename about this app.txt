@@ -6,21 +6,44 @@ Famigliappってアプリを作りたい
 
 一般販売の予定は無い。
 
-【現在の開発状況】
-主要な掲示板、ポイント管理、カレンダー、タスク機能まで実装が進み、通知やAI解析を含む各種自動化も動作しています。
-Web版とCLI版双方が利用可能で、テストも整備されています。
-継続的に機能追加と改善を行っています。
+## Current Development Status and Implementation Overview
 
+The Famigliapp project has reached a mature prototype stage. A significant number of core functionalities, as originally envisioned in the detailed specifications below, have been implemented and are accessible through both a Command-Line Interface (CLI) and a Flask-based web application.
 
+Key implemented areas include:
+*   **User and Points Management:** The Punto system for tracking and managing user points (AhvPunto, OzePunto, UnitoPunto) is functional, including history, rankings, and admin editing capabilities.
+*   **Content Modules/Bulletin Boards:** Various themed boards such as Posts (general), Bravissimo (audio praise), Intrattenimento (entertainment), Corso (seminar feedback), Seminario (lesson feedback), Principessina (baby reports), and Monsignore (image columns) are operational, generally supporting posting, viewing, and filtering.
+*   **Interactive Features:** Quest Box for task management, Scatola di Capriccio for private feedback and admin surveys, Vote Box for polls, and Nedari Box for requests are available.
+*   **Calendario:** A shared calendar with event management and an advanced shift management system for admins (including rule-based warnings and drag-and-drop assignment) is in place.
+*   **Reporting & Analysis:** Resoconto for work reports features daily AI analysis (via Claude API) viewable by admins, CSV export, and user contribution rankings.
+*   **Notifications:** Email, LINE Notify, and Pushbullet notifications are integrated for various application events.
+*   **Data Storage:** The application primarily uses JSON files for feature-specific data, with SQLAlchemy and a SQLite database managing core user information, generic posts, and points history.
 
+For a comprehensive list of currently implemented features and their details, please refer to the main `README.md` file. The `TODO.md` file outlines planned enhancements, features from the original specification that are still pending or partially implemented, and areas for future work. The general approach has been to build out the features with a focus on functionality, with ongoing efforts to refine the user interface, particularly for the web version.
 
+## Key Development Milestones/History (Recent)
 
+*   Integration of a Flask web interface alongside the original CLI.
+*   Implementation of `flask run` compatibility for easier development server startup.
+*   Standardization of module naming conventions (e.g., 'Seminario' capitalization).
+*   Iterative refinements to CSS for calendar views, shift management UI, and event item display to improve clarity and usability.
+*   Ongoing updates to documentation (`README.md`, `TODO.md`) to reflect current project state.
 
+## Future Outlook
 
+The future development of Famigliapp will focus on several key areas, guided by the `TODO.md` document:
 
+*   **Full Specification Alignment:** Completing any remaining aspects of the original "【FamigliApp仕様】" detailed below, particularly around nuanced behaviors in Scatola di Capriccio, Quest Box lifecycle, and reminder systems.
+*   **Enhancements:** Improving existing features with more robust file handling (security, previews), user-configurable notifications, deeper Punto integrations, and a more unified and mobile-responsive web UI.
+*   **Stability and Performance:** Addressing potential bugs, strengthening error handling, and optimizing performance, especially concerning the use of JSON files for data storage.
+*   **Testing and Documentation:** Significantly increasing test coverage (unit, integration, UI) and expanding developer and user documentation.
+*   **Refactoring:** Evaluating the long-term data persistence strategy (JSON vs. database), improving code modularity, and enhancing configuration management for security and scalability.
 
+The long-term vision remains to provide a rich, private, and engaging digital environment for the target user group.
 
-
+---
+(Original Detailed Specifications Below)
+---
 
 【FamigliApp仕様】
 
