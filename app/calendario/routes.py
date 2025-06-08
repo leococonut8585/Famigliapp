@@ -198,9 +198,10 @@ def add():
             event_date_obj=form.date.data, # Renamed for clarity to match util function
             title=form.title.data,
             description=form.description.data or "",
-            category=form.category.data,
-            participants=form.participants.data,  # Pass as a list
-            time=form.time.data # Add time field
+            employee='',  # employeeフィールドがないため空文字列を渡す
+            category=form.category.data, # category をフォームから取得
+            participants=form.participants.data, # participants をフォームから取得
+            time=form.time.data # time をフォームから取得
         )
         flash("新しい予定を追加しました。", "success")
         return redirect(url_for("calendario.index"))

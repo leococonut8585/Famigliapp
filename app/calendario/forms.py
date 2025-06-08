@@ -37,7 +37,13 @@ class EventForm(FlaskForm):
         # カテゴリ変更時にJavaScriptで対象者の表示/非表示を切り替えるための属性を追加
         render_kw={'onchange': 'toggleParticipantsField(this.value); toggleTimeField(this.value);'}
     )
-    time = TimeField("時間", validators=[Optional()], format='%H:%M', render_kw={'id': 'event_time'})
+    time = TimeField(
+        "時間",
+        validators=[Optional()],
+        format='%H:%M',
+        widget=widgets.TimeInput(), # widget を TimeInput に変更
+        render_kw={'id': 'event_time'} # render_kw は維持
+    )
     participants = SelectMultipleField(
         "対象者",
         choices=[(u, u) for u in config.USERS if u not in config.EXCLUDED_USERS],
