@@ -23,16 +23,17 @@
         </div>
     </div>
 
-    <table class="calendar table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th style="width: 14.28%;">月</th>
-                <th style="width: 14.28%;">火</th>
-                <th style="width: 14.28%;">水</th>
-                <th style="width: 14.28%;">木</th>
-                <th style="width: 14.28%;">金</th>
-                <th style="width: 14.28%;">土</th>
-                <th style="width: 14.28%;">日</th>
+    <div class="calendar-scroll-container">
+        <table class="calendar table table-bordered">
+            <thead class="table-light">
+                <tr>
+                <th>月</th>
+                <th>火</th>
+                <th>水</th>
+                <th>木</th>
+                <th>金</th>
+                <th>土</th>
+                <th>日</th>
             </tr>
         </thead>
         <tbody>
@@ -40,12 +41,12 @@
             <tr>
                 {% for d in week %}
                 <td class="{% if d.month != month.month %}other-month text-muted bg-light{% else %}calendar-day{% endif %}"
-                    {% if d.month == month.month %}data-date="{{ d.isoformat() }}"{% endif %}
-                    style="vertical-align: top; height: 120px; overflow-y: auto; padding: 2px;"> {# Reduced padding for more space #}
-                    <div class="day-number fw-bold" style="font-size: 0.9em; margin-bottom: 2px;">{{ d.day }}</div>
+                    {% if d.month == month.month %}data-date="{{ d.isoformat() }}"{% endif %}>
+                    <div class="cell-content-wrapper">
+                        <div class="day-number fw-bold">{{ d.day }}</div>
 
-                    {# Removed the all-encompassing event-grid-container #}
-                    {% set events_for_day = events_by_date.get(d.isoformat(), []) %}
+                        {# Removed the all-encompassing event-grid-container #}
+                        {% set events_for_day = events_by_date.get(d.isoformat(), []) %}
                     {% for ev in events_for_day %}
                         {# Logic to open shift-grid-container #}
                         {% if ev.category == 'shift' and (loop.first or loop.previtem.category != 'shift') %}
@@ -53,9 +54,9 @@
                         {% endif %}
 
                         {% if ev.category == 'shift' %}
-                            <div class="shift-grid-item event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ ev.id }}">
-                                <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {{ ev.cleaned_title or ev.employee }}
+                            <div class="shift-grid-item event-grid-item event-shift event-shift-item calendar-event-text-compact d-flex align-items-center justify-content-between" draggable="true" data-event-id="{{ ev.id }}">
+                                <span class="flex-grow-1 initial-text-{{ (ev.employee or ev.cleaned_title)|lower|replace(' ', '_') }}" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ (ev.cleaned_title or ev.employee) | initials }}
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
                                     {# Shift events: Copy, Move #}
@@ -88,12 +89,14 @@
                         </div> {# Close shift-grid-container #}
                         {% endif %}
                     {% endfor %}
+                    </div> {# Close cell-content-wrapper #}
                 </td>
                 {% endfor %}
             </tr>
         {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
     <div class="mt-3">
         <a href="{{ url_for('calendario.add') }}" class="btn btn-success">新しい予定を追加</a>
         {% if user.role == 'admin' %}

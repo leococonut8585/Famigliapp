@@ -4,6 +4,7 @@ from pathlib import Path
 
 import config
 import pytest
+import json # Added for new tests
 
 flask = pytest.importorskip("flask")
 
@@ -12,6 +13,7 @@ from datetime import date
 from app import create_app
 from app import utils as app_utils
 from app.calendario import utils
+from app.calendario.utils import another_initials_filter_for_japanese_names
 
 
 def setup_module(module):
@@ -361,3 +363,198 @@ def test_recalculate_shift_counts_unauthenticated():
         assert "auth/login" in res.headers["Location"]
 
 
+def test_another_initials_filter():
+    assert another_initials_filter_for_japanese_names("山田太郎") == "山"
+    assert another_initials_filter_for_japanese_names("Yamada Taro") == "Y" # Assuming it takes the first char of the whole string
+    assert another_initials_filter_for_japanese_names("raito") == "R"
+    assert another_initials_filter_for_japanese_names(" hitomi") == " " # Leading space
+    assert another_initials_filter_for_japanese_names("　sara") == "　" # Leading full-width space
+    assert another_initials_filter_for_japanese_names("") == ""
+    assert another_initials_filter_for_japanese_names(None) == ""
+    # Add more test cases as needed, e.g., single character names
+    assert another_initials_filter_for_japanese_names("J") == "J"
+    assert another_initials_filter_for_japanese_names("あ") == "あ"
+
+
+# --- Tests for new features (Specialized Schedules, New Genres, Display Fixes) ---
+
+def test_add_edit_new_event_genres(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    # Ensure files are clean for this test if it modifies them
+    utils.save_events([])
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "testadmin", "role": "admin", "email": "admin@example.com"}
+
+        # Test adding 'mommy' category event
+        res_add_mommy = client.post(
+            "/calendario/add",
+            data={
+                "date": "2024-08-01", "title": "マミーテスト", "category": "mommy",
+                "description": "Mommy event test", "time": "10:00"
+            },
+            follow_redirects=True,
+        )
+        assert res_add_mommy.status_code == 200
+        assert "新しい予定を追加しました".encode("utf-8") in res_add_mommy.data
+
+        events = utils.load_events()
+        assert len(events) == 1
+        assert events[0]["category"] == "mommy"
+        assert events[0]["title"] == "マミーテスト"
+        assert events[0]["time"] == "10:00"
+        mommy_event_id = events[0]["id"]
+
+        # Test adding 'tattoo' category event
+        res_add_tattoo = client.post(
+            "/calendario/add",
+            data={
+                "date": "2024-08-02", "title": "タトゥーテスト", "category": "tattoo",
+                "description": "Tattoo event test", "time": "" # No time
+            },
+            follow_redirects=True,
+        )
+        assert res_add_tattoo.status_code == 200
+        events = utils.load_events()
+        assert len(events) == 2
+        tattoo_event = next(e for e in events if e["title"] == "タトゥーテスト")
+        assert tattoo_event["category"] == "tattoo"
+        assert tattoo_event["time"] is None
+
+        # Test editing an event to 'mommy'
+        res_edit_to_mommy = client.post(
+            f"/calendario/edit/{tattoo_event['id']}",
+            data={
+                "date": "2024-08-02", "title": "タトゥーテスト改めマミー", "category": "mommy",
+                "description": "Changed to mommy", "time": "14:30"
+            },
+            follow_redirects=True,
+        )
+        assert res_edit_to_mommy.status_code == 200
+        assert "予定を更新しました".encode("utf-8") in res_edit_to_mommy.data
+        events = utils.load_events()
+        edited_event = next(e for e in events if e["id"] == tattoo_event['id'])
+        assert edited_event["category"] == "mommy"
+        assert edited_event["title"] == "タトゥーテスト改めマミー"
+        assert edited_event["time"] == "14:30"
+
+        # Test that new categories appear on the add form (indirectly by checking EventForm choices)
+        # This is more of a unit test for EventForm, but a quick check here is okay.
+        # from app.calendario.forms import EventForm
+        # form = EventForm()
+        # category_choices = [choice[0] for choice in form.category.choices]
+        # assert "mommy" in category_choices
+        # assert "tattoo" in category_choices
+        # A more robust way for integration: GET /add and check HTML for options, but that's more complex.
+
+def test_specialized_schedule_rules_save_load(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_rules({}) # Clean rules
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "testadmin", "role": "admin", "email": "admin@example.com"}
+
+        special_req_payload = {"マミー系": ["sara", "hitomi"], "タトゥー": ["jun"]}
+
+        res_post_rules = client.post(
+            "/calendario/shift_rules",
+            data={
+                "max_consecutive_days": "5",
+                "min_staff_per_day": "1",
+                "forbidden_pairs": "",
+                "required_pairs": "",
+                "employee_attributes": "",
+                "required_attributes": "",
+                "defined_attributes_json_str": '["リーダー", "新人"]', # Must provide other valid form data
+                "specialized_requirements_json_str": json.dumps(special_req_payload)
+            },
+            follow_redirects=True,
+        )
+        assert res_post_rules.status_code == 200
+        assert "保存しました".encode("utf-8") in res_post_rules.data
+
+        rules, _ = utils.load_rules()
+        assert "specialized_requirements" in rules
+        assert rules["specialized_requirements"] == special_req_payload
+
+        # Test loading rules
+        res_get_rules = client.get("/calendario/shift_rules")
+        assert res_get_rules.status_code == 200
+        # Check if the data is passed to the template and set in JS context
+        # This relies on the template rendering `window.initialSpecializedRequirements`
+        assert f"window.initialSpecializedRequirements = {json.dumps(special_req_payload)};".encode("utf-8") in res_get_rules.data
+
+
+def test_specialized_schedule_violation_display(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+
+    # 1. Setup rules
+    test_rules = {
+        "max_consecutive_days": 5, "min_staff_per_day": 1,
+        "specialized_requirements": {"マミー系": ["sara"]}
+    }
+    utils.save_rules(test_rules, ["リーダー"]) # defined_attributes needed by save_rules
+
+    # 2. Setup events
+    test_events = [
+        {"id": 1, "date": "2024-09-10", "title": "マミーイベント", "category": "マミー系", "employee": ""},
+        # No shift for 'sara' on 2024-09-10, or shift for someone else
+        {"id": 2, "date": "2024-09-10", "title": "ケンシフト", "category": "shift", "employee": "ken"},
+        {"id": 3, "date": "2024-09-11", "title": "マミーイベント２", "category": "マミー系", "employee": ""},
+        {"id": 4, "date": "2024-09-11", "title": "サラシフト", "category": "shift", "employee": "sara"}, # Sara works, no violation
+    ]
+    utils.save_events(test_events)
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "testadmin", "role": "admin", "email": "admin@example.com"}
+
+        res = client.get("/calendario/shift?month=2024-09")
+        assert res.status_code == 200
+
+        # Check for violation on 2024-09-10
+        expected_violation_msg = "マミー系の予定がある日(2024-09-10)に、指定担当者 (sara) のいずれも割り当てられていません。"
+        assert expected_violation_msg.encode("utf-8") in res.data
+
+        # Check no violation for 2024-09-11
+        non_violation_trigger = "マミー系の予定がある日(2024-09-11)".encode("utf-8")
+        assert non_violation_trigger not in res.data
+
+
+def test_month_view_event_display_previous_next_month_days(monkeypatch):
+    app = create_app()
+    app.config["TESTING"] = True
+    utils.save_events([]) # Clean events
+
+    # October 2023: First day is Sunday (Oct 1). Grid will start Sep 25 (Mon). Last day Oct 31 (Tue). Grid ends Nov 5 (Sun).
+    # Event on Sep 30 (Saturday, should be visible on Oct month view)
+    event_prev_month = {"id": 1, "date": "2023-09-30", "title": "Prev Month Event", "category": "other", "employee": "prev_staff"}
+    # Event on Nov 1 (Wednesday, should be visible on Oct month view)
+    event_next_month = {"id": 2, "date": "2023-11-01", "title": "Next Month Event", "category": "lesson", "employee": "next_staff"}
+    # Event in current month
+    event_curr_month = {"id": 3, "date": "2023-10-15", "title": "Curr Month Event", "category": "kouza", "employee": "curr_staff"}
+
+    utils.save_events([event_prev_month, event_next_month, event_curr_month])
+
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user"] = {"username": "testuser", "role": "user", "email": "user@example.com"}
+
+        # Request October 2023 month view
+        res = client.get("/calendario/?month=2023-10")
+        assert res.status_code == 200
+
+        # Check if all three events are present in the rendered HTML
+        assert "Prev Month Event".encode("utf-8") in res.data
+        assert "Next Month Event".encode("utf-8") in res.data
+        assert "Curr Month Event".encode("utf-8") in res.data
+
+        # Check a specific date from previous month rendering
+        assert "2023-09-30".encode("utf-8") in res.data # Ensure the date cell is there
+        # Check a specific date from next month rendering
+        assert "2023-11-01".encode("utf-8") in res.data # Ensure the date cell is there

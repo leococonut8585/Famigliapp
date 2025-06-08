@@ -12,18 +12,21 @@ from app.resoconto import utils as resoconto_utils
 from app.resoconto import tasks as resoconto_tasks
 from app.resoconto.tasks import start_scheduler
 from app.intrattenimento.tasks import start_scheduler as start_intrattenimento_scheduler
-from app.seminario.tasks import start_scheduler as start_seminario_scheduler
+from app.Seminario.tasks import start_scheduler as start_seminario_scheduler
 from app.principessina.tasks import start_scheduler as start_principessina_scheduler
 from app.corso.tasks import start_scheduler as start_corso_scheduler
 from app.principessina import utils as principessina_utils
 from app.quest_box import utils as quest_utils
-from app.seminario import utils as seminario_utils
+from app.Seminario import utils as seminario_utils
 from app.bravissimo import utils as bravissimo_utils
 from app.scatola_capriccio import utils as scatola_capriccio_utils
 from app.monsignore import utils as monsignore_utils
 from app.calendario import utils as calendario_utils
 from app.invites import utils as invite_utils
 
+from app import create_app
+
+app = create_app()
 
 def display_menu(user: Dict[str, str]):
     while True:

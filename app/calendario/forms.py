@@ -29,6 +29,8 @@ class EventForm(FlaskForm):
             ("hug", "ハグの日"),
             ('kouza', '講座'),
             ('shucchou', '出張'),
+            ('mommy', 'マミー系'),
+            ('tattoo', 'タトゥー'),
             ("other", "その他"),
         ],
         validators=[DataRequired()],

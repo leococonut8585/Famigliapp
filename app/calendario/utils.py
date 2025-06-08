@@ -129,10 +129,24 @@ def delete_event(event_id: int) -> bool:
 
 def load_rules() -> tuple[Dict[str, Any], List[str]]:
     rules_dict = DEFAULT_RULES.copy()
+    loaded_from_file = False
     if RULES_PATH.exists():
         with open(RULES_PATH, "r", encoding="utf-8") as f:
-            try: rules_dict.update(json.load(f))
-            except json.JSONDecodeError: pass
+            try:
+                loaded_rules_from_file = json.load(f)
+                rules_dict.update(loaded_rules_from_file)
+                loaded_from_file = True
+            except json.JSONDecodeError:
+                pass  # File is corrupt, proceed with defaults
+
+    # Initialize specialized_requirements
+    if loaded_from_file and 'specialized_requirements' in rules_dict:
+        # Already loaded from file if present
+        pass
+    else:
+        # Not in file or file didn't exist/was corrupt
+        rules_dict['specialized_requirements'] = {}
+
     defined_attributes = rules_dict.get("defined_attributes", DEFAULT_DEFINED_ATTRIBUTES[:])
     if not (isinstance(defined_attributes, list) and all(isinstance(attr, str) for attr in defined_attributes)):
         defined_attributes = DEFAULT_DEFINED_ATTRIBUTES[:]
@@ -297,6 +311,64 @@ def get_shift_violations(assignments: Dict[str, List[str]], rules: Dict[str, Any
             if current_attr_count < req_count: detected_violations.append({"date": target_date_iso_str, "rule_type": "required_attribute_count", "attribute": req_attr_name, "description": f"{target_date_iso_str}には属性'{req_attr_name}'が最低{req_count}人必要ですが、現在{current_attr_count}人です", "details": {"current_count": current_attr_count, "required_count": req_count, "attribute": req_attr_name, "date": target_date_iso_str}})
     return detected_violations
 
+
+def get_specialized_schedule_violations(events: List[Dict[str, Any]], rules: Dict[str, Any], users_config: Dict[str, Any]) -> List[str]:
+    """
+    Checks for violations of specialized schedule requirements.
+    For example, if a 'マミー系' event is scheduled, ensures that one of the designated 'マミー系' staff is on shift that day.
+    """
+    violations: List[str] = []
+    specialized_requirements = rules.get('specialized_requirements', {})
+    # Assuming translation map might be needed if keys are 'mommy', 'tattoo'
+    # For now, using direct keys like 'マミー系', 'タトゥー' as per example.
+    # translation_map = rules.get('specialized_requirements_translation_map', {})
+
+
+    if not specialized_requirements:
+        return violations
+
+    shifts_by_day: Dict[str, Set[str]] = defaultdict(set)
+    for event in events:
+        if event.get('category') == 'shift' and event.get('employee') and event.get('date'):
+            shifts_by_day[event['date']].add(event['employee'])
+
+    for event in events:
+        event_category = event.get('category')
+        event_date_str = event.get('date')
+
+        if not event_category or not event_date_str:
+            continue
+
+        if event_category in specialized_requirements:
+            required_genre = event_category
+            designated_staff_for_genre = specialized_requirements[required_genre]
+
+            if not isinstance(designated_staff_for_genre, list) or not all(isinstance(s, str) for s in designated_staff_for_genre):
+                # Rule format is incorrect, skip or log an error
+                print(f"Warning: Rule for specialized genre '{required_genre}' is not a list of strings. Skipping.")
+                continue
+
+            if not designated_staff_for_genre: # No staff designated for this genre, so no violation possible here
+                continue
+
+            staff_on_shift_today = shifts_by_day.get(event_date_str, set())
+
+            is_designated_staff_present = any(staff_member in staff_on_shift_today for staff_member in designated_staff_for_genre)
+
+            if not is_designated_staff_present:
+                # Use the genre key itself if a more human-readable translation isn't available/needed
+                # genre_name_for_message = translation_map.get(required_genre, required_genre)
+                genre_name_for_message = required_genre # Assuming keys are already user-friendly
+
+                violation_message = (
+                    f"{genre_name_for_message}の予定がある日({event_date_str})に、指定担当者 "
+                    f"({', '.join(designated_staff_for_genre)}) のいずれも割り当てられていません。"
+                )
+                violations.append(violation_message)
+
+    return violations
+
+
 # --- New function for Step 1 of this subtask ---
 def calculate_consecutive_work_days_for_all(
     assignments: Dict[str, List[str]],
@@ -346,3 +418,10 @@ def calculate_consecutive_work_days_for_all(
                 all_consecutive_info[employee][current_work_date.isoformat()] = consecutive_days_count
                 
     return dict(all_consecutive_info) # Convert defaultdict to dict for return if preferred
+
+def another_initials_filter_for_japanese_names(name):
+    if not name:
+        return ""
+    # For Japanese names like '山田太郎', just take the first character.
+    # For romaji names like 'raito', it will also take the first char 'R'.
+    return name[0].upper()

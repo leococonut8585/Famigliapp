@@ -146,16 +146,32 @@ def index():
                                header_nav_prev_month=header_nav_prev_month, header_nav_next_month=header_nav_next_month)
     else: # month view
         target_month_display = month
-        # Filter from the globally sorted and augmented 'events' list
-        events_month = [e_month for e_month in events if e_month.get("date", "").startswith(target_month_display.strftime("%Y-%m"))]
+        cal = calendar.Calendar(firstweekday=0)
+        weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
+
+        calendar_grid_start_date = weeks_data[0][0]
+        calendar_grid_end_date = weeks_data[-1][-1]
+
+        # Filter events for the entire displayed grid
+        events_for_display_grid = []
+        for event_item in events: # 'events' is the globally sorted list
+            try:
+                event_date_obj = date.fromisoformat(event_item.get("date"))
+                if calendar_grid_start_date <= event_date_obj <= calendar_grid_end_date:
+                    events_for_display_grid.append(event_item)
+            except (ValueError, TypeError):
+                # Handle cases where event date is missing or malformed
+                continue
+
+        events_by_date = defaultdict(list)
+        for e_event_by_date in events_for_display_grid: # Use the new filtered list
+            events_by_date[e_event_by_date["date"]].append(e_event_by_date)
+
         nav_prev_month_val = (target_month_display - timedelta(days=1)).replace(day=1)
         if nav_prev_month_val.replace(day=calendar.monthrange(nav_prev_month_val.year, nav_prev_month_val.month)[1]) < limit_past_date: nav_prev_month_val = None
         nav_next_month_val = (target_month_display + timedelta(days=31)).replace(day=1)
         if nav_next_month_val > limit_future_date: nav_next_month_val = None
-        events_by_date = defaultdict(list)
-        for e_event_by_date in events_month:
-            events_by_date[e_event_by_date["date"]].append(e_event_by_date)
-        cal = calendar.Calendar(firstweekday=0); weeks_data = [w for w in cal.monthdatescalendar(target_month_display.year, target_month_display.month)]
+
         return render_template("month_view.html", events_by_date=events_by_date, user=user, stats=stats, month=target_month_display,
                                nav_prev_month=nav_prev_month_val, nav_next_month=nav_next_month_val, weeks=weeks_data, timedelta=timedelta)
 
@@ -396,6 +412,10 @@ def shift():
     csrf_form = ShiftManagementForm()
     consecutive_days_data = utils.calculate_consecutive_work_days_for_all(assignments_for_consecutive_calc, target_month_display)
 
+    # Get specialized schedule violations
+    # Note: all_events_raw contains all events, which is needed for context by get_specialized_schedule_violations
+    special_schedule_violations = utils.get_specialized_schedule_violations(all_events_raw, rules, config.USERS)
+
     return render_template("shift_manager.html", user=user, month=target_month_display,
                            rules_for_js=rules_data_for_js, form=csrf_form,
                            weeks=weeks_for_display, employees=employees,
@@ -404,35 +424,99 @@ def shift():
                            counts=counts, off_counts=off_counts,
                            nav_prev_month=nav_prev_month_obj, nav_next_month=nav_next_month_obj,
                            consecutive_days_data=consecutive_days_data,
+                           special_schedule_violations=special_schedule_violations, # Pass to template
                            EVENT_SORT_PRIORITY=EVENT_SORT_PRIORITY) # Pass EVENT_SORT_PRIORITY if needed in template
 
 @bp.route("/shift_rules", methods=["GET", "POST"])
 def shift_rules():
     user = session.get("user")
     if user.get("role") != "admin": flash("権限がありません"); return redirect(url_for("calendario.index"))
-    rules, defined_attributes = utils.load_rules(); form = ShiftRulesForm()
-    form_employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS] 
+
+    rules, defined_attributes = utils.load_rules()
+    form = ShiftRulesForm()
+    form_employees = [n for n in config.USERS if n not in config.EXCLUDED_USERS]
+
+    # Prepare categories for specialized rules (e.g., from EventForm, excluding some)
+    event_form_for_categories = EventForm()
+    excluded_categories_for_special_rules = ['shift', 'hug']
+    special_rule_categories = [
+        choice for choice in event_form_for_categories.category.choices
+        if choice[0] not in excluded_categories_for_special_rules
+    ]
+
     if request.method == "GET":
-        form.max_consecutive_days.data = str(rules.get("max_consecutive_days", "")); form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
-        form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", [])); form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
-        emp_attrs_items = [];_ = [emp_attrs_items.append(f"{k}:{'|'.join(v_list) if isinstance(v_list, list) else v_list}") for k, v_list in rules.get("employee_attributes", {}).items()]
+        form.max_consecutive_days.data = str(rules.get("max_consecutive_days", ""))
+        form.min_staff_per_day.data = str(rules.get("min_staff_per_day", ""))
+        form.forbidden_pairs.data = ",".join("-".join(p) for p in rules.get("forbidden_pairs", []))
+        form.required_pairs.data = ",".join("-".join(p) for p in rules.get("required_pairs", []))
+
+        emp_attrs_items = []
+        for k, v_list in rules.get("employee_attributes", {}).items():
+            emp_attrs_items.append(f"{k}:{'|'.join(v_list) if isinstance(v_list, list) else v_list}")
         form.employee_attributes.data = ",".join(emp_attrs_items)
-        req_attrs_items = [];_ = [req_attrs_items.append(f"{k}:{v_int}") for k, v_int in rules.get("required_attributes", {}).items()]
+
+        req_attrs_items = []
+        for k, v_int in rules.get("required_attributes", {}).items():
+            req_attrs_items.append(f"{k}:{v_int}")
         form.required_attributes.data = ",".join(req_attrs_items)
+
+        # specialized_requirements are already in 'rules' dict due to updated utils.load_rules()
+
     if form.validate_on_submit():
-        rules_to_save = {"max_consecutive_days": int(form.max_consecutive_days.data or 0), "min_staff_per_day": int(form.min_staff_per_day.data or 0),
-                         "forbidden_pairs": utils.parse_pairs(form.forbidden_pairs.data or ""), "required_pairs": utils.parse_pairs(form.required_pairs.data or ""),
-                         "employee_attributes": utils.parse_kv(form.employee_attributes.data or ""), "required_attributes": utils.parse_kv_int(form.required_attributes.data or "")}
+        rules_to_save = {
+            "max_consecutive_days": int(form.max_consecutive_days.data or 0),
+            "min_staff_per_day": int(form.min_staff_per_day.data or 0),
+            "forbidden_pairs": utils.parse_pairs(form.forbidden_pairs.data or ""),
+            "required_pairs": utils.parse_pairs(form.required_pairs.data or ""),
+            "employee_attributes": utils.parse_kv(form.employee_attributes.data or ""),
+            "required_attributes": utils.parse_kv_int(form.required_attributes.data or "")
+        }
+
         defined_attributes_json_str = request.form.get("defined_attributes_json_str", "[]")
         try:
             submitted_defined_attributes = json.loads(defined_attributes_json_str)
             if not (isinstance(submitted_defined_attributes, list) and all(isinstance(attr, str) for attr in submitted_defined_attributes)):
-                flash("属性リストの形式が不正です。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
-            elif not submitted_defined_attributes: 
-                 flash("属性リストは空にできません。デフォルトに戻します。", "warning"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
-        except json.JSONDecodeError: flash("属性リストのJSON解析に失敗しました。", "error"); submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
-        utils.save_rules(rules_to_save, submitted_defined_attributes); flash("保存しました"); return redirect(url_for("calendario.shift_rules"))
-    return render_template("shift_rules.html", form=form, user=user, employees=form_employees, attributes=defined_attributes)
+                flash("属性リストの形式が不正です。", "error")
+                submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
+            elif not submitted_defined_attributes:
+                flash("属性リストは空にできません。デフォルトに戻します。", "warning")
+                submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
+        except json.JSONDecodeError:
+            flash("属性リストのJSON解析に失敗しました。", "error")
+            submitted_defined_attributes = utils.DEFAULT_DEFINED_ATTRIBUTES[:]
+
+        # Handle specialized_requirements
+        specialized_requirements_json = request.form.get("specialized_requirements_json_str", "{}")
+        try:
+            submitted_specialized_requirements = json.loads(specialized_requirements_json)
+            # Basic validation: ensure it's a dict and values are lists of strings
+            if not isinstance(submitted_specialized_requirements, dict):
+                raise ValueError("Specialized requirements must be a dictionary.")
+            for key, value in submitted_specialized_requirements.items():
+                if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+                    raise ValueError(f"Invalid format for specialized category '{key}'. Must be a list of strings.")
+            rules_to_save["specialized_requirements"] = submitted_specialized_requirements
+        except json.JSONDecodeError:
+            flash("専門予定設定のJSON解析に失敗しました。変更は保存されませんでした。", "error")
+            # Decide if to proceed saving other rules or halt. For now, halt saving specialized rules.
+            rules_to_save["specialized_requirements"] = rules.get('specialized_requirements', {}) # Keep old value
+        except ValueError as e:
+            flash(f"専門予定設定の形式が無効です: {e}。変更は保存されませんでした。", "error")
+            rules_to_save["specialized_requirements"] = rules.get('specialized_requirements', {}) # Keep old value
+
+        utils.save_rules(rules_to_save, submitted_defined_attributes)
+        flash("保存しました")
+        return redirect(url_for("calendario.shift_rules"))
+
+    return render_template(
+        "shift_rules.html",
+        form=form,
+        user=user,
+        employees=form_employees,
+        attributes=defined_attributes,
+        specialized_requirements=rules.get('specialized_requirements', {}), # Pass to template
+        special_rule_categories=special_rule_categories # Pass to template
+    )
 
 @bp.route("/stats", methods=["GET", "POST"])
 def stats():

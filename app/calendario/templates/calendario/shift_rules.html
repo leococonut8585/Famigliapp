@@ -9,6 +9,7 @@
         <input type="hidden" name="employee_attributes" id="employee_attributes_hidden" value="{{ form.employee_attributes.data or '' }}">
         <input type="hidden" name="required_attributes" id="required_attributes_hidden" value="{{ form.required_attributes.data or '' }}">
         <input type="hidden" name="defined_attributes_json_str" id="defined_attributes_json_str">
+        <input type="hidden" name="specialized_requirements_json_str" id="specialized_requirements_json_str">
 
         <div class="card mb-3">
             <div class="card-header">基本設定</div>
@@ -120,6 +121,40 @@
             </div>
         </div>
 
+        <!-- Specialized Schedule Settings Card -->
+        <div class="card mb-3">
+            <div class="card-header">専門予定設定</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="special_event_category" class="form-label">予定ジャンル</label>
+                        <select id="special_event_category" class="form-select form-select-sm">
+                            {% for cat_val, cat_name in special_rule_categories %}
+                                <option value="{{ cat_val }}">{{ cat_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="special_required_staff" class="form-label">必須担当者 (複数選択可)</label>
+                        <select id="special_required_staff" class="form-select form-select-sm" multiple size="3">
+                            {% for emp in employees %}
+                                <option value="{{ emp }}">{{ emp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3 align-self-end">
+                        <button type="button" id="add_special_requirement_button" class="btn btn-outline-primary btn-sm w-100">追加</button>
+                    </div>
+                </div>
+                <hr>
+                <h5>現在の専門予定ルール</h5>
+                <ul id="specialized_rules_list_display" class="list-group">
+                    <!-- JS will populate this -->
+                </ul>
+            </div>
+        </div>
+        <!-- End of Specialized Schedule Settings Card -->
+
         <hr class="my-4">
         <h2>現在設定されているルール詳細</h2>
 
@@ -175,6 +210,7 @@
 </div>
 <script>
     window.initialShiftAttributes = {{ attributes|tojson|safe }};
+    window.initialSpecializedRequirements = {{ specialized_requirements|tojson|safe }};
 </script>
 <script src="{{ url_for('static', filename='js/shift_rules.js') }}" defer></script>
 {% endblock %}

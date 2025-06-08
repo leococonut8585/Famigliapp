@@ -23,7 +23,7 @@ body {
 }
 
 .container {
-    max-width: 960px;
+    max-width: 1140px;
     margin: 20px auto;
     padding: 20px;
     background: #fff;
@@ -76,17 +76,39 @@ table { /* General table styling */
 }
 
 /* Calendar specific table layouts */
-.calendar, .calendar-grid {
-    table-layout: auto;
-    width: 100%; /* Ensure it's still 100% */
+.calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
+    table-layout: fixed; /* Ensured */
+    width: 980px !important; /* Set fixed width */
+    margin: 0 auto; /* Ensured for centering */
+    /* max-width: fit-content; and width: auto; removed */
 }
 
-/* Remove word-break from calendar cells if item content itself handles truncation */
+/* Styles for calendar th and td cells */
+.calendar th,
 .calendar td.calendar-day,
-.calendar-grid td.calendar-cell {
-    /* If there were word-break: break-all; or overflow-wrap: break-word; here, consider removing */
-    /* For now, no specific removal, assuming they don't exist or aren't problematic */
+.calendar td.shift-cell {
+    width: 140px !important;       /* Strict width for all calendar cells */
+    min-width: 140px !important;   /* Strict width */
+    max-width: 140px !important;   /* Strict width */
+    vertical-align: top;         /* Ensured for td, good default for th */
+    border: 1px solid #ddd;      /* Ensured */
 }
+
+/* Specific overrides for td cells if needed, grouped for common properties */
+.calendar td.calendar-day,
+.calendar td.shift-cell {
+    height: 150px;       /* Fixed height for cells (Preserved) */
+    padding: 0;          /* Padding reset for td cells */
+    /* Previous min-width/max-width specific to td removed in favor of the common rule above */
+}
+
+/* Specific overrides for th cells if needed (padding comes from general th rule or can be set here) */
+.calendar th {
+    /* background: #f9f9f9; /* from general th rule */
+    /* padding: 8px; /* from general th rule, or set specific if 0 is not desired from common rule if it was applied there */
+    /* width calc removed, now uses 140px !important from common rule */
+}
+
 
 table { /* This is a duplicate, ensure it's merged or organized if needed */
     width: 100%;
@@ -165,7 +187,9 @@ ul {
     background: #e3f2fd;
     padding: 4px 8px;
     margin: 2px;
-    display: inline-block;
+    display: inline-flex; /* Changed from inline-block */
+    align-items: center; /* Added */
+    white-space: nowrap; /* Added */
     border-radius: 4px;
     cursor: move;
 }
@@ -178,9 +202,52 @@ ul {
     display: block;
     background: #bbdefb;
     margin: 2px 0;
-    padding: 2px 4px;
+    padding: 2px 1px !important; /* Padding reverted for shift items */
     border-radius: 4px;
     cursor: pointer;
+    border: 1px solid #777;
+    overflow: hidden !important; /* Ensured */
+    white-space: nowrap !important; /* Ensured */
+    text-overflow: ellipsis !important; /* Ensured */
+    height: auto !important; /* Maintained */
+    line-height: 1.2 !important; /* Adjusted line-height */
+    width: 125px !important; /* Verified fixed width */
+    min-width: 125px !important; /* Verified fixed min-width */
+    max-width: 125px !important; /* Verified fixed max-width */
+    box-sizing: border-box; /* Maintained */
+    flex-shrink: 0; /* Maintained */
+    word-break: normal !important; /* Restored from break-word */
+}
+
+.shift-manager-assignment-grid {
+    display: grid !important; /* Restored grid display */
+    grid-template-columns: repeat(4, 125px) !important; /* Restored grid columns */
+    gap: 3px !important; /* Restored gap */
+    justify-content: start !important; /* Restored justify-content */
+    padding-top: 2px; /* Maintained */
+    margin-top: 5px; /* Maintained */
+}
+
+/* .shift-manager-assignment-grid .event-grid-item rule is removed as non-shift events are now in their own container. */
+
+/* New container for non-shift events in manager view */
+.manager-other-events-container {
+    display: grid; /* Added */
+    grid-template-columns: 1fr; /* Added for single column layout */
+    justify-items: start; /* Added to align items to the left */
+    gap: 3px; /* Added for spacing between items, consistent with other grids */
+    margin-bottom: 5px; /* Space between non-shift events and shift grid (verified) */
+}
+
+/* Adjust display of shift items within shift manager */
+.shift-manager-assignment-grid > .assigned {
+    /* Base styling (width, overflow, etc.) is inherited from .shift-cell .assigned !important rules */
+    /* padding is handled by the more specific rule below or inherited from .shift-cell .assigned */
+    /* line-height: 1.3; /* This is overridden by .shift-cell .assigned's 1.2 !important or the specific rule below */
+    height: auto; /* Verified specific height */
+    min-height: unset; /* Crucial override for this context */
+    margin: 2px 0; /* Verified margin (consistent with .shift-cell .assigned) */
+    /* text-overflow, white-space, etc. are inherited from .shift-cell .assigned */
 }
 
 /* For compact calendar event text */
@@ -194,9 +261,10 @@ ul {
 /* For the container of events within a calendar cell (month view) */
 .event-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 3px;
-    padding-top: 2px;
+    grid-template-columns: 1fr; /* Changed to a single column layout */
+    gap: 3px; /* Verified */
+    padding-top: 2px; /* Verified */
+    justify-items: start; /* Align items to the start of the column */
 }
 
 .event-grid-container-week {
@@ -207,14 +275,72 @@ ul {
 }
 
 .event-grid-item {
-    padding: 2px 4px;
-    border: 1px solid #e0e0e0;
-    border-radius: 3px;
-    background-color: #f9f9f9; /* Default background */
-    word-break: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* Common appearance properties */
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+
+    /* Defaults to be overridden, or ensure they are not overly specific */
+    border: 1px solid #e0e0e0; /* Kept as a base */
+    border-radius: 3px; /* Kept as a base */
+    background-color: #f9f9f9; /* Kept as a base */
+    height: auto !important; /* Maintained */
+    flex-shrink: 0; /* Maintained, if items can be flex children */
+    /* Removed specific width, min-width, max-width, font-size, padding */
+    /* word-break: normal !important; /* Covered by white-space: nowrap */
 }
+
+/* Styles for non-shift events (default for .event-grid-item) */
+.event-grid-item:not(.event-shift) {
+    width: 165px !important;
+    min-width: 165px !important;
+    max-width: 165px !important;
+    font-size: 0.85em !important;
+    padding: 2px 4px !important;
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
+}
+
+/* Styles for non-shift events specifically in the Shift Manager */
+.manager-other-events-container .event-grid-item:not(.event-shift) {
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    font-size: 0.85em !important; /* Explicitly re-stated for clarity */
+    padding: 2px 4px !important; /* Explicitly re-stated for clarity */
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
+}
+
+/* Common styles for ALL shift event items (main calendar and manager) */
+.event-grid-item.event-shift {
+    flex: 0 0 125px !important; /* For flex contexts if its container is flex */
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    font-size: 0.85em !important; /* Default font size for shifts */
+    padding: 2px 4px !important;   /* Default padding for shifts (e.g., main calendar) */
+    background-color: gray !important; /* Shift-specific appearance */
+    /* color: white !important; /* Removed as per subtask - color should be from initial-text-* or event-shift-item */
+    /* Inherits line-height, text handling etc. from base .event-grid-item */
+    /* Note: .shift-grid-item also gets these properties by having .event-grid-item.event-shift classes */
+    /* Note: .assigned items in manager also get these by having .event-grid-item.event-shift classes */
+}
+
+/* Specific styles for shift events in the Shift Manager, overriding common shift styles */
+.shift-manager-assignment-grid span.assigned.event-grid-item.event-shift {
+    padding: 2px 1px !important; /* Overrides padding for consecutive day text */
+    font-size: 0.9em !important;  /* Specific font size for manager shifts */
+    /* Inherits flex, width, min-width, max-width, background-color, color, line-height, etc., */
+    /* from .event-grid-item and the common .event-grid-item.event-shift rule above */
+    width: 125px !important; /* Re-stated for clarity/override */
+    min-width: 125px !important; /* Re-stated for clarity/override */
+    max-width: 125px !important; /* Re-stated for clarity/override */
+    flex: 0 0 125px !important; /* Re-stated for clarity/override */
+    /* background-color, color are inherited from .event-grid-item.event-shift */
+}
+
+/* The old .manager-other-events-container .event-grid-item rule (without :not) is now removed. */
 
 .btn-xs-custom {
     padding: 0.1rem 0.3rem;
@@ -226,37 +352,50 @@ ul {
 
 /* Shift-specific 4-column grid container */
 .shift-grid-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
-    gap: 3px; /* Gap between shift items */
-    padding-top: 2px;
+    display: grid !important; /* Restored grid display */
+    grid-template-columns: repeat(4, 125px) !important; /* Restored grid columns */
+    gap: 3px !important; /* Restored gap */
+    justify-content: start !important; /* Restored justify-content */
+    padding-top: 2px; /* Maintained */
 }
 
 /* Individual shift items within the shift grid */
 .shift-grid-item {
-    padding: 2px 4px;
+    padding: 2px 1px !important; /* Padding reverted for shift items */
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    word-break: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* white-space: nowrap; /* Might be too restrictive if shift details are longer */
+    white-space: nowrap !important; /* Ensured */
+    word-break: normal !important; /* Ensured */
+    overflow: hidden !important; /* Ensured */
+    text-overflow: ellipsis !important; /* Ensured */
+    width: 125px !important; /* Verified fixed width */
+    min-width: 125px !important; /* Verified fixed min-width */
+    max-width: 125px !important; /* Verified fixed max-width */
+    height: auto !important; /* Maintained */
+    line-height: 1.2 !important; /* Adjusted line-height */
+    box-sizing: border-box; /* Maintained */
+    flex-shrink: 0; /* Maintained */
 }
 
 /* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
 .event-grid-item .event-actions,
 .shift-grid-item .event-actions {
-    flex-shrink: 0;
-    white-space: nowrap; /* Ensures buttons stay in a single line */
+    display: flex; /* Added */
+    flex-wrap: nowrap; /* Added (consistent with white-space: nowrap) */
+    justify-content: space-between; /* Added to space out buttons */
+    gap: 2px; /* Added for spacing between buttons */
+    flex-shrink: 0; /* Maintained */
+    white-space: nowrap; /* Maintained: Ensures buttons stay in a single line if flex properties are not fully supported or overridden */
 }
 
 /* Ensure title/text part in both shift and general events truncates properly */
 .event-grid-item > .flex-grow-1, /* Targets the span that should truncate in general events */
 .shift-grid-item > .flex-grow-1 { /* Targets the span that should truncate in shift events */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; /* Ensures text is on a single line for ellipsis to work */
+    overflow: hidden; /* Keep hidden to manage overflow with multi-line */
+    /* text-overflow: ellipsis; */ /* Removed for multi-line */
+    white-space: normal; /* Changed from nowrap */
+    word-break: break-all; /* Added for better CJK wrapping */
     min-width: 0;     /* Crucial for text-overflow in flex items */
 }
 
@@ -299,6 +438,22 @@ ul {
     margin-right: 0.3em; /* Space between time and title */
 }
 
+.day-number {
+    font-size: 0.9em;
+    margin-bottom: 2px;
+    font-weight: bold; /* Consolidated from month_view's fw-bold class */
+}
+
+.cell-content-wrapper {
+    width: 100%; /* Maintained */
+    height: 100%; /* Preserved */
+    overflow-x: auto; /* Changed back from hidden */
+    overflow-y: auto; /* Preserved */
+    padding: 5px; /* Preserved */
+    box-sizing: border-box; /* Preserved */
+    /* max-width, min-width for cell-content-wrapper were removed in a previous step, this is correct. */
+}
+
 .btn-custom-edit {
     background-color: navy !important; /* 紺色 */
     color: white !important; /* 文字色 白 */
@@ -307,19 +462,21 @@ ul {
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
+    text-decoration: none !important;
 }
 
 .btn-custom-edit:hover {
     background-color: darkblue !important;
     border-color: darkblue !important;
     color: white !important;
+    text-decoration: none !important;
 }
 
 .btn-custom-copy {
     background-color: orange !important; /* オレンジ */
     color: white !important; /* 文字色 白 */
     border: 1px solid orange !important; /* オレンジの枠 */
-    padding: 0.1rem 0.3rem;
+    padding: 0.1rem 0.25rem;
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
@@ -346,3 +503,64 @@ ul {
     border-color: #A0522D !important;
     color: white !important;
 }
+
+.employee-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 10px; /* Adjust gap as needed */
+}
+
+.employee-summary-item {
+    padding: 10px; /* Added/Adjusted padding */
+    border-width: 4px;
+    border-style: solid;
+    /* Default border color if a specific user class isn't matched, or remove if not needed */
+    border-color: #ccc; /* Light grey default, can be overridden */
+    margin-bottom: 5px; /* Add some space between items if the gap isn't enough vertically */
+}
+
+/* User-specific borders */
+.user-summary-raito { border-color: #000000; } /* Light Grey for 'raito' as white might be invisible */
+.user-summary-hitomi { border-color: #0000FF; } /* Vivid Blue */
+.user-summary-sara { border-color: #FFA500; } /* Vivid Orange */
+.user-summary-jun { border-color: #800020; } /* Burgundy */
+.user-summary-nanchan { border-color: #90EE90; } /* Light Green */
+.user-summary-hachi { border-color: #40E0D0; } /* Light Turquoise */
+.user-summary-kie { border-color: #ffd700; } /* Dark Yellow (Amber) */
+.user-summary-gumi { border-color: #C71585; } /* Dark Pink (MediumVioletRed) */
+
+/* User-specific initial colors */
+.initial-text-raito { color: #000000 !important; } /* Black, was White */
+.initial-text-hitomi { color: #0000FF !important; } /* Vivid Blue */
+.initial-text-sara { color: #FFA500 !important; } /* Vivid Orange */
+.initial-text-jun { color: #800020 !important; } /* Burgundy */
+.initial-text-nanchan { color: #90EE90 !important; } /* Light Green */
+.initial-text-hachi { color: #40E0D0 !important; } /* Light Turquoise */
+.initial-text-kie { color: #ffd700 !important; } /* Gold (consistent with border change) */
+.initial-text-gumi { color: #C71585 !important; } /* Dark Pink (MediumVioletRed) */
+
+.calendar-scroll-container {
+    overflow-x: auto; /* Ensured */
+    max-width: 100%;  /* Added */
+    padding-bottom: 1rem; /* Added */
+    /* overflow-y and max-height from old rule removed as not specified */
+}
+
+/* New rule for shift events on main calendar with increased specificity */
+div.shift-grid-item.event-grid-item.event-shift {
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    padding: 2px 4px !important;
+    font-size: 0.85em !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+    flex: 0 0 125px !important; /* Added flex property */
+}
+
+/* The "FINAL override" rule for div.shift-grid-item.event-grid-item.event-shift (width:135px, display:block) is removed. */
+/* The previous div.shift-grid-item.event-grid-item.event-shift (width:125px, flex property) is also removed by the earlier SEARCH block not finding it. */
+/* New rules will be added in subsequent steps. */

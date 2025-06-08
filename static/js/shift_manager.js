@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedEmployees = [];
   const employeeBoxes = Array.from(document.querySelectorAll('.employee-box'));
 
+  function getInitialFromName(name) {
+    if (!name || name.length === 0) {
+        return "";
+    }
+    return name.charAt(0).toUpperCase();
+  }
+
   employeeBoxes.forEach(box => {
     box.addEventListener('click', e => {
       const empName = box.dataset.emp;
@@ -103,9 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!empsInCell.includes(empName)) {
           empsInCell.push(empName);
           const newSpan = document.createElement('span');
-          newSpan.className = 'assigned';
+          newSpan.className = 'assigned event-shift-item'; // Added event-shift-item for consistency
           newSpan.dataset.emp = empName;
-          newSpan.textContent = empName;
+          newSpan.textContent = getInitialFromName(empName); // Use helper to set initial
+          // Add user-specific color class for the initial text
+          newSpan.classList.add('initial-text-' + empName.toLowerCase().replace(/ /g, '_'));
           list.appendChild(newSpan);
           addSpanEventListeners(newSpan);
         }
