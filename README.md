@@ -1,133 +1,226 @@
-# Famigliapp CLI プロトタイプ
+# Famigliapp: Your Private Family & Community Hub
 
-## 開発状況まとめ
-現在はCLIとFlask Web版の双方でポイント管理・各掲示板・カレンダー・タスク管理等の主要機能が動作します。
-メールに加えLINE NotifyやPushbulletでの通知、AI解析付きResocontoレポートなども実装済みです。
-スケジューラーによるリマインダーやドラッグ&ドロップ対応のシフト管理など、仕様で挙げられた機能の大部分が実装されました。
+**Famigliapp** is a versatile, private application designed to foster connection, organization, and fun within families or small communities. It combines practical tools with engaging features to manage daily life and strengthen bonds.
 
+## Overview
 
-Famigliapp は家族専用のコミュニティアプリを目指したプロジェクトの CLI 版プロトタイプです。Web アプリの前段階として作られており、ユーザーごとのポイント管理や簡易掲示板などの機能をコマンドラインから試すことができます。
+Famigliapp serves as a central digital space for family members or a close-knit group. It offers a suite of tools ranging from shared calendars and task management to unique point systems and various themed bulletin boards for different types of interaction. Initially prototyped as a CLI application, it has evolved to include a Flask-based web interface, offering a richer user experience. The application supports notifications via email, LINE Notify, and Pushbullet, and even incorporates AI for analyzing work reports.
 
-## 実行方法
+## Current Development Status
 
-Python 3 がインストールされている環境で、次のコマンドを実行します。
+The application includes a wide array of functional modules, accessible via both a command-line interface (CLI) and a Flask web application. Key features such as point management, diverse bulletin boards (for general posts, audio praise, feedback, media sharing), shared calendar with shift management, task management (Quest Box), and various reporting/utility functions are implemented. The system uses a hybrid data storage approach with JSON files for many features and SQLAlchemy for core user data. Notification systems and AI integration for text analysis are also in place.
 
-```
+## Key Features
+
+Famigliapp is composed of several distinct modules, each catering to different needs:
+
+*   **User Authentication:** Secure login system with predefined user accounts and roles (admin, user). Passwords are not stored in plain text (implied by standard Flask practices, though not explicitly detailed in provided files).
+*   **Punto (Points System):**
+    *   Manages user points: `AhvPunto` (A points), `OzePunto` (O points), and `UnitoPunto` (A - O, auto-calculated).
+    *   Admin can edit points. Users can view their own points.
+    *   Point changes trigger email notifications.
+    *   Features include point history, rankings (weekly, monthly, yearly, all-time, growth rate), and graph visualization.
+    *   Data primarily stored in `points.json` and `points_history.json`.
+*   **Posts (Generic Bulletin Board):**
+    *   General purpose posting and viewing.
+    *   Supports categories, author filtering, keyword search, and date range filtering.
+    *   Users can edit their own posts; admins can edit/delete any post.
+    *   Supports comments on posts.
+    *   Data stored in `posts.json` and `comments.json`.
+*   **Bravissimo! (Audio Praise Board):**
+    *   Admins can upload audio praise messages directed at specific users.
+    *   Targeted users receive notifications.
+    *   Allows searching by date, sender, and recipient.
+    *   All users can listen and save audio files.
+    *   Data and uploaded files managed by the `bravissimo` module.
+*   **Intrattenimento (Entertainment Sharing):**
+    *   Users share thoughts and media (audio/video) on entertainment.
+    *   Supports titles, body text, optional file uploads, and an expiration date for posts.
+    *   Features filtering by author, keyword, and date range.
+    *   Expired posts are hidden from regular users but accessible to admins.
+    *   Includes a daily reminder (8 PM) for users who haven't posted.
+    *   Data in `intrattenimento.json`, uploads in `static/uploads`.
+*   **Corso (Course/Seminar Feedback):**
+    *   Platform for users to post feedback on courses or seminars they've attended.
+    *   Supports file uploads (e.g., seminar materials, audio/video).
+    *   Features filtering by author and keyword search.
+    *   Posts can have an expiration date, after which they are hidden from regular users but retained for admins.
+    *   Data in `corso.json`, uploads in `static/uploads`.
+*   **Seminario (Lesson Feedback & Scheduling):**
+    *   Users post feedback on lessons/tutoring sessions.
+    *   Users can register lesson dates; receives daily reminders to post feedback for past, un-commented lessons.
+    *   Supports filtering by author and keyword.
+    *   Data in `seminario.json`.
+*   **Principessina (Baby Reports):**
+    *   Primarily for babysitters/staff to report on a child's status.
+    *   Supports text, image, and video uploads.
+    *   All users can view; features filtering by poster and keyword.
+    *   Includes a daily reminder for all users to post.
+    *   Data in `principessina.json`, media likely in `static/uploads`.
+*   **Monsignore (Image-based Column/Feedback):**
+    *   Users and admins can upload images (e.g., columns, articles).
+    *   Users can post comments/feedback on these images.
+    *   Supports filtering by upload date and keyword search.
+    *   Includes a daily reminder to post feedback on un-commented images.
+    *   Data in `monsignore.json`, uploads in `static/uploads`.
+*   **Scatola di Capriccio (Feedback & Survey Box):**
+    *   Users can submit feedback and suggestions.
+    *   Content is visible only to administrators.
+    *   Admins can post surveys targeted at specific users, triggering notifications.
+    *   Data in `scatola_capriccio.json` and `scatola_surveys.json`.
+*   **Quest Box (Task Management):**
+    *   Users and admins can post tasks or requests.
+    *   Admins can define participation conditions, deadlines, and rewards (A-points or monetary).
+    *   Tasks can be assigned to specific users or open for acceptance.
+    *   Users can accept quests, report progress, and mark as complete (requiring confirmation from the issuer).
+    *   Data in `quests.json`.
+*   **Vote Box (Voting/Polls):**
+    *   Allows users to create and participate in polls.
+    *   Features include creating votes, viewing open/closed votes, and seeing vote details.
+    *   Data likely in `votebox.json`.
+*   **Nedari Box (Requests/Begging):**
+    *   A space for users to make requests for items or favors.
+    *   Data likely in `nedari.json`.
+*   **Calendario (Shared Calendar & Shift Management):**
+    *   Shared calendar for events. Users can add, edit (own), and view events.
+    *   Event modifications trigger notifications to all users.
+    *   **Shift Management (Admin only):**
+        *   Visual drag-and-drop interface for assigning employees to shifts.
+        *   Warnings for rule violations (max consecutive workdays, min staff per day, forbidden/required pairings, attribute requirements).
+        *   Employee attributes (A, B, C, D) can be defined for rule-based warnings.
+        *   Displays ongoing work/off day counts for employees.
+        *   Calendar statistics (work/off days per employee) viewable.
+    *   Data in `events.json` and `calendar_rules.json`.
+*   **Resoconto (Work Reports & AI Analysis):**
+    *   Users submit daily work reports.
+    *   Reports are processed daily (4 AM) by an AI (Claude API) to generate summaries, rankings, and critiques visible to admins.
+    *   Admins can view all reports and AI analysis; users can view their own.
+    *   Features report counts ranking and CSV export.
+    *   Data in `resoconto.json`.
+*   **Invite System:**
+    *   Admins can generate invite codes for new users to join.
+    *   Data in `invites.json`.
+*   **Notification System:**
+    *   Core events (point changes, new posts in some modules, calendar edits) trigger notifications.
+    *   Supports Email, LINE Notify, and Pushbullet.
+    *   Configuration in `config.py`.
+
+## Technology Stack
+
+*   **Backend:** Python, Flask
+*   **Database:** Primarily JSON files for most features. SQLAlchemy and SQLite are used for core models like User, Post, and PointsHistory (see `app/models.py`). Alembic is used for SQLAlchemy database migrations.
+*   **Frontend:** Jinja2 for templating, HTML, CSS, JavaScript.
+*   **Forms:** Flask-WTF for web forms.
+*   **Scheduling:** APScheduler for reminder tasks and daily report processing.
+*   **AI Integration:** Anthropic Claude API for Resoconto analysis (requires API key).
+*   **Notifications:** Email (Flask-Mail), LINE Notify, Pushbullet.
+*   **Development Server:** Werkzeug (via `flask run`).
+
+## Directory Structure and Key File Roles
+
+*   **`run.py`**: Main entry point for the CLI application and for launching the Flask web server via `flask run`.
+*   **`config.py`**: Contains application configuration, including user credentials, file paths for JSON data, API keys, and notification settings.
+*   **`requirements.txt`**: Lists Python package dependencies.
+*   **`app/`**: Main application package.
+    *   **`__init__.py`**: Application factory (`create_app`), initializes Flask extensions, registers blueprints.
+    *   **`models.py`**: Defines SQLAlchemy database models (User, Post, PointsHistory).
+    *   **`utils.py`**: General utility functions for the application.
+    *   **`<module_name>/` (e.g., `app/punto/`, `app/calendario/`)**: Individual feature modules (blueprints). Typically contain:
+        *   `__init__.py`: Blueprint registration.
+        *   `routes.py`: Defines web routes and view functions for the module.
+        *   `forms.py`: Defines WTForms for web input.
+        *   `utils.py`: Module-specific utility functions and data handling (often interacting with JSON files).
+        *   `tasks.py`: Module-specific scheduled tasks (if any).
+        *   `templates/<module_name>/`: Jinja2 templates for the module's web pages.
+*   **`static/`**: Static files (CSS, JavaScript, images, user uploads).
+*   **`migrations/`**: Alembic database migration scripts for SQLAlchemy models.
+*   **Data Files (`*.json`)**: Located in the project's root directory, storing data for various features (e.g., `points.json`, `events.json`). These are typically created automatically on first use.
+
+## Setup and Execution
+
+### Prerequisites
+
+*   Python 3 (e.g., 3.8+)
+*   `pip` (Python package installer)
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd <repository_name>
+    ```
+2.  **Create and activate a virtual environment (recommended):**
+    ```bash
+    python -m venv venv
+    # On macOS/Linux:
+    source venv/bin/activate
+    # On Windows:
+    # venv\Scripts\activate
+    ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### Configuration
+
+1.  Review `config.py`.
+2.  **`USERS`**: Define user accounts, passwords, roles, and emails in the `USERS` dictionary.
+3.  **`SECRET_KEY`**: Change this to a strong, unique random string for session management in a production-like environment.
+4.  **API Keys & Tokens (Optional):**
+    *   `LINE_NOTIFY_TOKEN`: For LINE notifications.
+    *   `PUSHBULLET_TOKEN`: For Pushbullet notifications.
+    *   `ANTHROPIC_API_KEY` (or ensure the relevant environment variable is set for Claude API access, as used in `resoconto/tasks.py`).
+5.  **Mail Settings (Optional):**
+    *   Set `MAIL_ENABLED = True` to enable email notifications.
+    *   Configure `MAIL_SERVER`, `MAIL_PORT`, `MAIL_SENDER`, and potentially `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_USE_TLS`, `MAIL_USE_SSL` depending on your email provider.
+
+### Database Setup
+
+*   **SQLAlchemy Database (User, Post, PointsHistory):**
+    The application uses Flask-Migrate for database schema migrations. Ensure `FLASK_APP=run.py` is set in your environment.
+    ```bash
+    # Initialize migrations directory (only if it doesn't exist)
+    # flask db init
+
+    # Generate a new migration script after changes to SQLAlchemy models in app/models.py
+    # flask db migrate -m "Brief description of model changes"
+
+    # Apply the latest migrations to the database (creates or updates tables)
+    flask db upgrade
+    ```
+    A SQLite database file (`famigliapp.db`) will be created in the project root by default.
+*   **JSON Data Files:** Most other data (points, module-specific posts, calendar events, etc.) are stored in JSON files (e.g., `points.json`, `events.json`) in the project root. These are generally created automatically when features are first used.
+
+### Running the Application
+
+**1. Command-Line Interface (CLI):**
+```bash
 python run.py
 ```
+You will be prompted for your username and password.
 
-起動後にユーザー名とパスワードを入力するとメニューが表示されます。メニュー項目は次の通りです。
-
-1. **ポイントを見る** ― 各ユーザーのポイント(A/O/U)を確認します。
-2. **ポイントを編集する** ― 管理者のみ利用可能。任意ユーザーのポイントを変更します。
-3. **投稿を見る** ― 投稿一覧を表示します。カテゴリや投稿者、キーワードによる絞り込みが可能です。
-4. **投稿する** ― 新しい投稿を追加します。
-5. **投稿を削除する** ― 管理者のみ利用可能。ID を指定して投稿を削除します。
-6. **ランキングを見る** ― A・O・U のいずれかのポイントでランキングを表示します。期間は全期間のほか、週間・月間・年間を選択できます。
-7. **ポイント履歴を見る** ― ポイント変動履歴を期間やユーザー名で確認します。
-8. **投稿を編集する** ― 投稿者本人または管理者が内容を変更します。
-9. **intrattenimento を見る** ― intrattenimento掲示板の投稿一覧を表示します。投稿者やキーワードに加え、開始日・終了日でも絞り込み可能です。
-10. **intrattenimento に投稿する** ― 新しい intrattenimento 投稿を追加します。タイトル、本文、公開終了日を入力します。
-11. **intrattenimento 投稿を削除する** ― 管理者のみ利用可能。ID を指定して intrattenimento 投稿を削除します。
-12. **Corso を見る** ― Corso 掲示板の投稿を表示します。
-13. **Corso に投稿する** ― 新しい Corso 投稿を追加します。
-14. **履歴をCSV出力** ― ポイント履歴をCSV形式で保存します。
-15. **Resoconto を見る** ― 業務報告一覧を表示します。
-16. **Resoconto に投稿する** ― 新しい業務報告を追加します。
-17. **Resoconto ランキングを見る** ― ユーザー別の報告数ランキングを表示します。
-18. **Principessina を見る** ― ベイビー報告の一覧を表示します。
-19. **Principessina に投稿する** ― 新しいベイビー報告を追加します。
-20. **Quest一覧を見る** ― 登録されたQuestを一覧表示します。期限が設定されている場合は `(期限: YYYY-MM-DD)` と併せて表示されます。
-21. **Questを投稿する** ― 新しいQuestを作成します。期限は `YYYY-MM-DD` 形式で入力します。設定した期限は Quest の一覧画面や詳細画面で確認でき、CLI の一覧表示でも `(期限: YYYY-MM-DD)` として表示されます。
-22. **QuestをAcceptする** ― 指定したQuestを引き受けます。
-23. **Questを完了する** ― Accept済みのQuestを完了扱いにします。
-24. **Questを削除する** ― 管理者のみ利用可能。IDを指定してQuestを削除します。
-25. **Quest報酬を設定する** ― 管理者が報酬を登録します。
-26. Seminario一覧を見る
-27. Seminarioをスケジュールする
-28. Seminarioにフィードバックする
-29. Bravissimo を見る
-30. Bravissimo に投稿する (管理者のみ)
-31. Bravissimo 投稿を削除する (管理者のみ)
-32. Scatola Capriccio を見る (管理者のみ)
-33. Scatola Capriccio に投稿する
-34. Monsignore を見る
-35. Monsignore に投稿する
-36. Monsignore 投稿を削除する (管理者のみ)
-37. カレンダーを見る
-38. カレンダーにイベント追加
-39. カレンダーのイベント削除 (管理者のみ)
-40. カレンダーのイベント移動
-41. カレンダーの担当者割当
-42. カレンダールールを見る (管理者のみ)
-43. カレンダールールを編集する (管理者のみ、禁止組み合わせや属性条件も設定可能)
-44. Questを編集する (管理者のみ)
-45. ResocontoをCSV出力 (管理者のみ)
-46. カレンダー統計を見る
-47. ポイント推移サマリを見る
-48. Scatola Capriccio アンケートを見る (管理者のみ)
-49. Scatola Capriccio アンケートを投稿 (管理者のみ)
-50. 上昇率ランキングを見る
-51. 投稿にコメントする
-52. Resoconto AI分析を見る (管理者のみ)
-
-Web 版では各コメントの作者または管理者が編集できるリンクも表示されます。
-0. **終了** ― アプリを終了します。
-
-### 投稿のフィルタ
-
-「投稿を見る」を選択すると、カテゴリ、投稿者、検索語に加えて開始日と終了日を入力して一覧を絞り込めます。空欄の項目は無視されるため、複数条件を組み合わせた検索も可能です。検索語は大文字小文字を区別せずに一致判定されます。
-
-## ユーザーとパスワード
-
-利用できるアカウント情報は `config.py` の `USERS` 辞書にまとめられています。必要に応じて追加や変更を行ってください。Web 版でセッション管理に使用する `SECRET_KEY` も同ファイル内で設定できます。公開リポジトリにアップロードする場合は適切な値へ変更することを推奨します。
-
-## データファイル
-
-ポイント情報は `points.json`、投稿情報は `posts.json` としてプロジェクトのルートディレクトリに保存されます。初回実行時に自動生成され、アプリの操作内容に応じて更新されます。
-
-## 通知設定
-
-`config.py` の `LINE_NOTIFY_TOKEN` にトークンを設定すると、メール送信に加えて LINE Notify へも同じ内容が送信されます。空のままの場合は LINE への通知は行われません。
-同様に `PUSHBULLET_TOKEN` を設定すると Pushbullet 経由でスマホや PC へ直接通知を送れます。
-
-## Web 版の起動方法
-
-Flask を使った簡易 Web 版を起動する場合は以下の手順を実行します。
-
+**2. Web Application (for development):**
+Ensure your `FLASK_APP` environment variable is set:
 ```bash
-pip install -r requirements.txt
-export FLASK_APP=app
+# On macOS/Linux:
+export FLASK_APP=run.py
+# On Windows (Command Prompt):
+# set FLASK_APP=run.py
+# On Windows (PowerShell):
+# $env:FLASK_APP = "run.py"
+
 flask run
 ```
+The application will typically be available at `http://127.0.0.1:5000/`. For production, use a proper WSGI server like Gunicorn or uWSGI.
 
-コマンドを実行すると `http://127.0.0.1:5000/` でアクセスできるようになります。
+## Data Management
 
-ログイン後、トップページにはポイント管理用の
-"Punto ダッシュボード" へのリンクが表示され、`/punto` から利用できます。
-ランキングは `/punto/rankings` で閲覧可能です。指標(A/O/U)と期間を選択して表示できます。
-ポイント履歴は `/punto/history` から確認できます。ユーザー名と日付でフィルタリング可能です。
-履歴をグラフ表示する `/punto/graph` と、CSV をダウンロードする `/punto/history/export` も利用できます(後者は管理者のみ)。
+Famigliapp uses a hybrid data storage approach:
+*   **SQLAlchemy (SQLite by default):** Manages core, structured data like user accounts, generic posts, and point transaction history. This provides relational integrity for these key entities.
+*   **JSON Files:** Feature-specific data for most modules (e.g., balances in `points.json`, individual module posts, calendar events, configurations) are stored in separate JSON files in the project root. This approach was likely chosen for simplicity during rapid prototyping and ease of inspection.
 
-掲示板は `/posts` から利用できます。カテゴリ、投稿者、キーワードのほか開始日・終了日を指定して一覧を絞り込み、新規投稿は `/posts/add` で行います。管理者は各投稿の "削除" リンクから投稿を削除できます。
+## License
 
-ブラヴィッシモ(褒め言葉掲示板)は `/bravissimo` で閲覧できます。管理者のみ `/bravissimo/add` から投稿可能です。投稿時に対象ユーザーを指定すると、そのユーザーへメール通知が送られます。一覧画面では投稿者・対象ユーザー・キーワードで絞り込みができます。
-
-インタッテニメント掲示板は `/intrattenimento` から利用できます。タイトルと本文、公開終了日、添付ファイルを入力して投稿できます。一覧画面では投稿者・キーワードのほか開始日と終了日で絞り込みが可能です。一般ユーザーは公開期間を過ぎた投稿を閲覧できません。
-CLI を起動すると、毎日20時に投稿がないユーザーへリマインドメールを送るスケジューラーも起動します。
-レッツィオーネのフィードバックが未提出の場合は、受講日を過ぎたエントリーに対し毎朝9時に通知するスケジューラーも動作します。
-Corso 掲示板は `/corso` から利用できます。タイトル、本文、公開終了日、添付ファイルを指定して投稿し、管理者は削除も行えます。
-
-スカトラ・ディ・カプリッチョ(フィードバック用掲示板)は `/scatola_capriccio` で閲覧できます。一般ユーザーは `/scatola_capriccio/add` からフィードバックを投稿でき、投稿内容は管理者のみ閲覧可能です。
-
-共有カレンダー機能は `/calendario` から利用します。日付とタイトル、内容を入力してイベントを登録できます。管理者は各イベントの "削除" リンクから予定を削除可能です。勤務日数・休日数を集計表示する `/calendario/stats` ページもあり、開始日と終了日を指定して統計を確認できます。イベントの追加・編集・削除が行われると、内容が全ユーザーにメール通知されます。
-業務報告ページ "Resoconto" は `/resoconto` からアクセスできます。ユーザーは日付と内容を入力して報告を投稿できます。管理者は全ユーザーの報告一覧を閲覧し、不要な投稿を削除できます。
-報告数のランキングは `/resoconto/rankings` で確認できます。期間を指定して集計することも可能です。
-管理者専用の `/resoconto/analysis` では、投稿内容を AI 解析した結果を閲覧できます。
-ベイビー報告 "Principessina" は `/principessina` から利用できます。文章と添付ファイルを投稿でき、管理者は削除も行えます。
-CLI 起動時には、当日の投稿がないユーザーへ毎晩 21 時にリマインドメールを送るスケジューラーも自動で開始されます。
-
-
-## ライセンス
-
-このプロジェクトは MIT License のもとで公開されています。詳しくは LICENSE ファイルを参照してください。
+This project is licensed under the MIT License. See the `LICENSE` file for details.
