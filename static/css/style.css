@@ -402,18 +402,29 @@ ul {
 /* Category-specific styling for event items */
 /* These will be applied to .event-grid-item or .shift-grid-item */
 
-.event-shucchou {
-    background-color: orange;
-    color: white !important;
+/* 予定ジャンルのカラー定義 */
+.event-tattoo {
+    background-color: #6c757d !important; /* グレー */
+    color: white;
+}
+
+.event-mammy {
+    background-color: #8b0000 !important; /* 暗めの赤 */
+    color: white;
+}
+
+.event-lesson {
+    background-color: #9370db !important; /* より明るい紫（ミディアムパープル） */
+    color: white;
+}
+
+.event-trip { /* Assuming this replaces event-shucchou or is a new category */
+    background-color: #ff8c00 !important; /* 濃いオレンジ（ダークオレンジ） */
+    color: white;
 }
 
 .event-hug {
     background-color: blue;
-    color: white !important;
-}
-
-.event-lesson {
-    background-color: green;
     color: white !important;
 }
 
@@ -564,3 +575,118 @@ div.shift-grid-item.event-grid-item.event-shift {
 /* The "FINAL override" rule for div.shift-grid-item.event-grid-item.event-shift (width:135px, display:block) is removed. */
 /* The previous div.shift-grid-item.event-grid-item.event-shift (width:125px, flex property) is also removed by the earlier SEARCH block not finding it. */
 /* New rules will be added in subsequent steps. */
+
+/* 時間選択セレクトボックスのスタイル */
+select.time-select, select[name="start_time"], select[name="end_time"] {
+    height: 40px; /* Or initial height, max-height will allow scroll */
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    /* Ensure background and text colors are suitable for the theme */
+    background-color: white; /* Or theme-appropriate background */
+    color: black; /* Or theme-appropriate text color */
+}
+
+/* オプション要素のスタイル */
+.time-select option {
+    padding: 5px 10px;
+    /* Ensure background and text colors are suitable for the theme */
+    background-color: white; /* Or theme-appropriate background */
+    color: black; /* Or theme-appropriate text color */
+}
+
+/* Webkit系ブラウザ用のスクロールバースタイル */
+.time-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.time-select::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.time-select::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+/* イベント詳細ポップアップ */
+.event-popup {
+    background: white;
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 15px;
+    max-width: 300px;
+    animation: fadeIn 0.2s ease-in;
+    /* Ensure position:absolute and z-index are effective */
+    position: absolute; /* As set in JS, but good to have a base */
+    z-index: 1000; /* As set in JS */
+}
+
+.popup-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    /* Add color if needed, e.g., color: #333; */
+}
+
+.close-popup {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    display: block; /* Or inline-block, to center if needed */
+    margin-left: auto; /* Example: to push to right or center */
+    margin-right: auto; /* Example: to center */
+}
+
+.close-popup:hover {
+    background: #0056b3; /* Darker shade on hover */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 予定ボックス内のボタン配置 */
+.event-grid-item { /* Targeting existing .event-grid-item */
+    padding: 5px 8px !important; /* パディングを削減 */
+    margin: 2px 0 !important;    /* マージンを削減 */
+    /* display: flex; align-items: center; */ /* Already flex via .d-flex on some items, or handled by internal structure */
+}
+
+.event-grid-item .event-actions { /* Targeting existing .event-actions within .event-grid-item */
+    display: flex !important;
+    gap: 3px !important; /* ボタン間のギャップを削減 */
+    margin-top: 3px !important;
+    /* align-items: center; */ /* Might be useful if buttons have different actual heights after styling */
+}
+
+.event-grid-item .event-actions button,
+.event-grid-item .event-actions a.btn { /* Targeting buttons and a.btn within .event-actions */
+    padding: 2px 6px !important;    /* ボタンのパディングを削減 */
+    font-size: 12px !important;   /* フォントサイズを小さく */
+    border-radius: 3px !important;
+}
+
+/* 日付セル内のスクロールを防ぐ */
+.calendar td.calendar-day,
+.calendar td.shift-cell { /* Targeting existing calendar day and shift cells */
+    overflow: hidden !important; /* デフォルトではスクロールなし */
+}
+
+.calendar td.calendar-day:hover,
+.calendar td.shift-cell:hover {
+    overflow-y: auto !important; /* ホバー時のみスクロール可能 */
+}

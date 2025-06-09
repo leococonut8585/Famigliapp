@@ -1,7 +1,7 @@
 """Utility functions for Calendario."""
 
 import json
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, time
 from pathlib import Path
 from typing import List, Dict, Set, Optional, Iterable, Any
 from collections import defaultdict
@@ -107,7 +107,7 @@ def update_event(event_id: int, form_data: Dict[str, Any]) -> bool:
         current_event_id = events[event_idx]['id']; update_payload = form_data.copy()
         if 'date' in update_payload and isinstance(update_payload['date'], date):
             update_payload['date'] = update_payload['date'].isoformat()
-        if 'time' in update_payload and isinstance(update_payload['time'], datetime.time):
+        if 'time' in update_payload and isinstance(update_payload['time'], time):
             update_payload['time'] = update_payload['time'].isoformat(timespec='minutes')
         elif 'time' in update_payload and update_payload['time'] is None: # Ensure None is stored if time is explicitly cleared
             update_payload['time'] = None

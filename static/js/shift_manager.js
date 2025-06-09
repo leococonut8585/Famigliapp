@@ -257,15 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const modalTitleEl = document.getElementById('violationDetailModalTitle');
-          const modalBodyEl = document.getElementById('violationDetailModalBody');
-          const modalElement = document.getElementById('violationDetailModal');
-
-          if (modalTitleEl) modalTitleEl.textContent = `${iconInfo.titlePrefix} (${detailsObj.date})`;
-
-          if (modalBodyEl) {
-            // New structured HTML for modal body
-            let bodyContent = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
+          const popupTitle = `${iconInfo.titlePrefix} (${detailsObj.date})`;
+          let bodyContent = '';
+          // Construct bodyContent as before
+            bodyContent = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
 
             if (detailsObj.employee) {
                 bodyContent += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
@@ -308,15 +303,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 bodyContent += `</ul>`;
             }
-            modalBodyEl.innerHTML = bodyContent;
-          }
 
-          if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
-            modalInstance.show();
+          // Use the new popup function
+          if (typeof showCalendarioPopup === 'function') {
+            showCalendarioPopup(popupTitle, bodyContent, iconEl, 'violation-popup');
           } else {
-            console.error('Modal element #violationDetailModal not found or Bootstrap not loaded!');
-            alert(`違反: ${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`);
+            console.error('showCalendarioPopup function not found. Make sure calendar_event_details.js is loaded and the function is global.');
+            alert(`違反: ${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`); // Fallback
           }
         });
         iconsC.appendChild(iconEl);
@@ -362,7 +355,11 @@ document.addEventListener('DOMContentLoaded', () => {
             triggerShiftViolationCheck();
         }).catch(error => {
             console.error("Manual check failed:", error);
-            alert("ルールチェックの実行に失敗しました。詳細はコンソールを確認してください。");
+            if (typeof showCalendarioPopup === 'function') {
+              showCalendarioPopup("エラー", "ルールチェックの実行に失敗しました。詳細はコンソールを確認してください。", checkViolationsBtn, "error-popup");
+            } else {
+              alert("ルールチェックの実行に失敗しました。詳細はコンソールを確認してください。");
+            }
         });
     });
   }
