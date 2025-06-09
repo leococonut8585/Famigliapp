@@ -35,13 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const b = document.querySelector(selectB).value;
       if (a && b) {
         if (a === b) {
-          alert('同じ担当者をペアに設定することはできません。');
+          if (typeof showCalendarioPopup === 'function') {
+            showCalendarioPopup('入力エラー', '同じ担当者をペアに設定することはできません。', addBtn, 'warning-popup');
+          } else {
+            alert('同じ担当者をペアに設定することはできません。');
+          }
           return;
         }
         // Check for duplicate pairs (A-B or B-A)
         const exists = pairs.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
         if (exists) {
-          alert('そのペアは既に追加されています。');
+          if (typeof showCalendarioPopup === 'function') {
+            showCalendarioPopup('入力エラー', 'そのペアは既に追加されています。', addBtn, 'warning-popup');
+          } else {
+            alert('そのペアは既に追加されています。');
+          }
           return;
         }
         pairs.push([a, b]);
@@ -150,9 +158,17 @@ document.addEventListener('DOMContentLoaded', () => {
         updateHidden();
         render();
       } else if (!attr) {
-        alert('属性を選択してください。');
+        if (typeof showCalendarioPopup === 'function') {
+          showCalendarioPopup('入力エラー', '属性を選択してください。', addBtn, 'warning-popup');
+        } else {
+          alert('属性を選択してください。');
+        }
       } else {
-        alert('有効な人数（0以上）を入力してください。');
+        if (typeof showCalendarioPopup === 'function') {
+          showCalendarioPopup('入力エラー', '有効な人数（0以上）を入力してください。', addBtn, 'warning-popup');
+        } else {
+          alert('有効な人数（0以上）を入力してください。');
+        }
       }
     });
     render();
@@ -249,9 +265,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderAttributeDependentUI();
         updateHiddenDefinedAttributes();
       } else if (!newAttr) {
-        alert('属性名を入力してください。');
+        if (typeof showCalendarioPopup === 'function') {
+          showCalendarioPopup('入力エラー', '属性名を入力してください。', definedAttributesAddBtnEl, 'warning-popup');
+        } else {
+          alert('属性名を入力してください。');
+        }
       } else {
-        alert('その属性名は既に追加されています。');
+        if (typeof showCalendarioPopup === 'function') {
+          showCalendarioPopup('入力エラー', 'その属性名は既に追加されています。', definedAttributesAddBtnEl, 'warning-popup');
+        } else {
+          alert('その属性名は既に追加されています。');
+        }
       }
     });
   }
@@ -336,7 +360,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const employee = employeeSelect.value;
 
     if (!category || !employee) {
-      alert('ジャンルと担当者の両方を選択してください。');
+      if (typeof showCalendarioPopup === 'function') {
+        showCalendarioPopup('入力エラー', 'ジャンルと担当者の両方を選択してください。', addSpecializedBtn, 'warning-popup');
+      } else {
+        alert('ジャンルと担当者の両方を選択してください。');
+      }
       return;
     }
 
@@ -349,7 +377,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // specialized_requirements[category].sort(); // Optional: sort employee list
       renderSpecializedRequirementsDisplay();
     } else {
-      alert(`「${employee}」は既に「${category}」ジャンルに追加されています。`);
+      if (typeof showCalendarioPopup === 'function') {
+        showCalendarioPopup('情報', `「${employee}」は既に「${category}」ジャンルに追加されています。`, addSpecializedBtn, 'info-popup');
+      } else {
+        alert(`「${employee}」は既に「${category}」ジャンルに追加されています。`);
+      }
     }
   });
 

@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
     DateField,
-    TimeField,
+    # TimeField, # Removed TimeField as it's being replaced by SelectField for time
     TextAreaField,
     SubmitField,
     SelectField,
@@ -14,6 +14,8 @@ from wtforms import (
 from wtforms.validators import DataRequired, Optional
 import config
 
+# Define time_choices for SelectFields
+time_choices = [(f"{h:02d}:{m:02d}", f"{h:02d}:{m:02d}") for h in range(24) for m in [0, 15, 30, 45]]
 
 class EventForm(FlaskForm):
     """Form to create or edit an event."""
@@ -37,12 +39,17 @@ class EventForm(FlaskForm):
         # カテゴリ変更時にJavaScriptで対象者の表示/非表示を切り替えるための属性を追加
         render_kw={'onchange': 'toggleParticipantsField(this.value); toggleTimeField(this.value);'}
     )
-    time = TimeField(
-        "時間",
+    start_time = SelectField(
+        '開始時間',
+        choices=time_choices,
         validators=[Optional()],
-        format='%H:%M',
-        widget=widgets.TimeInput(), # widget を TimeInput に変更
-        render_kw={'id': 'event_time'} # render_kw は維持
+        render_kw={'class': 'time-select', 'id': 'event_start_time'}
+    )
+    end_time = SelectField(
+        '終了時間',
+        choices=time_choices,
+        validators=[Optional()],
+        render_kw={'class': 'time-select', 'id': 'event_end_time'}
     )
     participants = SelectMultipleField(
         "対象者",
