@@ -75,23 +75,22 @@ table { /* General table styling */
     border-collapse: collapse;
 }
 
-/* Calendar specific table layouts */
-.calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
-    table-layout: fixed; /* Ensured */
-    width: 980px !important; /* Set fixed width */
-    margin: 0 auto; /* Ensured for centering */
-    /* max-width: fit-content; and width: auto; removed */
-}
-
-/* Styles for calendar th and td cells */
+/* カレンダーセルの幅を予定ボックスに合わせて調整 */
 .calendar th,
 .calendar td.calendar-day,
 .calendar td.shift-cell {
-    width: 140px !important;       /* Strict width for all calendar cells */
-    min-width: 140px !important;   /* Strict width */
-    max-width: 140px !important;   /* Strict width */
-    vertical-align: top;         /* Ensured for td, good default for th */
-    border: 1px solid #ddd;      /* Ensured */
+    width: 180px !important;       /* 140pxから180pxに拡大 */
+    min-width: 180px !important;
+    max-width: 180px !important;
+    vertical-align: top;
+    border: 1px solid #ddd;
+}
+
+/* カレンダー全体の幅も調整 */
+.calendar, .calendar-grid {
+    table-layout: fixed;
+    width: 1260px !important;      /* 7列 × 180px = 1260px */
+    margin: 0 auto;
 }
 
 /* Specific overrides for td cells if needed, grouped for common properties */
@@ -292,11 +291,11 @@ ul {
     /* word-break: normal !important; /* Covered by white-space: nowrap */
 }
 
-/* Styles for non-shift events (default for .event-grid-item) */
+/* 予定ボックスの幅も合わせて調整 */
 .event-grid-item:not(.event-shift) {
-    width: 165px !important;
-    min-width: 165px !important;
-    max-width: 165px !important;
+    width: 170px !important;       /* セル内マージンを考慮 */
+    min-width: 170px !important;
+    max-width: 170px !important;
     font-size: 0.85em !important;
     padding: 2px 4px !important;
     /* Inherits line-height, text handling etc. from base .event-grid-item */
@@ -402,8 +401,15 @@ ul {
 /* Category-specific styling for event items */
 /* These will be applied to .event-grid-item or .shift-grid-item */
 
-.event-shucchou {
-    background-color: orange;
+/* カテゴリ名のマッピングを確認して修正 */
+.event-shucchou {  /* 'trip'ではなく'shucchou'の可能性 */
+    background-color: #ff8c00 !important; /* 濃いオレンジ */
+    color: white !important;
+}
+
+/* マミー系は'mammy'ではなく'mummy'の可能性もチェック */
+.event-mummy { /* Using 'mummy' as per user's note */
+    background-color: #8b0000 !important; /* 暗めの赤 */
     color: white !important;
 }
 

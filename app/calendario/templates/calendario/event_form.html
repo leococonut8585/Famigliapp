@@ -13,7 +13,8 @@
     <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=40) }}</p>
     <p>{{ form.category.label }}<br>{{ form.category() }}</p>
     {# Time field added here #}
-    <p>{{ form.time.label }}<br>{{ form.time(id='event_time') }}</p>
+    <p>{{ form.start_time.label }}<br>{{ form.start_time(id='event_start_time') }}</p>
+    <p>{{ form.end_time.label }}<br>{{ form.end_time(id='event_end_time') }}</p>
 
     {# 対象者フィールドのコンテナ #}
     <div id="participants-field-container">

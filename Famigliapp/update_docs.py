@@ -6,9 +6,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+# Get the directory where the script is located
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 def update_project_status():
     """PROJECT_STATUS.mdの最終更新日時を自動更新"""
-    status_file = Path("DEVELOPMENT_DOCS/PROJECT_STATUS.md")
+    status_file = SCRIPT_DIR / "DEVELOPMENT_DOCS/PROJECT_STATUS.md"
     if status_file.exists():
         content = status_file.read_text(encoding='utf-8')
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -29,17 +32,12 @@ def update_project_status():
                 updated_content = re.sub(r"最終更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", f"最終更新: {now}", content)
             else:
                 # If no timestamp is found, add it at the beginning of the file or after the title
-                title_match = re.search(r"^# Famigliapp プロジェクトステータス
-", content, re.MULTILINE)
+                title_match = re.search(r"^# Famigliapp プロジェクトステータス$", content, re.MULTILINE)
                 if title_match:
                     insert_pos = title_match.end()
-                    updated_content = content[:insert_pos] + f"最終更新: {now}
-
-" + content[insert_pos:]
+                    updated_content = content[:insert_pos] + f"最終更新: {now}\n\n" + content[insert_pos:]
                 else: # Prepend if title not found
-                    updated_content = f"最終更新: {now}
-
-" + content
+                    updated_content = f"最終更新: {now}\n\n" + content
 
         status_file.write_text(updated_content, encoding='utf-8')
         print(f"PROJECT_STATUS.md を更新しました: {now}")
@@ -85,7 +83,7 @@ def create_session_log_template(session_number: int, user_name: str = "[ユー�
 
 def create_new_session_log(session_number: int, user_name: str = "[ユーザー名]", assistant_name: str = "[Claude/Jules等]"):
     """新規セッションログファイルを作成"""
-    logs_dir = Path("DEVELOPMENT_DOCS/CONVERSATION_LOGS")
+    logs_dir = SCRIPT_DIR / "DEVELOPMENT_DOCS/CONVERSATION_LOGS"
     if not logs_dir.exists():
         logs_dir.mkdir(parents=True, exist_ok=True)
         print(f"ディレクトリを作成しました: {logs_dir}")
@@ -101,7 +99,7 @@ def create_new_session_log(session_number: int, user_name: str = "[ユーザー�
 
 def get_next_session_number():
     """次のセッション番号を自動で決定"""
-    logs_dir = Path("DEVELOPMENT_DOCS/CONVERSATION_LOGS")
+    logs_dir = SCRIPT_DIR / "DEVELOPMENT_DOCS/CONVERSATION_LOGS"
     if not logs_dir.exists():
         return 1
 
@@ -162,4 +160,4 @@ if __name__ == "__main__":
     if not (args.update_status or args.new_log):
         parser.print_help()
         print("\nオプションを指定して実行してください。")
-        print("例: python update_docs.py --update-status --new-log --user "坂口烈緒" --assistant "Jules"")
+        print('例: python update_docs.py --update-status --new-log --user "坂口烈緒" --assistant "Jules"')

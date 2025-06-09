@@ -257,66 +257,54 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          const modalTitleEl = document.getElementById('violationDetailModalTitle');
-          const modalBodyEl = document.getElementById('violationDetailModalBody');
-          const modalElement = document.getElementById('violationDetailModal');
+          const popupTitle = `${iconInfo.titlePrefix} (${detailsObj.date})`;
+          let popupBodyHtml = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
 
-          if (modalTitleEl) modalTitleEl.textContent = `${iconInfo.titlePrefix} (${detailsObj.date})`;
-
-          if (modalBodyEl) {
-            // New structured HTML for modal body
-            let bodyContent = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
-
-            if (detailsObj.employee) {
-                bodyContent += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
-            }
-            if (detailsObj.employees && Array.isArray(detailsObj.employees) && detailsObj.employees.length > 0) {
-                bodyContent += `<p class="mb-1"><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
-            }
-            if (detailsObj.attribute) {
-                bodyContent += `<p class="mb-1"><strong>対象属性:</strong> ${detailsObj.attribute}</p>`;
-            }
-
-            if (detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
-                bodyContent += `<p class="mt-3 mb-1"><strong>詳細情報:</strong></p><ul class="list-unstyled ps-3">`;
-                for (const key in detailsObj.details) {
-                    let displayKey = key;
-                    if (key === "current_consecutive") displayKey = "現在の連勤日数";
-                    else if (key === "max_allowed") displayKey = "最大許容日数";
-                    else if (key === "current_staff") displayKey = "現在の人数";
-                    else if (key === "min_required") displayKey = "最低必要人数";
-                    else if (key === "pair") displayKey = "ペア";
-                    else if (key === "missing_member") displayKey = "不足メンバー";
-                    else if (key === "present_member") displayKey = "勤務中メンバー";
-                    else if (key === "current_count") displayKey = "現在のカウント";
-                    else if (key === "required_count") displayKey = "要求カウント";
-                    else if (key === "date" && detailsObj.date) continue; // Already in title
-                    else if (key === "employee" && detailsObj.employee) continue;
-                    else if (key === "attribute" && detailsObj.attribute) continue;
-                    else if (key === "category" && detailsObj.category) { // details.category を表示
-                        displayKey = "対象カテゴリ";
-                    } else if (key === "required_staff" && Array.isArray(detailsObj.details[key])) {
-                        displayKey = "必須担当者";
-                        detailsObj.details[key] = detailsObj.details[key].join(', ');
-                    } else if (key === "assigned_staff" && Array.isArray(detailsObj.details[key])) {
-                        displayKey = "現在担当者";
-                        detailsObj.details[key] = detailsObj.details[key].join(', ') || '(なし)';
-                    }
-
-
-                    bodyContent += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
-                }
-                bodyContent += `</ul>`;
-            }
-            modalBodyEl.innerHTML = bodyContent;
+          if (detailsObj.employee) {
+              popupBodyHtml += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
+          }
+          if (detailsObj.employees && Array.isArray(detailsObj.employees) && detailsObj.employees.length > 0) {
+              popupBodyHtml += `<p class="mb-1"><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
+          }
+          if (detailsObj.attribute) {
+              popupBodyHtml += `<p class="mb-1"><strong>対象属性:</strong> ${detailsObj.attribute}</p>`;
           }
 
-          if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
-            modalInstance.show();
+          if (detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
+              popupBodyHtml += `<p class="mt-3 mb-1"><strong>詳細情報:</strong></p><ul class="list-unstyled ps-3">`;
+              for (const key in detailsObj.details) {
+                  let displayKey = key;
+                  if (key === "current_consecutive") displayKey = "現在の連勤日数";
+                  else if (key === "max_allowed") displayKey = "最大許容日数";
+                  else if (key === "current_staff") displayKey = "現在の人数";
+                  else if (key === "min_required") displayKey = "最低必要人数";
+                  else if (key === "pair") displayKey = "ペア";
+                  else if (key === "missing_member") displayKey = "不足メンバー";
+                  else if (key === "present_member") displayKey = "勤務中メンバー";
+                  else if (key === "current_count") displayKey = "現在のカウント";
+                  else if (key === "required_count") displayKey = "要求カウント";
+                  else if (key === "date" && detailsObj.date) continue; // Already in title
+                  else if (key === "employee" && detailsObj.employee) continue;
+                  else if (key === "attribute" && detailsObj.attribute) continue;
+                  else if (key === "category" && detailsObj.category) {
+                      displayKey = "対象カテゴリ";
+                  } else if (key === "required_staff" && Array.isArray(detailsObj.details[key])) {
+                      displayKey = "必須担当者";
+                      detailsObj.details[key] = detailsObj.details[key].join(', ');
+                  } else if (key === "assigned_staff" && Array.isArray(detailsObj.details[key])) {
+                      displayKey = "現在担当者";
+                      detailsObj.details[key] = detailsObj.details[key].join(', ') || '(なし)';
+                  }
+                  popupBodyHtml += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
+              }
+              popupBodyHtml += `</ul>`;
+          }
+
+          if (typeof showCalendarioPopup === 'function') {
+            showCalendarioPopup(popupTitle, popupBodyHtml, iconEl);
           } else {
-            console.error('Modal element #violationDetailModal not found or Bootstrap not loaded!');
-            alert(`違反: ${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`);
+            console.error('showCalendarioPopup function is not defined. Falling back to alert.');
+            alert(`${popupTitle}\n\n${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`);
           }
         });
         iconsC.appendChild(iconEl);

@@ -447,3 +447,55 @@ def another_initials_filter_for_japanese_names(name):
     # For Japanese names like '山田太郎', just take the first character.
     # For romaji names like 'raito', it will also take the first char 'R'.
     return name[0].upper()
+
+def get_calendar_weeks_for_month(year, month):
+    """指定月のカレンダー週を取得（前後1週間を含む）"""
+    # 月の最初と最後の日を取得
+    first_day_of_month = date(year, month, 1)
+    last_day_of_month = date(year, month, calendar.monthrange(year, month)[1])
+
+    # 表示範囲の開始日を決定（月の初日の1週間前）
+    # timedelta(days=first_day_of_month.weekday()) でその週の月曜日に移動
+    # さらに timedelta(days=7) で1週間前に
+    start_date = first_day_of_month - timedelta(days=first_day_of_month.weekday() + 7)
+
+    # 表示範囲の終了日を決定（月の最終日の1週間後）
+    # timedelta(days=(6 - last_day_of_month.weekday())) でその週の日曜日に移動
+    # さらに timedelta(days=7) で1週間後に
+    end_date = last_day_of_month + timedelta(days=(6 - last_day_of_month.weekday()) + 7)
+
+    # しかし、問題の指示は「前後1週間」なので、月の初日が含まれる週の開始日から、
+    # 月の最終日が含まれる週の終了日までの範囲で、さらにその外側1週間ずつとする。
+    # より正確には、月の初日を含む週の月曜日から、月の最終日を含む週の日曜日まで。
+    # そして、その範囲を1週間ずつ前後に拡張する。
+
+    # 月の初日が含まれる週の月曜日
+    actual_start_of_month_week = first_day_of_month - timedelta(days=first_day_of_month.weekday())
+    # 月の最終日が含まれる週の日曜日
+    actual_end_of_month_week = last_day_of_month + timedelta(days=(6 - last_day_of_month.weekday()))
+
+    # 前後1週間を拡張
+    display_start_date = actual_start_of_month_week - timedelta(days=7)
+    display_end_date = actual_end_of_month_week + timedelta(days=7)
+
+    # ユーザーの指示「前2週間が表示され、月末が表示されない」を解決するため、
+    # 「指定月のカレンダー週を取得（前後1週間を含む）」という説明と、
+    # 「start_date = first_day - timedelta(days=7)」
+    # 「end_date = last_day + timedelta(days=7)」
+    # 「週の開始日（月曜日）に調整 start_date = start_date - timedelta(days=start_date.weekday())」
+    # 「週の終了日（日曜日）に調整 end_date = end_date + timedelta(days=(6 - end_date.weekday()))」
+    # を忠実に実装する。
+
+    first_day = date(year, month, 1)
+    last_day = date(year, month, calendar.monthrange(year, month)[1])
+
+    # 前後1週間を含めるための単純な日付
+    start_limit = first_day - timedelta(days=7)
+    end_limit = last_day + timedelta(days=7)
+
+    # その日付が含まれる週の月曜日に調整
+    final_start_date = start_limit - timedelta(days=start_limit.weekday())
+    # その日付が含まれる週の日曜日に調整
+    final_end_date = end_limit + timedelta(days=(6 - end_limit.weekday()))
+
+    return final_start_date, final_end_date
