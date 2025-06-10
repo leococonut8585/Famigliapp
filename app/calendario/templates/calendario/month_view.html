@@ -65,23 +65,21 @@
                                 </div>
                             </div>
                         {% else %} {# Non-shift events #}
-                            <div class="event-grid-item event-{{ ev.css_category_class | default('other') }} calendar-event-text-compact d-flex align-items-center justify-content-between mb-1" draggable="true" data-event-id="{{ ev.id }}">
-                                <span class="flex-grow-1" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                    {% if ev.time %}<span class="event-time">{{ ev.time }}</span>&nbsp;{% elif ev.display_time %}<span class="event-time">{{ ev.display_time }}</span>&nbsp;{% endif %}
-                                    <span class="event-title">{{ ev.cleaned_title }}</span>
+                            <div class="event-item event-category-{{ ev.category|lower }}" draggable="true" data-event-id="{{ ev.id }}">
+                                <span class="event-content">
+                                    {% if ev.display_time %}<strong>{{ ev.display_time }}</strong> {% endif %}
+                                    {{ ev.cleaned_title or ev.title }}
                                 </span>
-                                <div class="event-actions" style="white-space: nowrap;">
-                                    {# Non-shift events: Details, Edit, Copy, Move #}
-                                    <button type="button" class="btn btn-info btn-xs-custom ms-1"
+                                <div class="event-buttons">
+                                    <button type="button" class="btn btn-sm btn-info"
                                             onclick="showEventDetails({{ ev.id }}, this.closest('td'))"
                                             data-event-id="{{ ev.id }}" data-title="{{ ev.cleaned_title }}"
                                             data-time="{{ ev.time or ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
                                             data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
                                             data-category="{{ ev.category }}"
                                             data-employee="{{ ev.employee or '' }}">詳細</button>
-                                    <a href="{{ url_for('calendario.edit_event', event_id=ev.id) }}" class="btn btn-custom-edit ms-1">編集</a>
-                                    <button type="button" class="btn btn-custom-copy btn-xs-custom ms-1" data-event-id="{{ ev.id }}">コピー</button>
-                                    <button type="button" class="btn btn-custom-move btn-xs-custom ms-1" data-event-id="{{ ev.id }}">移動</button>
+                                    <button class="btn btn-sm btn-primary" onclick="editEvent({{ ev.id }})">編集</button>
+                                    <button type="button" class="btn btn-sm btn-warning event-move-btn" data-event-id="{{ ev.id }}">移動</button>
                                 </div>
                             </div>
                         {% endif %}

@@ -74,3 +74,11 @@ function showWarningDetails(warningType, details, cellElement) {
 
     showCalendarioPopup(title, contentHtml, targetDomElement, popupClass);
 }
+
+// Function to truncate long event titles
+function truncateEventTitle(title, maxLength = 20) {
+    if (title.length > maxLength) {
+        return title.substring(0, maxLength) + '...';
+    }
+    return title;
+}
