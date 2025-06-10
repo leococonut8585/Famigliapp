@@ -72,11 +72,13 @@
                                         {{ ev.cleaned_title or ev.title }}
                                     </div>
                                     <div class="event-buttons">
-                                        <button type="button" class="btn btn-sm btn-info event-details-btn"
+                                        <button type="button" class="btn btn-sm btn-info btn-event-details"
                                                 data-event-id="{{ ev.id }}">詳細</button>
-                                        <button type="button" class="btn btn-sm btn-primary event-edit-btn"
+                                        <button type="button" class="btn btn-sm btn-primary btn-event-edit"
                                                 data-event-id="{{ ev.id }}">編集</button>
-                                        <button type="button" class="btn btn-sm btn-warning event-move-btn"
+                                        <button type="button" class="btn btn-sm btn-success btn-event-copy"
+                                                data-event-id="{{ ev.id }}">コピー</button>
+                                        <button type="button" class="btn btn-sm btn-warning btn-event-move"
                                                 data-event-id="{{ ev.id }}">移動</button>
                                     </div>
                                 </div>

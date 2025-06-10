@@ -771,6 +771,7 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
     display: block; /* flexではなくblock */
     width: calc(100% - 10px); /* セル内で適切な幅を確保 */
     max-width: 190px; /* 最大幅を制限 */
+    padding-right: 160px !important; /* 4つのボタン分のスペース */
 }
 
 .event-content-wrapper {
@@ -790,15 +791,15 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 
 .event-buttons {
     display: flex;
-    gap: 2px;
+    gap: 1px !important; /* ボタン間隔をさらに狭く */
     justify-content: flex-start; /* 左寄せ */
     flex-wrap: nowrap; /* ボタンが折り返さない */
 }
 
 /* 各ボタンのサイズ調整 */
 .event-buttons .btn {
-    padding: 2px 6px;
-    font-size: 11px;
+    padding: 1px 5px !important; /* さらに小さく */
+    font-size: 11px !important;
     line-height: 1.2;
     flex-shrink: 0; /* ボタンが縮まない */
 }
@@ -829,4 +830,9 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
     .calendar-scroll-container {
         overflow-x: visible !important; /* 大画面ではスクロール不要 */
     }
+}
+
+.moving-mode {
+    opacity: 0.6;
+    border: 2px dashed #007bff;
 }
