@@ -409,12 +409,9 @@ ul {
 }
 
 /* 出張 */
-.event-genre-shucchou,
-.event-category-shucchou,
-.event-genre-出張,
 .event-shucchou {
-    background-color: #FFD700 !important; /* Gold */
-    color: #333333 !important;
+    background-color: #FFD700 !important; /* ゴールド */
+    color: #333 !important; /* テキストを暗くして読みやすく */
 }
 
 .event-mummy { /* 'mammy' から 'mummy' に変更 */
@@ -422,11 +419,9 @@ ul {
     color: white !important;
 }
 
-.event-genre-lesson,
-.event-category-lesson,
 .event-lesson {
-    background-color: #90EE90 !important; /* LightGreen */
-    color: #2d5016 !important; /* 濃い緑でコントラストを確保 */
+    background-color: #9370db !important; /* より明るい紫（ミディアムパープル） */
+    color: white;
 }
 
 .event-trip { /* Assuming this replaces event-shucchou or is a new category */
@@ -439,11 +434,9 @@ ul {
     color: white !important;
 }
 
-.event-genre-kouza,
-.event-category-kouza,
 .event-kouza {
-    background-color: #E6E6FA !important; /* Lavender */
-    color: #4B0082 !important; /* Indigo でコントラストを確保 */
+    background-color: purple;
+    color: white !important;
 }
 
 .event-other {
@@ -712,72 +705,4 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
     right: 5px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-}
-
-/* カレンダーコンテナ全体の幅を広げる */
-.calendar-wrapper {
-    min-width: 1400px; /* 最小幅を大きく設定 */
-    max-width: 100%;
-    margin: 0 auto;
-    overflow-x: auto;
-}
-
-/* カレンダーテーブルの調整 */
-.calendar-table {
-    width: 100%;
-    table-layout: auto; /* 自動レイアウトで内容に応じて調整 */
-}
-
-/* 日付セルの最小幅を設定 */
-.calendar-table td {
-    min-width: 180px; /* 十分な幅を確保 */
-    padding: 8px;
-    vertical-align: top;
-    position: relative;
-}
-
-/* 予定ボックスのスタイル調整 */
-.event-item {
-    position: relative;
-    padding-right: 120px; /* ボタン3つ分の余裕を確保 */
-    margin-bottom: 4px;
-    min-height: 30px;
-    display: flex;
-    align-items: center;
-}
-
-/* ボタングループの配置 */
-.event-buttons {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 2px; /* ボタン間の間隔 */
-}
-
-/* 各ボタンのサイズ調整 */
-.event-buttons .btn {
-    padding: 2px 8px;
-    font-size: 12px;
-    line-height: 1.2;
-}
-
-/* シフト管理エリアの予定表示調整 */
-.shift-event-item {
-    max-width: calc(100% - 40px); /* 違反アイコン分を確保 */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* レスポンシブ対応 */
-@media (min-width: 1600px) {
-    .calendar-wrapper {
-        min-width: 100%;
-    }
-
-    .calendar-table td {
-        min-width: 200px; /* より大きな画面ではさらに広く */
-    }
 }
