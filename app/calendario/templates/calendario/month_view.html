@@ -66,20 +66,19 @@
                             </div>
                         {% else %} {# Non-shift events #}
                             <div class="event-item event-category-{{ ev.category|lower }}" draggable="true" data-event-id="{{ ev.id }}">
-                                <span class="event-content">
-                                    {% if ev.display_time %}<strong>{{ ev.display_time }}</strong> {% endif %}
-                                    {{ ev.cleaned_title or ev.title }}
-                                </span>
-                                <div class="event-buttons">
-                                    <button type="button" class="btn btn-sm btn-info"
-                                            onclick="showEventDetails({{ ev.id }}, this.closest('td'))"
-                                            data-event-id="{{ ev.id }}" data-title="{{ ev.cleaned_title }}"
-                                            data-time="{{ ev.time or ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
-                                            data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
-                                            data-category="{{ ev.category }}"
-                                            data-employee="{{ ev.employee or '' }}">詳細</button>
-                                    <button class="btn btn-sm btn-primary" onclick="editEvent({{ ev.id }})">編集</button>
-                                    <button type="button" class="btn btn-sm btn-warning event-move-btn" data-event-id="{{ ev.id }}">移動</button>
+                                <div class="event-content-wrapper">
+                                    <div class="event-title-line">
+                                        {% if ev.display_time %}<strong>{{ ev.display_time }}</strong> {% endif %}
+                                        {{ ev.cleaned_title or ev.title }}
+                                    </div>
+                                    <div class="event-buttons">
+                                        <button type="button" class="btn btn-sm btn-info event-details-btn"
+                                                data-event-id="{{ ev.id }}">詳細</button>
+                                        <button type="button" class="btn btn-sm btn-primary event-edit-btn"
+                                                data-event-id="{{ ev.id }}">編集</button>
+                                        <button type="button" class="btn btn-sm btn-warning event-move-btn"
+                                                data-event-id="{{ ev.id }}">移動</button>
+                                    </div>
                                 </div>
                             </div>
                         {% endif %}
