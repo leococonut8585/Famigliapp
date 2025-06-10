@@ -142,4 +142,63 @@
 </script>
 <script src="{{ url_for('static', filename='js/calendario.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/shift_manager.js') }}" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 全ての非シフトイベントのタイトルを短縮
+    document.querySelectorAll('.manager-other-events-container .event-grid-item').forEach(function(eventItem) {
+        const maxLength = 15; // 違反アイコン3つ分のスペースを考慮
+        let titleTextNode = null;
+        let originalTitle = "";
+
+        // Iterate through child nodes to find the main text node representing the title
+        eventItem.childNodes.forEach(function(node) {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+                // Assuming the first significant text node is the title
+                if (!titleTextNode) {
+                    titleTextNode = node;
+                    originalTitle = node.textContent.trim();
+                }
+            }
+        });
+
+        if (titleTextNode && originalTitle.length > maxLength) {
+            titleTextNode.textContent = originalTitle.substring(0, maxLength) + '...';
+            // Update the parent div's title attribute for the full tooltip
+            // Also, try to append employee info to the tooltip if it exists
+            let tooltipTitle = originalTitle;
+            const employeeElement = eventItem.querySelector('small.event-employee');
+            if (employeeElement) {
+                tooltipTitle += employeeElement.textContent; // This will include the parentheses and spaces
+            }
+            eventItem.setAttribute('title', tooltipTitle);
+        } else if (titleTextNode) {
+            // If not truncated, ensure the tooltip is at least the title itself, plus employee if present
+            let tooltipTitle = originalTitle;
+            const employeeElement = eventItem.querySelector('small.event-employee');
+            if (employeeElement) {
+                tooltipTitle += employeeElement.textContent;
+            }
+            // Only update if the existing title attribute is different or not set to the full desired content
+            if (eventItem.getAttribute('title') !== tooltipTitle) {
+                 eventItem.setAttribute('title', tooltipTitle);
+            }
+        } else {
+            // Fallback for elements where the title is not a direct text node child (e.g., wrapped in a span)
+            // This part is less precise and might grab more than just the title.
+            const contentForTruncation = eventItem.querySelector('.event-title') || eventItem;
+            // If .event-title exists, use it; otherwise, use the item itself.
+            // This assumes .event-title would be a span containing only the title.
+            const fullText = contentForTruncation.textContent.trim();
+            if (fullText.length > maxLength) {
+                // This part is tricky: if contentForTruncation is eventItem, this will wipe out other child elements.
+                // If it's a specific .event-title span, it's safer.
+                // Given the HTML, this fallback might not be hit if the text node logic above is robust.
+                contentForTruncation.textContent = fullText.substring(0, maxLength) + '...';
+                eventItem.setAttribute('title', fullText); // Set tooltip to the original full text
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
