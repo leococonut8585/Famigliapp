@@ -49,16 +49,18 @@ function showCalendarioPopup(title, contentHtml, targetElement, additionalClass 
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const mainContent = document.body; // Or a more specific container
+    const calendarContainer = document.querySelector('.calendar-scroll-container'); // More specific container
 
-    mainContent.addEventListener('click', function (event) {
-        const button = event.target.closest('.details-btn');
+    if (calendarContainer) {
+        calendarContainer.addEventListener('click', function (event) {
+            const button = event.target.closest('.details-btn');
 
-        if (button) {
-            event.preventDefault();
+            if (button) {
+                event.preventDefault();
+                event.stopPropagation();
 
-            const title = button.dataset.title || '予定の詳細';
-            const time = button.dataset.time || '';
+                const title = button.dataset.title || '予定の詳細';
+                const time = button.dataset.time || '';
             const category = button.dataset.category || '';
             const description = button.dataset.description || '';
             // Participants and employee are not used in the generic popup structure directly,
@@ -66,21 +68,22 @@ document.addEventListener('DOMContentLoaded', function () {
             // For event details, we construct the HTML content for the popup.
 
             let contentHtml = `<p><strong>時間:</strong> ${time || '指定なし'}</p>
-                               <p><strong>種類:</strong> ${category || '指定なし'}</p>
-                               <p><strong>内容:</strong></p>
-                               <pre style="white-space: pre-wrap; word-break: break-word;">${description || 'なし'}</pre>`;
+                               <p><strong>種類:</strong> ${category || '指定なし'}</p>`;
 
-            // If you had other fields like employee or participants for the event details popup:
-            // const employee = button.dataset.employee || '';
-            // if (employee) {
-            //    contentHtml += `<p><strong>担当:</strong> ${employee}</p>`;
-            // }
-            // const participants = button.dataset.participants || '';
-            // if (participants) {
-            //    contentHtml += `<p><strong>対象者:</strong> ${participants}</p>`;
-            // }
+            const employee = button.dataset.employee || '';
+            if (employee) {
+                contentHtml += `<p><strong>担当:</strong> ${employee}</p>`;
+            }
+            const participants = button.dataset.participants || '';
+            if (participants) {
+                contentHtml += `<p><strong>対象者:</strong> ${participants}</p>`;
+            }
+
+            contentHtml += `<p><strong>内容:</strong></p>
+                            <pre style="white-space: pre-wrap; word-break: break-word;">${description || 'なし'}</pre>`;
 
             showCalendarioPopup(title, contentHtml, button);
         }
     });
+    } // end if (calendarContainer)
 });

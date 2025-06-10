@@ -78,7 +78,7 @@ table { /* General table styling */
 /* Calendar specific table layouts */
 .calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
     table-layout: fixed; /* Ensured */
-    width: 980px !important; /* Set fixed width */
+    width: 1260px !important; /* Set fixed width */
     margin: 0 auto; /* Ensured for centering */
     /* max-width: fit-content; and width: auto; removed */
 }
@@ -87,9 +87,9 @@ table { /* General table styling */
 .calendar th,
 .calendar td.calendar-day,
 .calendar td.shift-cell {
-    width: 140px !important;       /* Strict width for all calendar cells */
-    min-width: 140px !important;   /* Strict width */
-    max-width: 140px !important;   /* Strict width */
+    width: 180px !important;       /* Strict width for all calendar cells */
+    min-width: 180px !important;   /* Strict width */
+    max-width: 180px !important;   /* Strict width */
     vertical-align: top;         /* Ensured for td, good default for th */
     border: 1px solid #ddd;      /* Ensured */
 }
@@ -294,9 +294,9 @@ ul {
 
 /* Styles for non-shift events (default for .event-grid-item) */
 .event-grid-item:not(.event-shift) {
-    width: 165px !important;
-    min-width: 165px !important;
-    max-width: 165px !important;
+    width: 170px !important;
+    min-width: 170px !important;
+    max-width: 170px !important;
     font-size: 0.85em !important;
     padding: 2px 4px !important;
     /* Inherits line-height, text handling etc. from base .event-grid-item */
@@ -408,9 +408,15 @@ ul {
     color: white;
 }
 
-.event-mammy {
+/* 出張 */
+.event-shucchou {
+    background-color: #ff8c00 !important; /* 濃いオレンジ */
+    color: white !important;
+}
+
+.event-mummy { /* 'mammy' から 'mummy' に変更 */
     background-color: #8b0000 !important; /* 暗めの赤 */
-    color: white;
+    color: white !important;
 }
 
 .event-lesson {
