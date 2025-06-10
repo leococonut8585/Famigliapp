@@ -23,7 +23,7 @@ body {
 }
 
 .container {
-    max-width: 1140px;
+    max-width: 1440px; /* 1140px から拡張 */
     margin: 20px auto;
     padding: 20px;
     background: #fff;
@@ -77,9 +77,10 @@ table { /* General table styling */
 
 /* Calendar specific table layouts */
 .calendar, .calendar-grid { /* .calendar-grid might be for other views, ensure fixed layout is desired there too, or make selector more specific e.g. table.calendar */
-    table-layout: fixed; /* Ensured */
-    width: 1260px !important; /* Set fixed width */
-    margin: 0 auto; /* Ensured for centering */
+    table-layout: fixed;
+    width: 100% !important; /* 1260px から 100% に変更 */
+    max-width: 1400px !important; /* 最大幅を制限 */
+    margin: 0 auto;
     /* max-width: fit-content; and width: auto; removed */
 }
 
@@ -361,7 +362,7 @@ ul {
 
 /* Individual shift items within the shift grid */
 .shift-grid-item {
-    padding: 2px 1px !important; /* Padding reverted for shift items */
+    padding: 2px 1px !important; /* Base padding, right side will be overridden by padding-right */
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
@@ -374,19 +375,27 @@ ul {
     max-width: 125px !important; /* Verified fixed max-width */
     height: auto !important; /* Maintained */
     line-height: 1.2 !important; /* Adjusted line-height */
-    box-sizing: border-box; /* Maintained */
+    box-sizing: border-box !important; /* Updated */
     flex-shrink: 0; /* Maintained */
+    position: relative; /* Added */
+    padding-right: 65px !important; /* Added */
 }
 
-/* Ensure action buttons in both shift and general events do not shrink and buttons themselves don't wrap */
-.event-grid-item .event-actions,
+/* Combined and updated rule for button containers */
+.event-buttons,
 .shift-grid-item .event-actions {
-    display: flex; /* Added */
-    flex-wrap: nowrap; /* Added (consistent with white-space: nowrap) */
-    justify-content: space-between; /* Added to space out buttons */
-    gap: 2px; /* Added for spacing between buttons */
-    flex-shrink: 0; /* Maintained */
-    white-space: nowrap; /* Maintained: Ensures buttons stay in a single line if flex properties are not fully supported or overridden */
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex !important;
+    gap: 2px;
+    z-index: 10;
+    visibility: visible !important;
+    opacity: 1 !important;
+    white-space: nowrap; /* Ensures buttons stay in a single line */
+    justify-content: flex-end; /* Align buttons to the right */
+    flex-shrink: 0; /* Prevent shrinking in flex context */
 }
 
 /* Ensure title/text part in both shift and general events truncates properly */
@@ -403,9 +412,15 @@ ul {
 /* These will be applied to .event-grid-item or .shift-grid-item */
 
 /* 予定ジャンルのカラー定義 */
-.event-tattoo {
+/* タトゥージャンルの定義を明確に */
+.event-tattoo,
+.event-category-tattoo,
+.event-genre-tattoo {
     background-color: #6c757d !important; /* グレー */
-    color: white;
+    color: white !important;
+    border: 1px solid #5a6268 !important; /* 少し暗いグレーの枠 */
+    padding: 5px 8px !important; /* 内部パディング */
+    display: block !important; /* ボックスとして表示 */
 }
 
 /* 出張 */
@@ -417,9 +432,16 @@ ul {
     color: #333333 !important;
 }
 
-.event-mummy { /* 'mammy' から 'mummy' に変更 */
+/* マミー系も同様に確認 */
+.event-mummy,
+.event-category-mummy,
+.event-genre-mummy,
+.event-mammy { /* 古い名前も念のため */
     background-color: #8b0000 !important; /* 暗めの赤 */
     color: white !important;
+    border: 1px solid #6b0000 !important;
+    padding: 5px 8px !important;
+    display: block !important;
 }
 
 .event-genre-lesson,
@@ -739,22 +761,17 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 /* 予定ボックスのスタイル調整 */
 .event-item {
     position: relative;
-    padding-right: 120px; /* ボタン3つ分の余裕を確保 */
-    margin-bottom: 4px;
-    min-height: 30px;
     display: flex;
     align-items: center;
+    margin-bottom: 4px;
+    min-height: 30px;
+    width: 100%;
+    max-width: 170px;
+    padding-right: 100px;
+    box-sizing: border-box;
 }
 
-/* ボタングループの配置 */
-.event-buttons {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    gap: 2px; /* ボタン間の間隔 */
-}
+/* .event-buttons rule will be replaced by a consolidated rule later */
 
 /* 各ボタンのサイズ調整 */
 .event-buttons .btn {
@@ -779,5 +796,18 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 
     .calendar-table td {
         min-width: 200px; /* より大きな画面ではさらに広く */
+    }
+}
+
+/* The specific .shift-grid-item .event-actions rule (for visibility) is now removed as its properties are merged into the consolidated rule above. */
+
+.shift-grid-item .btn-custom-copy {
+    display: inline-block !important; /* 明示的に表示 */
+}
+
+/* 画面幅に応じた調整 */
+@media (min-width: 1440px) {
+    .calendar-scroll-container {
+        overflow-x: visible !important; /* 大画面ではスクロール不要 */
     }
 }
