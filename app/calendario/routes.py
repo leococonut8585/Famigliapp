@@ -265,7 +265,7 @@ def edit_event(event_id: int):
                 # "employee": form.employee.data or "", # Employee field is being removed
                 "category": form.category.data,
                 "participants": form.participants.data,  # Pass as a list
-                "time": form.start_time.data.isoformat(timespec='minutes') if form.start_time.data else None
+                "time": form.start_time.data if form.start_time.data else None
             }
             if utils.update_event(event_id, updated_event_data):
                 flash("予定を更新しました。", "success")

@@ -91,7 +91,7 @@ def add_event(
         "id": next_id, "date": event_date_obj.isoformat(), "title": title,
         "description": description, "employee": employee, "category": category,
         "participants": list(participants or []),
-        "time": time.isoformat(timespec='minutes') if time else None,
+        "time": time if isinstance(time, str) else (time.isoformat(timespec='minutes') if hasattr(time, 'isoformat') else None),
     }
     events.append(new_event); save_events(events); _notify_event("add", new_event)
     check_rules_and_notify()
