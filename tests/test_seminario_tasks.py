@@ -8,7 +8,7 @@ import pytest
 flask = pytest.importorskip("flask")
 
 import config
-from app.seminario import utils, tasks
+from app.Seminario import utils, tasks
 
 
 def setup_module(module):

@@ -8,6 +8,7 @@
 -   **シフト管理エリアのカレンダー表示範囲の問題**: 表示月に対して前2週間が表示され、月末が表示されないことがあった問題。(`routes.py` の `/shift` ルートの表示期間計算ロジックを修正して解決)
 -   **イベントカテゴリのカラー適用不備**: 「出張」や「マミー系」といった特定のイベントカテゴリに意図した背景色・文字色が適用されていなかった問題。(`style.css` の修正、`routes.py` でのカテゴリ名正規化、`month_view.html` での適用方法変更により解決)
 -   **シフト管理エリアの警告ポップアップの不統一**: シフト管理機能内で一部 `alert()` が使用されており、他のポップアップと表示スタイルや挙動が異なっていた問題。(`shift_manager.js` を修正し、`showCalendarioPopup` に統一して解決)
+-   **Flask起動時のModuleNotFoundError**: `app.seminario` (小文字s) と `app.Seminario` (大文字S) のインポートパスの不一致により、`ModuleNotFoundError: No module named 'app.seminario'` が発生していた問題。(2025-06-09 緊急修正にて `wsgi.py`, `tests/*.py` のパスを `app.Seminario` に統一して解決)
 
 ## 残存する問題
 

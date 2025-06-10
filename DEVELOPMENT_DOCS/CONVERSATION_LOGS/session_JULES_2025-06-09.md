@@ -49,9 +49,9 @@
 -   **ステップ7: 論理テスト**
     -   実施内容: 上記6つの修正項目について、期待される動作が実装されているかを論理的に確認。
     -   結果: 全ての項目で、期待される動作が実装されていると判断。
--   **ステップ8: ドキュメント更新**
-    -   実施内容: 本セッションの内容に基づき、`DEVELOPMENT_DOCS/PROJECT_STATUS.md` を更新、`DEVELOPMENT_DOCS/CONVERSATION_LOGS/session_JULES_2025-06-09.md` (このファイル) および `DEVELOPMENT_DOCS/KNOWN_ISSUES.md` を新規作成。
-    -   結果: 進行中 (このファイルの作成自体がステップの一部)。
+-   **ステップ8: ドキュメント更新 (1回目)**
+    -   実施内容: 上記セッションの内容に基づき、`DEVELOPMENT_DOCS/PROJECT_STATUS.md` を更新、`DEVELOPMENT_DOCS/CONVERSATION_LOGS/session_JULES_2025-06-09.md` (このファイル) および `DEVELOPMENT_DOCS/KNOWN_ISSUES.md` を新規作成。
+    -   結果: 正常に完了。
 
 ## ユーザーフィードバック
 
@@ -62,3 +62,32 @@
 -   イベント編集フォームのバックエンド (`forms.py` および関連するルート) が `start_time`, `end_time` フィールドに完全に対応しているかの最終確認。
 -   `ev.category` に実際に格納されている値のバリエーション（日本語、英語大文字小文字混在など）を網羅的に確認し、`routes.py` のカテゴリ名正規化処理が全てのケースをカバーできているか確認。
 -   実際のアプリケーション動作を通じた各修正項目のテスト。
+
+---
+## 緊急修正: ModuleNotFoundError for 'app.seminario' (2025-06-09)
+
+### ユーザー指示
+
+Flaskアプリケーション起動時に `ModuleNotFoundError: No module named 'app.seminario'` が発生したため、この緊急修正が指示されました。原因は `seminario` モジュールのディレクトリ名が `Seminario` (大文字S) であるのに対し、一部のインポート文が `app.seminario` (小文字s) を使用していたことでした。
+
+### 新しい作業計画
+
+1.  **`wsgi.py` の修正**: `app.seminario.tasks` からのインポートを `app.Seminario.tasks` に修正。
+2.  **プロジェクト全体の確認と修正**: コードベース全体で `from app.seminario` または `import app.seminario` を検索し、必要に応じて `app.Seminario` に修正（`run.py` と `app/__init__.py` は除く）。
+3.  **Flaskアプリケーションの起動確認**: `flask run` (または代替コマンド)でエラーが解消されることを確認。
+4.  **ドキュメント更新**: 緊急修正の内容を関連ドキュメントに追記。
+
+### 実行ステップと結果
+
+-   **ステップ1: `wsgi.py` の修正**
+    -   実施内容: `wsgi.py` 内の `from app.seminario.tasks import ...` を `from app.Seminario.tasks import ...` に修正。
+    -   結果: 正常に完了。
+-   **ステップ2: プロジェクト全体のインポート文修正**
+    -   実施内容: `grep` で `from app.seminario` を検索し、`tests/test_seminario.py` と `tests/test_seminario_tasks.py` で該当箇所を発見。これらを `app.Seminario` を使用するように修正。`import app.seminario` は見つからず。
+    -   結果: 正常に完了。
+-   **ステップ3: Flaskアプリケーションの起動確認**
+    -   実施内容: `python -m flask run --host=0.0.0.0 --port=8080` を実行。
+    -   結果: コマンドはタイムアウトしたが、これはアプリケーションが正常に起動しフォアグラウンドで実行され続けていることを示唆。`ModuleNotFoundError` は解消されたと判断。
+-   **ステップ4: ドキュメント更新 (2回目)**
+    -   実施内容: 緊急修正の内容を `DEVELOPMENT_DOCS/PROJECT_STATUS.md`、`DEVELOPMENT_DOCS/CONVERSATION_LOGS/session_JULES_2025-06-09.md` (このセクション)、`DEVELOPMENT_DOCS/KNOWN_ISSUES.md` に追記。
+    -   結果: 進行中 (このセクションの記述自体がステップの一部)。

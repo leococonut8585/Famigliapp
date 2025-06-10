@@ -28,3 +28,9 @@
 5.  **イベントカテゴリのカラー適用修正**: `style.css` に `event-shucchou` を追加、`event-mammy` を `event-mummy` に修正。`routes.py` にカテゴリ名を正規化してCSSクラス名を生成するロジックを追加し、`month_view.html` でそれを適用するように修正。
 6.  **シフト管理エリアの警告ポップアップ対応**: `shift_manager.js` 内で `alert()` が使用されていた箇所（違反詳細のJSONパース失敗時）を `showCalendarioPopup` を使用するように統一。
 7.  **論理テスト**: 上記修正項目について、期待される動作が実装されていることを論理的に確認。
+
+### 2025-06-09 緊急修正 (Jules)
+
+- Flask起動時の `ModuleNotFoundError: No module named 'app.seminario'` エラーを修正。
+    - `wsgi.py`、`tests/test_seminario.py`、`tests/test_seminario_tasks.py` のインポートパスを `app.seminario` から `app.Seminario` に修正。
+    - 起動確認テストを実施し、エラーが解消されたことを確認。

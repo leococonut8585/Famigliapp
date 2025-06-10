@@ -9,7 +9,7 @@ import pytest
 flask = pytest.importorskip("flask")
 
 from app import create_app
-from app.seminario import utils
+from app.Seminario import utils
 
 
 def setup_module(module):
