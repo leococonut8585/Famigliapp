@@ -1,3 +1,11 @@
+// Ensure editEvent is globally available
+if (typeof window.editEvent === 'undefined') {
+    window.editEvent = function(eventId) {
+        // console.log('Attempting to navigate to edit page for event ID (global):', eventId); // Optional logging
+        window.location.href = `/calendario/edit/${eventId}`;
+    };
+}
+
 // static/js/calendario.js (前回作成したものを修正)
 function showEventDetails(eventId, cellElement) {
     // 既存のポップアップを削除 (showCalendarioPopupが行うので、ここでは不要かもしれないが念のため)
@@ -82,3 +90,62 @@ function truncateEventTitle(title, maxLength = 20) {
     }
     return title;
 }
+
+$(document).ready(function() {
+    // Details Button
+    $(document).on('click', '.event-details-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const eventId = $(this).data('event-id');
+        const cellElement = $(this).closest('td')[0]; // Get the raw DOM element
+        if (typeof showEventDetails === 'function') {
+            showEventDetails(eventId, cellElement);
+        } else {
+            console.error('showEventDetails function is not defined for event ID:', eventId);
+        }
+    });
+
+    // Edit Button
+    $(document).on('click', '.event-edit-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const eventId = $(this).data('event-id');
+        if (typeof editEvent === 'function') { // This refers to window.editEvent
+            editEvent(eventId);
+        } else {
+            // This else block should ideally not be reached if window.editEvent is correctly defined.
+            console.error('Global editEvent function is not defined. Attempting direct navigation for event ID:', eventId);
+            window.location.href = `/calendario/edit/${eventId}`; // Fallback
+        }
+    });
+
+    // Move Button
+    $(document).on('click', '.event-move-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const eventId = $(this).data('event-id');
+        console.log('Move button clicked for event ID:', eventId);
+        // Placeholder for existing move functionality integration
+        // Example: if there's a global function like `initiateMoveProcess(eventId)`
+        // if (typeof initiateMoveProcess === 'function') {
+        //     initiateMoveProcess(eventId);
+        // } else {
+        //     console.warn('Move functionality not yet fully implemented for this button.');
+        // }
+    });
+
+    // Shift Event Copy Button (and potentially other .btn-custom-copy buttons)
+    $(document).on('click', '.btn-custom-copy', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const eventId = $(this).data('event-id');
+        console.log('Copy button clicked for event ID:', eventId);
+        // Placeholder for copy functionality
+        // Example: if there's a global function like `copyEvent(eventId)`
+        // if (typeof copyEvent === 'function') {
+        //     copyEvent(eventId);
+        // } else {
+        //     console.warn('Copy functionality not yet implemented for this button.');
+        // }
+    });
+});

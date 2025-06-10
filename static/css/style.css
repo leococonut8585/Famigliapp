@@ -88,9 +88,9 @@ table { /* General table styling */
 .calendar th,
 .calendar td.calendar-day,
 .calendar td.shift-cell {
-    width: 180px !important;       /* Strict width for all calendar cells */
-    min-width: 180px !important;   /* Strict width */
-    max-width: 180px !important;   /* Strict width */
+    width: 200px !important;       /* Updated width */
+    min-width: 200px !important;   /* Updated min-width */
+    max-width: 200px !important;   /* Updated max-width */
     vertical-align: top;         /* Ensured for td, good default for th */
     border: 1px solid #ddd;      /* Ensured */
 }
@@ -354,7 +354,7 @@ ul {
 /* Shift-specific 4-column grid container */
 .shift-grid-container {
     display: grid !important; /* Restored grid display */
-    grid-template-columns: repeat(4, 125px) !important; /* Restored grid columns */
+    grid-template-columns: repeat(4, minmax(125px, 1fr)) !important; /* 柔軟なグリッド */
     gap: 3px !important; /* Restored gap */
     justify-content: start !important; /* Restored justify-content */
     padding-top: 2px; /* Maintained */
@@ -362,40 +362,38 @@ ul {
 
 /* Individual shift items within the shift grid */
 .shift-grid-item {
-    padding: 2px 1px !important; /* Base padding, right side will be overridden by padding-right */
     border: 1px solid #777; /* Slightly darker border for shift items */
     border-radius: 3px;
     /* background-color and color will be set by .event-shift-item */
-    white-space: nowrap !important; /* Ensured */
-    word-break: normal !important; /* Ensured */
-    overflow: hidden !important; /* Ensured */
-    text-overflow: ellipsis !important; /* Ensured */
-    width: 125px !important; /* Verified fixed width */
-    min-width: 125px !important; /* Verified fixed min-width */
-    max-width: 125px !important; /* Verified fixed max-width */
-    height: auto !important; /* Maintained */
-    line-height: 1.2 !important; /* Adjusted line-height */
-    box-sizing: border-box !important; /* Updated */
-    flex-shrink: 0; /* Maintained */
-    position: relative; /* Added */
-    padding-right: 65px !important; /* Added */
+    width: 125px !important;
+    min-width: 125px !important;
+    max-width: 125px !important;
+    box-sizing: border-box !important;
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 4px !important;
+    min-height: 24px;
+    /* Text properties like overflow, text-overflow, white-space are now for child span */
 }
 
-/* Combined and updated rule for button containers */
-.event-buttons,
+.shift-grid-item > span[class*="initial-text-"] {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The consolidated rule for .event-buttons and .shift-grid-item .event-actions is removed. */
+/* .event-buttons will be re-added with new styling below. */
+
 .shift-grid-item .event-actions {
-    position: absolute;
-    right: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex !important;
+    display: flex !important; /* !important to override potential conflicts */
     gap: 2px;
-    z-index: 10;
-    visibility: visible !important;
-    opacity: 1 !important;
-    white-space: nowrap; /* Ensures buttons stay in a single line */
-    justify-content: flex-end; /* Align buttons to the right */
-    flex-shrink: 0; /* Prevent shrinking in flex context */
+    flex-shrink: 0; /* Prevent shrinking */
+    margin-left: 4px; /* Space from the title text */
 }
 
 /* Ensure title/text part in both shift and general events truncates properly */
@@ -526,6 +524,9 @@ ul {
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
+    display: inline-block !important; /* 確実に表示 */
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .btn-custom-copy:hover {
@@ -542,6 +543,9 @@ ul {
     font-size: 0.75em;
     line-height: 1.2;
     border-radius: 0.2rem;
+    display: inline-block !important; /* 確実に表示 */
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .btn-custom-move:hover {
@@ -752,7 +756,7 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 
 /* 日付セルの最小幅を設定 */
 .calendar-table td {
-    min-width: 180px; /* 十分な幅を確保 */
+    min-width: 200px; /* 十分な幅を確保 - Updated */
     padding: 8px;
     vertical-align: top;
     position: relative;
@@ -761,23 +765,42 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 /* 予定ボックスのスタイル調整 */
 .event-item {
     position: relative;
-    display: flex;
-    align-items: center;
     margin-bottom: 4px;
-    min-height: 30px;
-    width: 100%;
-    max-width: 170px;
-    padding-right: 100px;
-    box-sizing: border-box;
+    min-height: 50px; /* ボタン用スペースを確保 */
+    padding: 0; /* パディングはwrapperで管理 */
+    display: block; /* flexではなくblock */
+    width: calc(100% - 10px); /* セル内で適切な幅を確保 */
+    max-width: 190px; /* 最大幅を制限 */
 }
 
-/* .event-buttons rule will be replaced by a consolidated rule later */
+.event-content-wrapper {
+    padding: 8px;
+    display: flex;
+    flex-direction: column; /* 縦方向に配置 */
+    height: 100%;
+}
+
+.event-title-line {
+    flex: 1; /* Takes available space in flex column */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 4px; /* ボタンとの間隔 */
+}
+
+.event-buttons {
+    display: flex;
+    gap: 2px;
+    justify-content: flex-start; /* 左寄せ */
+    flex-wrap: nowrap; /* ボタンが折り返さない */
+}
 
 /* 各ボタンのサイズ調整 */
 .event-buttons .btn {
-    padding: 2px 8px;
-    font-size: 12px;
+    padding: 2px 6px;
+    font-size: 11px;
     line-height: 1.2;
+    flex-shrink: 0; /* ボタンが縮まない */
 }
 
 /* シフト管理エリアの予定表示調整 */
@@ -794,16 +817,12 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
         min-width: 100%;
     }
 
-    .calendar-table td {
-        min-width: 200px; /* より大きな画面ではさらに広く */
-    }
+    /* .calendar-table td rule for 1600px is now redundant as base is 200px */
 }
 
 /* The specific .shift-grid-item .event-actions rule (for visibility) is now removed as its properties are merged into the consolidated rule above. */
 
-.shift-grid-item .btn-custom-copy {
-    display: inline-block !important; /* 明示的に表示 */
-}
+/* The specific .shift-grid-item .btn-custom-copy rule is now removed as its properties are merged into the main .btn-custom-copy rule. */
 
 /* 画面幅に応じた調整 */
 @media (min-width: 1440px) {
