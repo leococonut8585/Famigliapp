@@ -410,8 +410,8 @@ ul {
 
 /* 出張 */
 .event-shucchou {
-    background-color: #ff8c00 !important; /* 濃いオレンジ */
-    color: white !important;
+    background-color: #FFD700 !important; /* ゴールド */
+    color: #333 !important; /* テキストを暗くして読みやすく */
 }
 
 .event-mummy { /* 'mammy' から 'mummy' に変更 */
@@ -668,7 +668,9 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 /* 予定ボックス内のボタン配置 */
 .event-grid-item { /* Targeting existing .event-grid-item */
     padding: 5px 8px !important; /* パディングを削減 */
+    padding-right: 35px !important; /* 移動ボタン分のスペースを確保 */
     margin: 2px 0 !important;    /* マージンを削減 */
+    position: relative !important; /* position:absolute の基準となるように */
     /* display: flex; align-items: center; */ /* Already flex via .d-flex on some items, or handled by internal structure */
 }
 
@@ -695,4 +697,12 @@ select.time-select, select[name="start_time"], select[name="end_time"] {
 .calendar td.calendar-day:hover,
 .calendar td.shift-cell:hover {
     overflow-y: auto !important; /* ホバー時のみスクロール可能 */
+}
+
+/* 既存の移動ボタンクラスに適用 (イベントアイテム内にある場合) */
+.event-grid-item .btn-custom-move {
+    position: absolute !important;
+    right: 5px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
 }

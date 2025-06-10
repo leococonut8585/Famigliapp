@@ -46,7 +46,7 @@
 -   **ステップ6: シフト管理警告ポップアップの統一**
     -   実施内容: `static/js/shift_manager.js` 内で、違反詳細のJSONパース失敗時に `alert()` が呼び出されていた箇所を `showCalendarioPopup` を使用するように修正。
     -   結果: 正常に完了。
--   **ステップ7: 論理テスト**
+-   **ステップ7: 論理テスト (1回目)**
     -   実施内容: 上記6つの修正項目について、期待される動作が実装されているかを論理的に確認。
     -   結果: 全ての項目で、期待される動作が実装されていると判断。
 -   **ステップ8: ドキュメント更新 (1回目)**
@@ -90,4 +90,69 @@ Flaskアプリケーション起動時に `ModuleNotFoundError: No module named 
     -   結果: コマンドはタイムアウトしたが、これはアプリケーションが正常に起動しフォアグラウンドで実行され続けていることを示唆。`ModuleNotFoundError` は解消されたと判断。
 -   **ステップ4: ドキュメント更新 (2回目)**
     -   実施内容: 緊急修正の内容を `DEVELOPMENT_DOCS/PROJECT_STATUS.md`、`DEVELOPMENT_DOCS/CONVERSATION_LOGS/session_JULES_2025-06-09.md` (このセクション)、`DEVELOPMENT_DOCS/KNOWN_ISSUES.md` に追記。
+    -   結果: 正常に完了。
+
+---
+## Calendarioモジュール修正 (2025-06-09)
+
+### ユーザー指示
+
+ユーザーより、Calendarioモジュールに関する以下の修正指示がありました。
+
+1.  **EventForm 'time' 属性エラーの修正**: `routes.py` で `form.time` の代わりに `form.start_time` を使用する。
+2.  **メインカレンダー詳細ポップアップの実装**:
+    *   イベント詳細情報を返すAPIエンドポイント (`/event/<id>/details`) を `routes.py` に作成。
+    *   新しいJavaScriptファイル `static/js/calendario.js` を作成し、APIを呼び出してイベント詳細を表示する `showEventDetails` 関数を実装（汎用ポップアップ `showCalendarioPopup` を使用）。
+    *   `month_view.html` の詳細ボタンを修正し、新しい `showEventDetails` 関数を呼び出すように変更。古い `details-btn` クラスを削除。
+3.  **シフト管理警告ポップアップの実装**:
+    *   `static/js/calendario.js` に警告表示用の `showWarningDetails` 関数を実装（汎用ポップアップ `showCalendarioPopup` を使用）。
+    *   `shift_manager.html` から古い静的な警告表示UIを削除。
+    *   `shift_manager.js` の違反アイコンクリック時の処理を、新しい `showWarningDetails` 関数を呼び出すように修正。
+4.  **カレンダー幅の自動調整CSS追加**: `style.css` に `.calendar-container` と `.calendar-table` 用のスタイル（幅100%、自動レイアウト、最小幅、レスポンシブ対応）を追加。
+5.  **「出張」ジャンルのカラー変更**: `style.css` で `.event-shucchou` の背景色をゴールドに、文字色を暗い色に変更。
+6.  **予定ボックスの移動ボタンの重なり修正**: `style.css` でイベントアイテム (`.event-grid-item`) と移動ボタン (`.btn-custom-move`) のスタイルを調整し、移動ボタンがアイテム右端に配置されるようにする。
+7.  **論理テスト**: 上記修正項目について、期待される動作が実装されているかを確認。
+8.  **ドキュメント更新**: 今回の修正内容を関連ドキュメントに追記。
+
+### 新しい作業計画
+
+1.  **`routes.py` 修正 (EventFormエラー対応)**: `add` および `edit_event` 関数内の `form.time` 参照を `form.start_time` に変更。
+2.  **APIエンドポイント作成 (`routes.py`)**: `/event/<int:event_id>/details` を追加。
+3.  **`calendario.js` 作成・編集**: `showEventDetails` 関数を新規作成。
+4.  **`month_view.html` 修正**: 詳細ボタンの `onclick` 属性変更、`details-btn` クラス削除、`calendario.js` の読み込み追加。
+5.  **`calendario.js` 編集**: `showWarningDetails` 関数を追加。
+6.  **`shift_manager.html` 修正**: 古い警告表示UIを削除。
+7.  **`shift_manager.js` 修正**: 違反アイコンクリック時の処理を `showWarningDetails` 呼び出しに変更。
+8.  **`style.css` 修正 (カレンダー幅)**: `.calendar-container`, `.calendar-table` スタイルを追加。
+9.  **`style.css` 修正 (出張カラー)**: `.event-shucchou` のスタイルを更新。
+10. **`style.css` 修正 (移動ボタン)**: `.event-grid-item` と `.btn-custom-move` のスタイルを調整。
+11. **論理テスト**: 全ての修正項目について、期待される動作が実装されているかを確認。
+12. **ドキュメント更新**: `PROJECT_STATUS.md`, `CONVERSATION_LOGS/session_JULES_YYYY-MM-DD.md`, `KNOWN_ISSUES.md` を更新。
+
+### 実行ステップと結果
+
+-   **ステップ1: `routes.py` 修正 (EventFormエラー対応)**
+    -   結果: `add` 関数、`edit_event` 関数の `GET` および `POST` 処理部分を修正完了。
+-   **ステップ2: APIエンドポイント作成 (`routes.py`)**
+    -   結果: `/event/<int:event_id>/details` エンドポイントを `routes.py` に追加完了。
+-   **ステップ3: `static/js/calendario.js` 作成**
+    -   結果: `showEventDetails` 関数を含む `calendario.js` を新規作成完了。
+-   **ステップ4: `month_view.html` 修正**
+    -   結果: 詳細ボタンの `onclick` 属性変更、`details-btn` クラス削除、`calendario.js` のスクリプトタグ追加を完了。
+-   **ステップ5: `static/js/calendario.js` 編集 (showWarningDetails追加)**
+    -   結果: `showWarningDetails` 関数を `calendario.js` に追加完了。
+-   **ステップ6: `shift_manager.html` 修正**
+    -   結果: 古い警告表示用モーダル (`#violationDetailModal`) を削除完了。
+-   **ステップ7: `shift_manager.js` 修正**
+    -   結果: 違反アイコンクリック時の処理を `showWarningDetails` 呼び出しに修正完了。
+-   **ステップ8: `style.css` 修正 (カレンダー幅)**
+    -   結果: `.calendar-container`, `.calendar-table` スタイルを追加完了。
+-   **ステップ9: `style.css` 修正 (出張カラー)**
+    -   結果: `.event-shucchou` のスタイルを更新完了。
+-   **ステップ10: `style.css` 修正 (移動ボタン)**
+    -   結果: `.event-grid-item` に `position:relative` と `padding-right` を、`.event-grid-item .btn-custom-move` に絶対配置スタイルを追加完了。
+-   **ステップ11: 論理テスト**
+    -   結果: 上記修正項目について、期待される動作が実装されていることを論理的に確認完了。
+-   **ステップ12: ドキュメント更新 (3回目)**
+    -   実施内容: 今回のCalendarioモジュール修正の内容を `DEVELOPMENT_DOCS/PROJECT_STATUS.md`、`DEVELOPMENT_DOCS/CONVERSATION_LOGS/session_JULES_2025-06-09.md` (このセクション)、`DEVELOPMENT_DOCS/KNOWN_ISSUES.md` に追記。
     -   結果: 進行中 (このセクションの記述自体がステップの一部)。

@@ -34,3 +34,14 @@
 - Flask起動時の `ModuleNotFoundError: No module named 'app.seminario'` エラーを修正。
     - `wsgi.py`、`tests/test_seminario.py`、`tests/test_seminario_tasks.py` のインポートパスを `app.seminario` から `app.Seminario` に修正。
     - 起動確認テストを実施し、エラーが解消されたことを確認。
+
+## 2025-06-09 Calendarioモジュール修正 (Jules)
+
+Calendarioモジュールの表示問題とエラー修正、UI改善を行いました。
+
+1.  **EventForm 'time' 属性エラー修正**: `routes.py` で `form.start_time` を使用するように変更。
+2.  **メインカレンダー詳細ポップアップ実装**: イベント詳細表示用のAPI (`/event/<id>/details`) とJavaScript関数 (`showEventDetails` in `calendario.js`) を新規実装し、汎用ポップアップ (`showCalendarioPopup`) で表示するように `month_view.html` を修正。
+3.  **シフト管理警告ポップアップ実装**: 警告表示用のJavaScript関数 (`showWarningDetails` in `calendario.js`) を新規実装し、汎用ポップアップ (`showCalendarioPopup`) で表示するように `shift_manager.js` を修正。`shift_manager.html` から古い警告表示用モーダルを削除。
+4.  **カレンダー幅の自動調整**: `style.css` にコンテナ (`.calendar-container`) とテーブル (`.calendar-table`) の幅調整、レスポンシブ対応スタイルを追加（HTML側でのクラス適用は別途必要）。
+5.  **出張ジャンルのカラー変更**: `style.css` の `.event-shucchou` の背景色をゴールドに、文字色を暗い色に変更。
+6.  **予定ボックスの移動ボタン重なり修正**: `style.css` で `.event-grid-item` に `position:relative` と右パディングを、`.btn-custom-move` に絶対配置スタイルを追加（他のボタンとのレイアウト調整は今後の課題）。

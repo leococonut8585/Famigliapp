@@ -219,7 +219,7 @@ def add():
             employee='',  # employeeフィールドがないため空文字列を渡す
             category=form.category.data, # category をフォームから取得
             participants=form.participants.data, # participants をフォームから取得
-            time=form.time.data # time をフォームから取得
+            time=form.start_time.data if form.start_time.data else None # time をフォームから取得
         )
         flash("新しい予定を追加しました。", "success")
         return redirect(url_for("calendario.index"))
@@ -244,12 +244,6 @@ def edit_event(event_id: int):
             except (TypeError, ValueError):
                 flash("イベントの日付形式が無効です。", "warning")
                 form.date.data = None # Or some default
-        if event.get("time"):
-            try:
-                form.time.data = datetime.strptime(event["time"], '%H:%M').time() # Convert string to time object
-            except (TypeError, ValueError):
-                flash("イベントの時間形式が無効です。", "warning")
-                form.time.data = None # Or some default
         # Ensure participants is a list, even if not present or None in event data
         form.participants.data = event.get("participants", [])
     else:
@@ -271,7 +265,7 @@ def edit_event(event_id: int):
                 # "employee": form.employee.data or "", # Employee field is being removed
                 "category": form.category.data,
                 "participants": form.participants.data,  # Pass as a list
-                "time": form.time.data.isoformat(timespec='minutes') if form.time.data else None
+                "time": form.start_time.data.isoformat(timespec='minutes') if form.start_time.data else None
             }
             if utils.update_event(event_id, updated_event_data):
                 flash("予定を更新しました。", "success")
@@ -655,3 +649,22 @@ def api_event_drop():
         # Log the exception e for debugging
         print(f"Error during event drop operation: {e}") # This is existing log, fine to keep
         return jsonify({"success": False, "error": "サーバー内部エラーが発生しました。"}), 500
+
+
+@bp.route('/event/<int:event_id>/details')
+def get_event_details(event_id):
+    '''イベントの詳細情報をJSON形式で返す'''
+    # Use 'utils.get_event_by_id' as per existing import style
+    event = utils.get_event_by_id(event_id)
+    if not event:
+        return jsonify({'error': 'Event not found'}), 404
+
+    return jsonify({
+        'id': event.get('id'),
+        'title': event.get('title'),
+        'date': event.get('date'),
+        'time': event.get('time'),
+        'genre': event.get('category', event.get('genre', 'その他')),
+        'description': event.get('description'),
+        'employee': event.get('employee')
+    })

@@ -263,57 +263,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const popupTitle = `${iconInfo.titlePrefix} (${detailsObj.date})`;
           let bodyContent = '';
-          // Construct bodyContent as before
-            bodyContent = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
+          // Construct bodyContent for the warning details
+          // This HTML string will be passed as 'details' to showWarningDetails
+          let bodyContentForWarning = `<p class="mb-2"><strong>概要:</strong> ${detailsObj.description || 'N/A'}</p>`;
 
-            if (detailsObj.employee) {
-                bodyContent += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
-            }
-            if (detailsObj.employees && Array.isArray(detailsObj.employees) && detailsObj.employees.length > 0) {
-                bodyContent += `<p class="mb-1"><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
-            }
-            if (detailsObj.attribute) {
-                bodyContent += `<p class="mb-1"><strong>対象属性:</strong> ${detailsObj.attribute}</p>`;
-            }
+          if (detailsObj.employee) {
+              bodyContentForWarning += `<p class="mb-1"><strong>対象従業員:</strong> ${detailsObj.employee}</p>`;
+          }
+          if (detailsObj.employees && Array.isArray(detailsObj.employees) && detailsObj.employees.length > 0) {
+              bodyContentForWarning += `<p class="mb-1"><strong>関連従業員:</strong> ${detailsObj.employees.join(', ')}</p>`;
+          }
+          if (detailsObj.attribute) {
+              bodyContentForWarning += `<p class="mb-1"><strong>対象属性:</strong> ${detailsObj.attribute}</p>`;
+          }
 
-            if (detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
-                bodyContent += `<p class="mt-3 mb-1"><strong>詳細情報:</strong></p><ul class="list-unstyled ps-3">`;
-                for (const key in detailsObj.details) {
-                    let displayKey = key;
-                    if (key === "current_consecutive") displayKey = "現在の連勤日数";
-                    else if (key === "max_allowed") displayKey = "最大許容日数";
-                    else if (key === "current_staff") displayKey = "現在の人数";
-                    else if (key === "min_required") displayKey = "最低必要人数";
-                    else if (key === "pair") displayKey = "ペア";
-                    else if (key === "missing_member") displayKey = "不足メンバー";
-                    else if (key === "present_member") displayKey = "勤務中メンバー";
-                    else if (key === "current_count") displayKey = "現在のカウント";
-                    else if (key === "required_count") displayKey = "要求カウント";
-                    else if (key === "date" && detailsObj.date) continue; // Already in title
-                    else if (key === "employee" && detailsObj.employee) continue;
-                    else if (key === "attribute" && detailsObj.attribute) continue;
-                    else if (key === "category" && detailsObj.category) { // details.category を表示
-                        displayKey = "対象カテゴリ";
-                    } else if (key === "required_staff" && Array.isArray(detailsObj.details[key])) {
-                        displayKey = "必須担当者";
-                        detailsObj.details[key] = detailsObj.details[key].join(', ');
-                    } else if (key === "assigned_staff" && Array.isArray(detailsObj.details[key])) {
-                        displayKey = "現在担当者";
-                        detailsObj.details[key] = detailsObj.details[key].join(', ') || '(なし)';
-                    }
+          if (detailsObj.details && typeof detailsObj.details === 'object' && Object.keys(detailsObj.details).length > 0) {
+              bodyContentForWarning += `<p class="mt-3 mb-1"><strong>詳細情報:</strong></p><ul class="list-unstyled ps-3">`;
+              for (const key in detailsObj.details) {
+                  let displayKey = key;
+                  if (key === "current_consecutive") displayKey = "現在の連勤日数";
+                  else if (key === "max_allowed") displayKey = "最大許容日数";
+                  else if (key === "current_staff") displayKey = "現在の人数";
+                  else if (key === "min_required") displayKey = "最低必要人数";
+                  else if (key === "pair") displayKey = "ペア";
+                  else if (key === "missing_member") displayKey = "不足メンバー";
+                  else if (key === "present_member") displayKey = "勤務中メンバー";
+                  else if (key === "current_count") displayKey = "現在のカウント";
+                  else if (key === "required_count") displayKey = "要求カウント";
+                  else if (key === "date" && detailsObj.date) continue;
+                  else if (key === "employee" && detailsObj.employee) continue;
+                  else if (key === "attribute" && detailsObj.attribute) continue;
+                  else if (key === "category" && detailsObj.category) {
+                      displayKey = "対象カテゴリ";
+                  } else if (key === "required_staff" && Array.isArray(detailsObj.details[key])) {
+                      displayKey = "必須担当者";
+                      detailsObj.details[key] = detailsObj.details[key].join(', ');
+                  } else if (key === "assigned_staff" && Array.isArray(detailsObj.details[key])) {
+                      displayKey = "現在担当者";
+                      detailsObj.details[key] = detailsObj.details[key].join(', ') || '(なし)';
+                  }
+                  bodyContentForWarning += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
+              }
+              bodyContentForWarning += `</ul>`;
+          }
 
-
-                    bodyContent += `<li><strong>${displayKey}:</strong> ${detailsObj.details[key]}</li>`;
-                }
-                bodyContent += `</ul>`;
-            }
-
-          // Use the new popup function
-          if (typeof showCalendarioPopup === 'function') {
-            showCalendarioPopup(popupTitle, bodyContent, iconEl, 'violation-popup');
+          // Use the new showWarningDetails function (from calendario.js)
+          if (typeof showWarningDetails === 'function') {
+            // warningType として rule_type を、details として整形済みHTML bodyContentForWarning を渡す
+            // cellElement として iconEl (クリックされたアイコン) を渡す
+            showWarningDetails(detailsObj.rule_type, bodyContentForWarning, iconEl);
+          } else if (typeof showCalendarioPopup === 'function') {
+            // フォールバックとして showCalendarioPopup を維持する場合
+            console.warn('showWarningDetails function not found, falling back to showCalendarioPopup.');
+            // popupTitle は showCalendarioPopup のためにここで定義
+            const fallbackTitle = `${iconInfo.titlePrefix} (${detailsObj.date})`;
+            showCalendarioPopup(fallbackTitle, bodyContentForWarning, iconEl, 'violation-popup');
           } else {
-            console.error('showCalendarioPopup function not found. Make sure calendar_event_details.js is loaded and the function is global.');
-            alert(`違反: ${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`); // Fallback
+            console.error('showWarningDetails and showCalendarioPopup functions not found.');
+            alert(`違反: ${detailsObj.description}\n詳細: ${JSON.stringify(detailsObj.details)}`); // Ultimate fallback
           }
         });
         iconsC.appendChild(iconEl);
