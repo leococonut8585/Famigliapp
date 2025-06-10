@@ -98,6 +98,24 @@ def index():
             event['sort_priority'] = 99
             event['sort_time'] = "23:59"
 
+    # 2b. Add css_category_class for styling
+    for event in events:
+        category = event.get('category') # Keep original case for logic if needed elsewhere
+        if category:
+            cat_lower = category.lower()
+            if cat_lower in ['出張', 'shucchou', 'trip']: # 'trip' was previously used for shucchou color
+                event['css_category_class'] = 'shucchou'
+            elif cat_lower in ['マミー系', 'mummy', 'mammy']: # mammy for older data, mummy for new
+                event['css_category_class'] = 'mummy'
+            # Add other specific mappings here if necessary
+            # e.g., elif cat_lower in ['some_other_jp_name', 'some_other_alias']:
+            # event['css_category_class'] = 'english_class_name'
+            else:
+                event['css_category_class'] = cat_lower.replace(' ', '_') # Default to lowercase, replace spaces
+        else:
+            event['css_category_class'] = 'other'
+
+
     # 3. Sort all events by date, then by new sort keys
     events.sort(key=lambda e: (e.get("date", ""), e.get('sort_priority', 99), e.get('sort_time', '23:59')))
 
@@ -302,17 +320,34 @@ def shift():
         try: year, mon = map(int, month_param.split("-")); target_month_display = date(year, mon, 1)
         except Exception: target_month_display = date(today.year, today.month, 1)
     else: target_month_display = date(today.year, today.month, 1)
-    weekday_of_first_day = target_month_display.weekday()
-    start_of_first_week_in_target_month_view = target_month_display - timedelta(days=weekday_of_first_day)
-    actual_calendar_start_date = start_of_first_week_in_target_month_view - timedelta(days=7)
-    current_day_iterator = actual_calendar_start_date; weeks_for_display = []
-    for _week_num in range(6):
+
+    # Calculate the start and end dates for the calendar display
+    first_day_of_month = target_month_display
+    actual_calendar_start_date = first_day_of_month - timedelta(days=first_day_of_month.weekday())
+
+    year = target_month_display.year
+    month_val = target_month_display.month # Renamed to avoid conflict with 'month' variable used later
+    days_in_month_val = calendar.monthrange(year, month_val)[1] # Renamed
+    last_day_of_month = date(year, month_val, days_in_month_val)
+    actual_calendar_end_date = last_day_of_month + timedelta(days=(6 - last_day_of_month.weekday()))
+
+    # Generate weeks for display
+    weeks_for_display = []
+    current_day_iterator = actual_calendar_start_date
+    while current_day_iterator <= actual_calendar_end_date:
         week_row = []
-        for _day_in_week in range(7): week_row.append(current_day_iterator); current_day_iterator += timedelta(days=1)
+        for _day_in_week in range(7):
+            week_row.append(current_day_iterator)
+            current_day_iterator += timedelta(days=1)
         weeks_for_display.append(week_row)
-    actual_calendar_end_date = weeks_for_display[-1][-1]
+
+    # Adjust fetch_data_start_date_for_calc relative to the new actual_calendar_start_date
+    # This range is used for consecutive day calculations, so it needs to go back further.
+    # Let's keep it as 2 weeks before the calendar view starts for safety.
     fetch_data_start_date_for_calc = actual_calendar_start_date - timedelta(days=14)
+    # fetch_data_end_date_for_calc should cover the displayed calendar period.
     fetch_data_end_date_for_calc = actual_calendar_end_date
+
     if request.method == "POST":
         if not user or user.get("role") != "admin":
             flash("権限がありません (POST Auth)"); return redirect(url_for("calendario.index", month=target_month_display.strftime('%Y-%m')))

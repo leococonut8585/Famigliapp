@@ -253,7 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
             detailsObj = JSON.parse(iconEl.dataset.violationDetails);
           } catch (e) {
             console.error("Failed to parse violation details:", e, iconEl.dataset.violationDetails);
-            alert("違反詳細の表示に失敗しました。");
+            if (typeof showCalendarioPopup === 'function') {
+                showCalendarioPopup("エラー", "違反詳細の表示に失敗しました。", iconEl, "error-popup");
+            } else {
+                alert("違反詳細の表示に失敗しました。");
+            }
             return;
           }
 
