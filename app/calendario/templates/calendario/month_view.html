@@ -72,7 +72,8 @@
                                 </span>
                                 <div class="event-actions" style="white-space: nowrap;">
                                     {# Non-shift events: Details, Edit, Copy, Move #}
-                                    <button type="button" class="btn btn-secondary btn-xs-custom ms-1 details-btn"
+                                    <button type="button" class="btn btn-info btn-xs-custom ms-1"
+                                            onclick="showEventDetails({{ ev.id }}, this.closest('td'))"
                                             data-event-id="{{ ev.id }}" data-title="{{ ev.cleaned_title }}"
                                             data-time="{{ ev.time or ev.display_time or '' }}" data-description="{{ ev.description or '' }}"
                                             data-participants="{{ ev.participants|join(', ') if ev.participants else '' }}"
@@ -109,6 +110,7 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/calendar_event_details.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/calendario.js') }}" defer></script> {# これを追加 #}
 
 <div id="dndConfirmationPopup" style="display: none; position: absolute; border: 1px solid #ccc; background-color: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1001;">
     <p style="margin-top: 0; margin-bottom: 10px;">この予定に対する操作を選択してください:</p>

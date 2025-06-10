@@ -128,17 +128,6 @@
 <p class="mt-3"><a href="{{ url_for('calendario.shift_rules') }}" class="btn btn-secondary btn-sm">シフト計算詳細設定</a></p>
 <p><a href="{{ url_for('calendario.index', month=month.strftime('%Y-%m')) }}" class="btn btn-outline-secondary btn-sm">カレンダービューに戻る</a></p>
 
-{# Modal for Violation Details #}
-<div class="modal fade" id="violationDetailModal" tabindex="-1" aria-labelledby="violationDetailModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title" id="violationDetailModalTitle">違反詳細</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body" id="violationDetailModalBody"><p>詳細情報を読み込み中...</p></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button></div>
-    </div>
-  </div>
-</div>
-
 <script>
   window.shiftRules = {{ rules_for_js|tojson|safe }};
   if (typeof window.shiftRules === 'undefined' || window.shiftRules === null) {
